@@ -126,5 +126,17 @@ async function fresh(){
  const er=ctx.enemyRoster(p0+'-trial');assert.ok(er[0].name.startsWith('精英'));
  ps.available=[p0+'-trial'];ps.current=p0+'-trial';ctx.startBattle(p0+'-trial');b=ps.battle;for(const e of b.enemies){e.hp=0;e.dead=true}await ctx.winBattle();
  const pr=X.pendingRelic();assert.ok(pr&&pr.length===3,'elite win offers 3 relics');assert.equal(X.chooseRelic(pr[0].key),true);assert.equal(X.pendingRelic(),null);assert.equal(X.relics().length,4);
- console.log(`expansion_test PASS: ${played}/${ids.length} new cards played; ${phased} boss phases, ${seen.field.size} fields, ${seen.ward.size} ward rules, ${seen.beh.size} behaviors, intents, bond strike, pacts, affixes, daily, records, stats, achievements, table rites, relics, shop, omens, elite; burn, taunt, aura, multi, pierce, stun, deathrattle, bounce, lamp verified`);
+ // 异兆：每个事件的每个选项都真的生效
+ for(let oi=0;oi<X.OMENS.length;oi++)for(let k=0;k<X.OMENS[oi][2].length;k++){
+  A.newSlot(3,'normal','omen','easy');ps=A.getState();ctx.grantContract(A.ML.arcs[0].contracts[0]);X.choosePact('plain');const node=A.ML.arcs[oi].id+'-omen',ops=X.OMENS[oi][2][k][2];
+  ps.available=[node];ps.coins=200;ps.will=5;ps.xp=0;for(const s of ps.spirits)s.hp=s.maxHp*.5;const before={deck:ps.deck.length,relics:(ps.relics||[]).length};
+  const r=X.chooseOmen(node,k);assert.ok(r,`omen ${oi}/${k} resolves`);
+  let coins=200,deck=before.deck,relics=before.relics;
+  for(const [op,v] of ops){if(op==='coins')coins+=v;if(op==='pay')coins-=v;if(op==='card')deck++;if(op==='losecard')deck--;if(op==='relic')relics++;
+   if(op==='xp')assert.equal(ps.xp,v,`omen ${oi}/${k} xp`);if(op==='will')assert.equal(ps.will,Math.max(1,Math.min(10,5+v)),`omen ${oi}/${k} will`);
+   if(op==='heal')assert.ok(ps.spirits.every(s=>s.hp===s.maxHp),`omen ${oi}/${k} heal`);if(op==='hurt')assert.ok(ps.spirits.every(s=>s.hp===Math.max(1,+(s.maxHp*.5-s.maxHp*v).toFixed(1))),`omen ${oi}/${k} hurt`);
+   if(op==='mend')assert.ok(ps.spirits.every(s=>s.hp===Math.min(s.maxHp,s.maxHp*.5+s.maxHp*v)),`omen ${oi}/${k} mend`);if(op==='incense')assert.equal(ps.xIncense,true);if(op==='curse')assert.equal(ps.xCurse,true)}
+  assert.equal(ps.coins,coins,`omen ${oi}/${k} coins`);assert.equal(ps.deck.length,deck,`omen ${oi}/${k} deck`);assert.equal((ps.relics||[]).length,relics,`omen ${oi}/${k} relics`);
+ }
+ console.log(`expansion_test PASS: ${played}/${ids.length} new cards played; ${phased} boss phases, ${seen.field.size} fields, ${seen.ward.size} ward rules, ${seen.beh.size} behaviors, intents, bond strike, pacts, affixes, daily, records, stats, achievements, table rites, relics, shop, all omen options, elite; burn, taunt, aura, multi, pierce, stun, deathrattle, bounce, lamp verified`);
 })().catch(e=>{console.error(e);process.exit(1)});
