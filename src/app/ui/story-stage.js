@@ -214,7 +214,7 @@ export function createStoryStage(ctx) {
 
   // ───────── 页管理 ─────────
   function layout(style) {
-    if (style === 'shadow') return { cpl: 18, maxLines: 6, fs: 54, lh: 74, W: TEXT_W, H: 512, x0: 20, y0: 10 };
+    if (style === 'shadow') return { cpl: 16, maxLines: 6, fs: 54, lh: 80, W: TEXT_W, H: 512, x0: 0, y0: 14 };
     if (style === 'ash') return { cpl: 15, maxLines: 7, fs: 46, lh: 80, W: TEXT_W, H: 832, x0: 170, y0: 135 };
     return { cpl: 17, maxLines: 8, fs: 50, lh: 82, W: TEXT_W, H: 832, x0: 120, y0: 92 };
   }
@@ -336,16 +336,16 @@ export function createStoryStage(ctx) {
     const proxy = new THREE.Mesh(new THREE.PlaneGeometry(SW + .6, SH + .3), new THREE.MeshBasicMaterial()); proxy.visible = false; proxy.userData.dofProxy = true; proxy.userData.noPick = true; proxy.position.y = SY; g.add(proxy);
     for (const x of [-SW / 2 - .1, SW / 2 + .1]) { const post = new THREE.Mesh(new THREE.BoxGeometry(.2, SH + .5, .22), woodMat); post.position.set(x, SY, 0); post.castShadow = true; g.add(post); const foot = new THREE.Mesh(new THREE.BoxGeometry(.5, .12, .9), woodMat); foot.position.set(x, .06, 0); g.add(foot); }
     for (const y of [SY + SH / 2 + .12, SY - SH / 2 - .1]) { const bar2 = new THREE.Mesh(new THREE.BoxGeometry(SW + .5, .2, .22), woodMat); bar2.position.set(0, y, 0); g.add(bar2); }
-    const ink = new THREE.Mesh(new THREE.PlaneGeometry(3.8, 1.9), inkMat('#b38b5c', '#3a2010'));
+    const ink = new THREE.Mesh(new THREE.PlaneGeometry(3.8, 1.9), inkMat('#4a2e16', '#140a04'));
     ink.position.set(0, 1.32, .03); ink.renderOrder = 6; g.add(ink);
     const figs = [];
     const list = spec.figures && spec.figures.length ? spec.figures : [{ id: '', name: '', kind: 'mist' }];
     list.forEach((fig, i) => {
       const { canvas, aspect, eyes } = silhouetteCanvas(fig, 640), tex = canvasTexture(canvas);
-      const hgt = fig.kind === 'mist' ? 1.2 : 1.35, w = hgt * aspect;
+      const hgt = (fig.kind === 'mist' ? 1.44 : 1.62) * (i % 2 ? .9 : 1), w = hgt * aspect;   // 人影放大，脚落在正文上沿，多个人影一高一低
       const m = new THREE.Mesh(new THREE.PlaneGeometry(w, hgt), new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, opacity: 0, color: '#000' }));
       const n = list.length, tx = n === 1 ? 0 : -1.7 + (3.4 * i) / (n - 1);
-      m.position.set(tx + (i % 2 ? 2.8 : -2.8), SY + .98, .02); m.renderOrder = 4;
+      m.position.set(tx + (i % 2 ? 2.8 : -2.8), SY + .15 + hgt / 2, .02); m.renderOrder = 4;
       if (eyes) { const em = new THREE.Mesh(new THREE.PlaneGeometry(w, hgt), new THREE.MeshBasicMaterial({ map: canvasTexture(eyes), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); em.position.z = .004; m.add(em); m.userData.eyeMesh = em; }
       g.add(m); figs.push({ m, tx, w, hgt, seed: rnd() * 9, flip: 1 });
     });
@@ -392,7 +392,7 @@ export function createStoryStage(ctx) {
       };
       S.enterT = .6;
     }
-    light.intensity = 0; tween(light, { intensity: sp.style === 'shadow' ? 12 : 7 }, { dur: 1200 });
+    light.intensity = 0; tween(light, { intensity: sp.style === 'shadow' ? 10 : 7 }, { dur: 1200 });
     applyPage(0);
     S.p = -(sp.style === 'blood' ? .35 : sp.style === 'ash' ? .5 : .7);
   }

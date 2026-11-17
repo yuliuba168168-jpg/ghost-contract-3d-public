@@ -467,3 +467,4 @@ body.plain-gfx #stage { image-rendering: pixelated; }
 
 /* 美术审查落地（提案之外的补充） */
 .sheet.wheels.narrow { width: min(820px, 92vw); }
+.story-bar { background: none; border: 0; box-shadow: none; backdrop-filter: none; padding: 0; }
