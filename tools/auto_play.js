@@ -33,12 +33,13 @@ function pickButton() {
   const sheet = q('.sheet .ink-btn, .sheet button.cell, .story-bar button, .sheet button');
   const pri = sheet.filter(b => b.classList.contains('primary') && !skip.test(b.textContent));
   const any = sheet.filter(b => !skip.test(b.textContent));
+  const arena = q('.ink-btn.primary').filter(b => /出战|下一波/.test(b.textContent));   // 无尽 / 每日挑战的擂台界面
   let node = q('.sm-node.open');
   // 岔路四选一：按幕轮换 调查/精英/鬼市/异兆，让四类节点都被走到
   if (node.length > 1) { const act = Math.max(0, ...(GC.state?.completed || []).map(i => GC.NODES[i]?.act || 0)); node = [node[(act + forkShift) % node.length], ...node]; }
   const home = q('.slot .ink-btn').filter(b => /继续旅途|建立新旅途/.test(b.textContent));
   if (home.length && homeSlot != null && !sheet.length) { GC.actions.loadSlot(homeSlot); return null; }   // 回到了标题页：读回指定的存档位
-  const list = [...pri, ...any, ...node, ...home, ...sheet.filter(b => /离开|跳过|返回/.test(b.textContent))];
+  const list = [...pri, ...any, ...arena, ...node, ...home, ...sheet.filter(b => /离开|跳过|返回/.test(b.textContent))];
   // 同一个界面上点过没反应的按钮（如篝火里的「按推荐培养」）往后排，换下一个
   const fresh = list.find(b => !tried.has(sig(b)));
   const btn = fresh || list[0] || null; if (btn) tried.add(sig(btn)); return btn;
