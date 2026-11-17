@@ -138,8 +138,10 @@ export function createScreens(ctx) {
     },
     map({ act }) {
       closeSheet();
-      if (globalThis.GC_X?.pendingRelic()) { setTimeout(() => S.relicPick(), 400); }
-      else if (globalThis.GC_X?.pendingPact()) { setTimeout(() => S.pact?.(), 400); }
+      // 延迟弹出的法器/条款面板不得顶掉玩家在这 0.4 秒里打开的其他面板（曾把结算面板顶掉，留下过期的路线图）
+      const later = fn => setTimeout(() => { if (!sheetEl && base === 'map' && !GC.battle) fn(); }, 400);
+      if (globalThis.GC_X?.pendingRelic()) later(() => S.relicPick());
+      else if (globalThis.GC_X?.pendingPact()) later(() => S.pact?.());
       const st = GC.state, changed = setBase('map');
       if (changed) ctx.rig.goTo('map', { dur: 1100 });
       mapView.show(act, id => A.enterNode(id));
@@ -272,7 +274,7 @@ export function createScreens(ctx) {
       const p = globalThis.GC_X?.pendingPact(); if (!p) return;
       sheet('pact', { kicker: '契约条款', title: `与「${p.name}」立下哪一种契约？`, cls: 'wide',
         body: `<p class="muted">每名鬼灵只立一次，立下后不能更改。</p><div class="grid c4">${p.options.map(o => `<button class="cell card" data-act="pick" data-arg="${o.key}"><b class="goldc">${esc(o.name)}</b><span>${esc(o.desc)}</span><p class="muted">${esc(o.flavor)}</p></button>`).join('')}</div>`,
-        acts: { pick: k => { play('reward'); globalThis.GC_X.choosePact(k); closeSheet(); if (globalThis.GC_X.pendingPact()) setTimeout(() => S.pact(), 250); } } });
+        acts: { pick: k => { play('reward'); globalThis.GC_X.choosePact(k); closeSheet(); if (globalThis.GC_X.pendingPact()) setTimeout(() => { if (!sheetEl) S.pact(); }, 250); else A.renderMap(); } } });
     },
     contractTrials() {
       const st = GC.state, cands = GD.spirits.filter(c => !st.spirits.some(s => s.id === c.id) && !['tong', 'xuan'].includes(c.id));
