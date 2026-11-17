@@ -20,16 +20,43 @@ export function createSkillVideo(ctx) {
     for (let p = plus; p >= 0; p--) if (files.has(base + 'p'.repeat(p))) return { key: base + 'p'.repeat(p), passive: !!hit[2] };
     return null;
   }
+  // 空位：对应表里有、但视频文件还没放进来的技能
+  function slotFor(req) {
+    if (!req) return null;
+    if (req.kind === 'player') return { key: 'player_' + ((req.index | 0) + 1), passive: false };
+    if (req.kind !== 'skill' || !req.portrait?.id) return null;
+    const name = String(req.name || '').replace(/\++$/, ''), list = VIDEO_MAP[req.portrait.id] || [];
+    const hit = list.find(e => e[0].includes(name)) || list.find(e => e[0].some(n => name.includes(n) || n.includes(name)));
+    return hit ? { key: `${req.portrait.id}_${hit[1]}`, passive: !!hit[2] } : null;
+  }
+  const slotMode = () => localStorage.getItem('gc3d-video-slot') === 'cine' ? 'cine' : 'black';
   function has(req) { const k = keyFor(req); return !!k && files.has(k.key); }
   async function tryPlay(req) {
-    if (!files.size) return false;
-    const k = keyFor(req); if (!k || !files.has(k.key)) return false;
     const mode = ctx.cine?.mode || 'full'; if (mode === 'table') return false;
+    let k = keyFor(req), blank = false;
+    if (!k || !files.has(k.key)) { k = slotMode() === 'black' ? slotFor(req) : null; blank = true; if (!k) return false; }
     const b = globalThis.GC?.battle, bk = b ? `${b.nodeId}|${b.uid || ''}|${globalThis.GC.state?.wave || 0}` : '';
     if (bk !== battleKey || (b && b.turn === 1 && !seen.size)) { battleKey = bk; }
     if ((k.passive || mode === 'smart') && seen.has(bk + k.key)) return false;
     seen.add(bk + k.key);
-    return show(files.get(k.key), req);
+    return blank ? placeholder(k.key, req) : show(files.get(k.key), req);
+  }
+  // 纯黑占位：视频还没做好时，在它将来出现的位置显示黑屏 + 技能名 + 文件名
+  function placeholder(key, req) {
+    return new Promise(resolve => {
+      const wide = (req.tier || 3) >= 3, speed = Math.max(1, +(globalThis.GC?.preferences?.speed) || 1);
+      const box = document.createElement('div'); box.className = 'skill-video slot' + (wide ? '' : ' band');
+      const cap = document.createElement('b'); cap.textContent = req.name || '';
+      const who = document.createElement('em'); who.textContent = req.kind === 'player' ? '御鬼者' : req.portrait?.name || '';
+      const tip = document.createElement('small'); tip.textContent = `素材空位 · assets/video/${key}.mp4 · 点击跳过`;
+      box.append(who, cap, tip); document.body.append(box); el = box; requestAnimationFrame(() => box.classList.add('on'));
+      let done = false;
+      const finish = () => { if (done) return; done = true; clearTimeout(timer); removeEventListener('keydown', onKey, true); box.remove(); if (el === box) el = null; resolve(true); };
+      const onKey = e => { if (e.code === 'Space' || e.code === 'Enter' || e.code === 'Escape') { e.preventDefault(); e.stopPropagation(); finish(); } };
+      const timer = setTimeout(finish, (wide ? 1500 : 800) / speed);
+      box.addEventListener('pointerdown', e => { e.stopPropagation(); finish(); });
+      addEventListener('keydown', onKey, true);
+    });
   }
   function show(file, req) {
     return new Promise(resolve => {
@@ -52,5 +79,5 @@ export function createSkillVideo(ctx) {
     });
   }
   ctx.on('battleCleared', () => seen.clear());
-  return { tryPlay, has, keyFor, get files() { return [...files.keys()]; }, get playing() { return !!el; } };
+  return { tryPlay, has, keyFor, slotFor, slotMode, setSlotMode(v) { localStorage.setItem('gc3d-video-slot', v === 'cine' ? 'cine' : 'black'); }, get files() { return [...files.keys()]; }, get playing() { return !!el; } };
 }

@@ -13,3 +13,10 @@
 - 技能视频：有视频的技能用视频代替程序化全屏演出（`main.js` 包了一层 `ctx.cine.play`）。3–4 级全屏，1–2 级斜切画幅。点击、空格、回车跳过。演出模式「仅牌桌」不播；「精简」每场每条只播一次；被动技能每场只播一次。`video-map.js` 由提示词文档 04 的标题生成。
 - 卡面：注册为 `art:<id>`，覆盖 `assets/gen` 里的同名卡面，目前画在卡牌上半部的画框里。
 - 立绘三视图（文档 01）不能直接放：要先用 `tools/build_assets.py` 抠图生成 `assets/gen/views`。
+
+## 空位与清单
+
+- 全部空位的总表在 `src/app/core/asset-slots.js`（音乐、卡面、立绘）和 `src/app/fx/video-map.js`（技能视频）。`node tools/asset_doc.cjs` 据此生成 `docs/素材导入说明.md`（逐文件对应游戏的哪一处 + 已有 / 空位）。
+- 游戏内「设置 → 素材清单」显示同一份清单的实时状态。
+- 技能视频缺失时默认显示纯黑占位（技能名 + 文件名，`fx/skill-video.js` 的 `placeholder`）；设置里「缺技能视频时」可切回程序演出（`localStorage['gc3d-video-slot']` = black | cine）。
+- 立绘可外放：`assets/views/<id>_front|side|back.png`（透明底），由 `core/assets.js` 加载并覆盖管线产物。

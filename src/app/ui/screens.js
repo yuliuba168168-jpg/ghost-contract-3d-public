@@ -1,6 +1,8 @@
 import { createMapView } from './map-view.js';
 import { createStoryStage } from './story-stage.js';
-import { hasViews } from '../core/assets.js';
+import { hasViews, artImage, viewImage } from '../core/assets.js';
+import { slotList } from '../core/asset-slots.js';
+import { skillTier } from '../fx/skill-tier.js';
 import { GUIDE } from './guide-data.js';
 import { makeCanvas } from '../scene/textures.js';
 import { CW, CH, drawUnitFace, drawSkillFace, unitDescriptor, compact, RARITY } from '../cards/card-face.js';
@@ -397,13 +399,13 @@ export function createScreens(ctx) {
     },
     settings() {
       const p = GC.preferences || {}, tips = (() => { try { return JSON.parse(localStorage.getItem('youqi-guide-v1') || '{}').enabled !== false; } catch { return true; } })();
-      let speed = p.speed || 1, q = qualityLocked() ? quality().name : 'auto', story = storyMode() ? 'stage' : 'plain', cine = ctx.cine?.mode || 'full';
+      let speed = p.speed || 1, q = qualityLocked() ? quality().name : 'auto', story = storyMode() ? 'stage' : 'plain', cine = ctx.cine?.mode || 'full', vslot = ctx.video?.slotMode?.() || 'black';
       const q0 = q, tierName = { cinema: '影院', high: '高', medium: '中', low: '低' }[quality().name];
       const box = sheet('settings', {
         kicker: '设置', title: '演出 · 声音 · 画质', cls: 'narrow',
-        body: `<div class="field"><span>演出速度</span><div class="seg" id="sp">${[[1, '正常'], [1.6, '快速'], [2.4, '极速']].map(([v, l]) => `<button data-act="sp" data-arg="${v}" class="${+speed === v ? 'on' : ''}">${l}</button>`).join('')}</div></div><div class="field"><span>画质</span><div class="seg" id="ql">${[['auto', `自动（当前${tierName}）`], ['cinema', '影院'], ['high', '高'], ['medium', '中'], ['low', '低']].map(([v, l]) => `<button data-act="ql" data-arg="${v}" class="${q === v ? 'on' : ''}">${l}</button>`).join('')}</div></div><div class="field"><span>剧情呈现</span><div class="seg" id="sty">${[['stage', '实景'], ['plain', '文字面板']].map(([v, l]) => `<button data-act="sty" data-arg="${v}" class="${story === v ? 'on' : ''}">${l}</button>`).join('')}</div></div><div class="field"><span>技能演出</span><div class="seg" id="cin">${[['full', '全屏 + 牌桌'], ['smart', '精简'], ['table', '仅牌桌']].map(([v, l]) => `<button data-act="cin" data-arg="${v}" class="${cine === v ? 'on' : ''}">${l}</button>`).join('')}</div></div><div class="field"><span>音效</span><input type="checkbox" id="snd" ${p.sound !== false ? 'checked' : ''}></div><div class="field"><span>音效音量</span><input type="range" id="vol" min="0" max="100" value="${Math.round((p.volume ?? .55) * 100)}"></div><div class="field"><span>音乐音量</span><input type="range" id="mus" min="0" max="100" value="${Math.round((ctx.music?.level ?? .5) * 100)}"></div><div class="field"><span>减少闪烁</span><input type="checkbox" id="rf" ${p.reduceFlash ? 'checked' : ''}></div><div class="field"><span>首次操作提示</span><input type="checkbox" id="tips" ${tips ? 'checked' : ''}></div><p class="muted">渲染分辨率会随帧率自动升降，以尽量保持 60 帧。「自动」在分辨率降到底仍不足时再降一档画质；手动选择高／中／低后只调分辨率，不换档。</p>`,
-        foot: [{ label: '重置提示与教学', fn: () => { localStorage.setItem('youqi-guide-v1', JSON.stringify({ enabled: true, seen: {} })); ctx.tutorial?.reset(); toast('操作提示与新手引导已重置：新旅途的第一场战斗会重新教学'); } }, { label: '查看指南', fn: () => show('guide', { index: 0 }) }, '-', { label: '保存', primary: true, fn: () => { ctx.music?.setLevel(+box.querySelector('#mus').value / 100); A.applyPresentationSettings({ speed, sound: box.querySelector('#snd').checked, reduceFlash: box.querySelector('#rf').checked, volume: +box.querySelector('#vol').value / 100, guideHints: box.querySelector('#tips').checked }); localStorage.setItem('gc3d-story-mode', story); ctx.cine?.setMode(cine); if (q !== q0) { if (q === 'auto') autoQuality(); else setQuality(q, true); } document.body.classList.toggle('reduce-flash', !!GC.preferences.reduceFlash); closeSheet(); } }],
-        acts: { cin: (v, el) => { cine = v; box.querySelectorAll('#cin button').forEach(b => b.classList.toggle('on', b === el)); }, sty: (v, el) => { story = v; box.querySelectorAll('#sty button').forEach(b => b.classList.toggle('on', b === el)); }, sp: (v, el) => { speed = +v; box.querySelectorAll('#sp button').forEach(b => b.classList.toggle('on', b === el)); }, ql: (v, el) => { q = v; box.querySelectorAll('#ql button').forEach(b => b.classList.toggle('on', b === el)); } }
+        body: `<div class="field"><span>演出速度</span><div class="seg" id="sp">${[[1, '正常'], [1.6, '快速'], [2.4, '极速']].map(([v, l]) => `<button data-act="sp" data-arg="${v}" class="${+speed === v ? 'on' : ''}">${l}</button>`).join('')}</div></div><div class="field"><span>画质</span><div class="seg" id="ql">${[['auto', `自动（当前${tierName}）`], ['cinema', '影院'], ['high', '高'], ['medium', '中'], ['low', '低']].map(([v, l]) => `<button data-act="ql" data-arg="${v}" class="${q === v ? 'on' : ''}">${l}</button>`).join('')}</div></div><div class="field"><span>剧情呈现</span><div class="seg" id="sty">${[['stage', '实景'], ['plain', '文字面板']].map(([v, l]) => `<button data-act="sty" data-arg="${v}" class="${story === v ? 'on' : ''}">${l}</button>`).join('')}</div></div><div class="field"><span>技能演出</span><div class="seg" id="cin">${[['full', '全屏 + 牌桌'], ['smart', '精简'], ['table', '仅牌桌']].map(([v, l]) => `<button data-act="cin" data-arg="${v}" class="${cine === v ? 'on' : ''}">${l}</button>`).join('')}</div></div><div class="field"><span>缺技能视频时</span><div class="seg" id="vsl">${[['black', '纯黑占位'], ['cine', '程序演出']].map(([v, l]) => `<button data-act="vsl" data-arg="${v}" class="${vslot === v ? 'on' : ''}">${l}</button>`).join('')}</div></div><div class="field"><span>音效</span><input type="checkbox" id="snd" ${p.sound !== false ? 'checked' : ''}></div><div class="field"><span>音效音量</span><input type="range" id="vol" min="0" max="100" value="${Math.round((p.volume ?? .55) * 100)}"></div><div class="field"><span>音乐音量</span><input type="range" id="mus" min="0" max="100" value="${Math.round((ctx.music?.level ?? .5) * 100)}"></div><div class="field"><span>减少闪烁</span><input type="checkbox" id="rf" ${p.reduceFlash ? 'checked' : ''}></div><div class="field"><span>首次操作提示</span><input type="checkbox" id="tips" ${tips ? 'checked' : ''}></div><p class="muted">渲染分辨率会随帧率自动升降，以尽量保持 60 帧。「自动」在分辨率降到底仍不足时再降一档画质；手动选择高／中／低后只调分辨率，不换档。</p>`,
+        foot: [{ label: '重置提示与教学', fn: () => { localStorage.setItem('youqi-guide-v1', JSON.stringify({ enabled: true, seen: {} })); ctx.tutorial?.reset(); toast('操作提示与新手引导已重置：新旅途的第一场战斗会重新教学'); } }, { label: '查看指南', fn: () => show('guide', { index: 0 }) }, { label: '素材清单', fn: () => show('assets') }, '-', { label: '保存', primary: true, fn: () => { ctx.music?.setLevel(+box.querySelector('#mus').value / 100); A.applyPresentationSettings({ speed, sound: box.querySelector('#snd').checked, reduceFlash: box.querySelector('#rf').checked, volume: +box.querySelector('#vol').value / 100, guideHints: box.querySelector('#tips').checked }); localStorage.setItem('gc3d-story-mode', story); ctx.cine?.setMode(cine); ctx.video?.setSlotMode?.(vslot); if (q !== q0) { if (q === 'auto') autoQuality(); else setQuality(q, true); } document.body.classList.toggle('reduce-flash', !!GC.preferences.reduceFlash); closeSheet(); } }],
+        acts: { vsl: (v, el) => { vslot = v; box.querySelectorAll('#vsl button').forEach(b => b.classList.toggle('on', b === el)); }, cin: (v, el) => { cine = v; box.querySelectorAll('#cin button').forEach(b => b.classList.toggle('on', b === el)); }, sty: (v, el) => { story = v; box.querySelectorAll('#sty button').forEach(b => b.classList.toggle('on', b === el)); }, sp: (v, el) => { speed = +v; box.querySelectorAll('#sp button').forEach(b => b.classList.toggle('on', b === el)); }, ql: (v, el) => { q = v; box.querySelectorAll('#ql button').forEach(b => b.classList.toggle('on', b === el)); } }
       });
     },
     confirmReset() { sheet('confirmReset', { kicker: '重置', title: '重新开始？', cls: 'narrow', body: '<p>当前旅途将被清空。</p>', foot: [{ label: '取消', fn: () => closeSheet() }, { label: '确认', primary: true, fn: () => A.resetCampaign() }] }); },
@@ -416,6 +418,22 @@ export function createScreens(ctx) {
       row.append(btn('完整指南', () => { d.remove(); show('guide', { index }); }), btn('知道了', () => d.remove(), true));
       d.append(row); tipEl.append(d);
       setTimeout(() => d.remove(), 14000);
+    },
+    // 素材清单：外部制作的视频 / 音乐 / 卡面 / 立绘，哪些已放入、哪些还是空位
+    assets() {
+      const S = slotList(GC.GD, skillTier), groups = [['video', '技能视频', 'assets/video'], ['music', '音乐', 'assets/music'], ['cards', '卡面', 'assets/cards'], ['views', '立绘（透明底抠图）', 'assets/views']];
+      const label = (k, s) => k === 'video' ? `${s.owner} · ${s.skill}${s.passive ? '（被动）' : ''}` : k === 'music' ? s.where : k === 'cards' ? s.owner : `${s.owner} · ${s.pose}`;
+      const box = sheet('assets', { kicker: '素材清单', title: '已放入与空位', body: '<p class="muted">读取中…</p>', foot: [{ label: '返回设置', fn: () => show('settings') }, '-', { label: '关闭', primary: true, fn: closeSheet }] });
+      Promise.all(groups.map(g => fetch('/__list?dir=' + g[2]).then(r => r.ok ? r.json() : []).catch(() => []))).then(lists => {
+        if (!box.isConnected) return;
+        const html = groups.map(([k, name, dir], i) => {
+          const on = new Set(lists[i].map(f => String(f).replace(/\.[^.]+$/, '').toLowerCase()));
+          const have = s => on.has(s.key) || (k === 'cards' && !!artImage(s.key)) || (k === 'views' && !!viewImage(s.key.replace(/_(front|side|back)$/, ''), s.key.split('_').pop()));
+          const n = S[k].filter(have).length;
+          return `<h3>${name} · 已放入 ${n} / ${S[k].length}</h3><p class="muted">放到 <b>${dir}/</b>，文件名如下（扩展名 ${S[k][0].ext.join(' / ')}）。绿色为已放入。</p><div class="asset-list">${S[k].map(s => `<span class="${have(s) ? 'have' : ''}" title="${esc(label(k, s))}">${esc(s.key)}　${esc(label(k, s))}</span>`).join('')}</div>`;
+        }).join('');
+        fill(box.querySelector('.sheet-body'), `<p class="muted">每个文件对应游戏的哪一处，详见 docs/素材导入说明.md。放入文件后刷新页面即生效。</p>${html}`);
+      });
     },
     guide({ index = 0 }) {
       const prev = sheetName && sheetName !== 'guide' && sheetName !== 'settings' ? null : null; void prev;

@@ -23,6 +23,9 @@ export async function loadAssets(onProgress) {
   // 新卡面：assets/cards/<id>.png|webp|jpg 存在时覆盖管线产物（也让原本无图的鬼灵有卡面）
   const custom = await fetch('/__list?dir=assets/cards').then(r => r.ok ? r.json() : []).catch(() => []);
   for (const f of custom) { const m = /^([a-z0-9_]+)\.(png|webp|jpe?g)$/i.exec(f); if (m) jobs.push([`art:${m[1].toLowerCase()}`, 'assets/cards/' + f]); }
+  // 新立绘：assets/views/<id>_front|side|back.png|webp（透明底抠图）存在时覆盖管线产物
+  const views = await fetch('/__list?dir=assets/views').then(r => r.ok ? r.json() : []).catch(() => []);
+  for (const f of views) { const m = /^([a-z0-9]+)_(front|side|back)\.(png|webp)$/i.exec(f); if (m) jobs.push([`view:${m[1].toLowerCase()}:${m[2].toLowerCase()}`, 'assets/views/' + f]); }
   let done = 0;
   await Promise.all(jobs.map(async ([key, url]) => {
     const img = await loadImage(url);
