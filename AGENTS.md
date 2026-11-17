@@ -82,3 +82,11 @@ py tools\build_assets.py                # 重建 assets/gen（只读接手包）
 - 新增本机存储键：`gc3d-records-v1`（成绩）、`gc3d-stats-v1`（战绩与成就）。存档里新增字段 `pacts` `pendingPacts` `xProps` `xIncense` `daily` `dailySeed`，旧存档缺这些字段时按空处理。
 - 测试：`node tests\expansion_test.cjs`（第 8 个规则测试）。平衡测试现在的期望输出是 `1840 seeded ... worst 8 rounds`。
 - 用户明确说过：平衡、稳定性、发布形态暂不处理。
+
+### 扩展层第二批（优先级 2 与新手引导）
+
+- 法器 15 件（`state.relics`）、冥钱（`state.coins`，战斗胜利获得）、每幕岔路新增 `<幕>-shop`（鬼市，type `shop`）与 `<幕>-omen`（异兆，type `omen`，8 个事件轮换），`<幕>-trial` 标 `elite`（敌人更强，胜利后 `state.pendingRelic` 三选一）。岔路现在是 调查 / 精英 / 鬼市 / 异兆 四选一。主线节点数 313 → 405（`mainline_test` 的期望输出随之改变）。
+- 开局馈赠 4 种（`GC_X.boons()`，按 `gc3d-stats-v1` 的累计战绩解锁，建档面板里选；无尽模式不生效）。
+- 新手引导 `src/app/ui/tutorial.js`（`ctx.tutorial`）：`a01-battle` 第 1 回合且 `localStorage['gc3d-tutorial-v1']` 为空时启动，10 步；高亮圈用相机投影世界坐标。设置里「重置提示与教学」会清掉该键。`.story-bar` 常驻 DOM（`display:none`），判断剧情是否在显示要看 `style.display`。
+- 首战之前 `a01-story` 的 `continueMainlineEvent` 会先契约童童；自动化脚本若跳过它，首战手里没有鬼灵牌。
+- 界面：`screens.js` 新增 `shop` `omen` `relicPick`；路线图 HUD 显示冥钱与法器数；「鬼灵与卡牌」里列出法器。指南共 37 条（`playability_test` 断言的是规则侧 `PLAY_GUIDE` 的 26 条，未变）。

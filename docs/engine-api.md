@@ -217,3 +217,18 @@ screen 由 `GC_BRIDGE.ui(screen, params)` 发出；`close` 表示关闭顶层覆
 | `touchProp('bell'|'censer'|'urn')` | 非战斗时触碰道具，返回 `{name,text,rite,reward}` 或 null |
 
 新增 fx 事件：`field:change {id,name,desc,by}`、`boss:phase {uid,lane,name,phase,desc}`、`keyword {kind:'death',uid,side,lane,name}`、`shadow {event,turn}`（event ∈ start/turn/phase/rule）、`bond:strike {key,name,strike,kind,a,b}`（awaited）。
+
+### 扩展层第二批
+
+| 调用 | 返回 / 作用 |
+|---|---|
+| `relics()` / `hasRelic(k)` / `gainRelic(k)` | 已有法器 `[{key,name,desc}]`；查询；获得（重复返回 false） |
+| `pendingRelic()` / `chooseRelic(k)` | 精英战后的三选一；带走一件 |
+| `coins()` | 当前冥钱 |
+| `shop(id)` | `{id, coins, items:[{index,kind:'card'|'relic'|'remove'|'heal',key,name,desc,rarity?,price,sold}]}` |
+| `buy(id, index, deckIndex?)` | 购买；`remove` 类需要 `deckIndex`；失败返回 false |
+| `leaveNode(id)` | 离开鬼市（完成节点并回路线图） |
+| `omen(id)` / `chooseOmen(id, i)` | `{id,title,text,options:[{index,label,desc,disabled}]}`；执行选项并完成节点，返回 `{label,text,got[]}` |
+| `boons()` / `setBoon(key)` | 开局馈赠 `[{key,name,desc,need,unlocked}]`；为下一次 `newSlot` 预选 |
+
+新增 ui 事件：`shop {id}`、`omen {id}`。存档新增字段：`relics` `coins` `pendingRelic` `shopStock` `xCurse` `boon`。
