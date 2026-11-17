@@ -10,7 +10,7 @@ export function createUnitChips(ctx) {
   function drop(uid) { const c = chips.get(uid); if (c) { c.el.remove(); chips.delete(uid); } }
   function clear() { for (const uid of [...chips.keys()]) drop(uid); }
   function update() {
-    const on = quality().plain && ctx.battle.active && ctx.R.hud !== false && !ctx.screens?.modalOpen;
+    const on = (quality().plain || innerHeight <= 520) && ctx.battle.active && ctx.R.hud !== false && !ctx.screens?.modalOpen;
     if (!on) { if (chips.size) clear(); return; }
     const cam = ctx.rig.camera, units = ctx.battle.units;
     for (const uid of chips.keys()) { const e = units.get(uid); if (!e || e.removed) drop(uid); }

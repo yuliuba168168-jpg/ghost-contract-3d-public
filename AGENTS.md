@@ -119,3 +119,14 @@ py tools\build_assets.py                # 重建 assets/gen（只读接手包）
 - 规则：见 `docs/balance.md` 末尾「独立审查后的改动与复测」（异兆 wound/dim、归巢一次性折扣 `b.xDeployDiscount`、首领技能顺延 `bossCastSlot`、鬼市卖经验、牌组下限 8、难度下限、鬼障缓入）。
 - 目录一节的旧数字以此处为准：指南 37 条（`guide-data.js`），规则测试 8 个（多了 `expansion_test`），加载顺序在 `playability` 与 `facade` 之间有 `expansion`，桌上是两支命烛而不是命灯排，成就 34 个。
 - 审查里没有处理的：规则层没有「战斗代次」（只在界面侧让「回到标题」等结算跑完）；上香仍是每场点一次；`xStun` 状态签用完不消失；仪式奖励满牌组时替换最后一张；导入存档校验较松；「法器」一词同时指御鬼者三件和旅途法器；极简画质下 3D 牌面文字很糊；`contractTrials` 等无入口的遗留代码未删。
+
+## 2026-11-18 美术 / UI 审查后的修改（审查报告在仓库外 `art_review.md`，随 v8 交付）
+
+- 设计变量在 `styles/ui.css` 靠后的 `:root`（`--ink-* --bone-* --cinnabar-* --gold-* --font-display/text/num --fs-* --t-*`）。新样式一律用变量，不再写硬编码颜色；数字字体用 `--font-num`（Palatino 系），canvas 里对应 `card-face.js` 的 `NUM`。蓝紫色调已全部换成暖墨 / 朱砂 / 旧金。
+- `ui.css` 仍是「后写覆盖前写」：审查提案和之后的修改都追加在文件末尾，最末两段是矮屏同步（`max-height: 820px` 与 `520px`）。改通用规则后要去末尾同步矮屏值，否则 768 高的笔记本和手机横屏会溢出。
+- 卡面 `cards/card-face.js`：只留一道类型色外框；数字 104 / 84px，满血不写上限；血条在 y=668、高 14；无立绘鬼灵用 `motif()`（按类型的背景母题）+ `rubbing()`（名字首字拓片）+ 类型落款印。
+- 战斗：手牌静止时露出数字行（`hand-view.js` `baseY` 系数 .43）；敌方意图是纸签（`x-hud.js`）；阵位圈平时退到背景（`table.js`）；命烛加粗、敌方朱红蜡。
+- 极简档与矮屏（高 ≤ 520）下，场上单位的攻击 / 生命用 DOM 数值签显示：`battle/unit-chips.js`（`ctx.unitChips`，每帧投影牌下沿，只在变化时写样式）。极简档关颗粒与色差、画布最近邻放大。
+- 面板关闭有 160ms 退出动画：`closeSheet()` 加 `.out` 类后再移除；`sheet()` 内部换面板时用 `closeSheet(true)` 立即移除。自动化脚本判断「面板已关」要等 200ms 或查 `.sheet-veil:not(.out)`。
+- 图鉴 / 选牌里带缩略图的 `.cell.card` 不再有格子框和重复的名字，选中态画在缩略图上（`.cell.card.on:has(.thumb) .thumb`）。
+- 审查提了但没做：道具重新摆位（#13 后半）、敌方灵体按类型变轮廓与黑影亮边（#14）、路线图底栏文字链、低档火焰光晕、极简档 HUD 标签改 DOM 与像素比取整。

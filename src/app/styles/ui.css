@@ -560,3 +560,4 @@ body.hud-off .unit-chips, body.tut-on .unit-chips { }
   .title-logo h1 small { writing-mode: horizontal-tb; margin: 0; padding: 0; border: 0; font-size: .46em; letter-spacing: .5em; }
   .slot-wheel { --wheel-h: 128px; }
 }
+.wheel-item.diff-taboo.on b { color: #ffe9e2; text-shadow: 0 0 10px rgba(255,42,26,.9), 0 1px 0 #5a0a05; }
