@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><title>鬼灵契约 · 流畅度诊断</title>
+<style>body{margin:0;background:#16161a;color:#e6e6e6;font:15px/1.6 "Microsoft YaHei",sans-serif;padding:18px 24px}h1{font-size:20px;margin:0 0 8px}table{border-collapse:collapse;margin:8px 0}td,th{border:1px solid #555;padding:4px 12px;text-align:left}th{background:#2a2a32}.bad{color:#ff7a6a;font-weight:700}.ok{color:#6ae08a;font-weight:700}iframe{position:fixed;inset:0;width:100%;height:100%;border:0;background:#000;z-index:0}#panel{position:relative;z-index:1;display:inline-block;background:rgba(22,22,26,.93);padding:14px 20px;border:1px solid #555}button{font:inherit;padding:6px 16px;margin-right:8px}textarea{width:min(900px,60vw);height:150px;background:#0e0e12;color:#ccc;border:1px solid #555}</style></head>
+<body><div id="panel"><h1>鬼灵契约 · 流畅度诊断</h1>
+<p id="state">正在检测，大约需要 1–3 分钟，请不要切换窗口……</p>
+<table id="info"></table><table id="runs"><tr><th>画质档</th><th>帧率</th><th>每帧耗时</th><th>其中渲染</th><th>渲染分辨率比例</th><th>绘制调用</th><th>结束时档位</th><th>启动用时</th></tr></table>
+<p id="verdict"></p><p><button id="copy">复制结果</button>检测完成后，请把这一页截图（或点「复制结果」粘贴）发给我。</p><textarea id="out" readonly></textarea></div>
+<script>
+const $=id=>document.getElementById(id),report={},wait=ms=>new Promise(r=>setTimeout(r,ms));
+function row(t,k,v,cls){const tr=t.insertRow();tr.insertCell().textContent=k;const c=tr.insertCell();c.textContent=v;if(cls)c.className=cls;}
+function gpu(){const c=document.createElement('canvas');const gl=c.getContext('webgl2')||c.getContext('webgl');if(!gl)return{renderer:'无法创建 WebGL',vendor:'',webgl2:false};
+ const e=gl.getExtension('WEBGL_debug_renderer_info');return{renderer:e?gl.getParameter(e.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER),vendor:e?gl.getParameter(e.UNMASKED_VENDOR_WEBGL):'',webgl2:!!c.getContext('webgl2'),maxTex:gl.getParameter(gl.MAX_TEXTURE_SIZE)};}
+async function run(q){const f=document.createElement('iframe');f.src='./?dev=battle&diag=1&'+q;document.body.append(f);const t0=performance.now();
+ while(!f.contentWindow.__ready&&performance.now()-t0<150000)await wait(300);const load=Math.round(performance.now()-t0);
+ if(!f.contentWindow.__ready){f.remove();return{error:'150 秒内没有启动完成',load};}
+ await wait(7000);let s={};try{s=f.contentWindow.__gcStats();}catch(e){s={error:String(e)};}f.remove();await wait(500);return{...s,load};}
+(async()=>{const g=gpu(),soft=/swiftshader|llvmpipe|software|basic render|microsoft basic/i.test(g.renderer);
+ Object.assign(report,{gpu:g,software:soft,ua:navigator.userAgent,dpr:devicePixelRatio,window:innerWidth+'x'+innerHeight,screen:screen.width+'x'+screen.height,cores:navigator.hardwareConcurrency,memGB:navigator.deviceMemory});
+ const I=$('info');row(I,'显卡（浏览器实际使用的）',g.renderer,soft?'bad':'ok');row(I,'是否软件渲染',soft?'是 —— 浏览器没有用显卡':'否',soft?'bad':'ok');row(I,'WebGL2',g.webgl2?'支持':'不支持');
+ row(I,'窗口 / 屏幕 / 缩放',report.window+' / '+report.screen+' / '+devicePixelRatio);row(I,'CPU 线程 / 内存',report.cores+' / '+(report.memGB||'?')+' GB');row(I,'浏览器',navigator.userAgent.replace(/^.*?(Edg|Chrome|Firefox)\/([\d.]+).*$/,'$1 $2'));
+ report.runs={};
+ for(const [name,q] of [['最高 cinema','q=cinema'],['中 medium','q=medium'],['低 low','q=low'],['试玩 lite','lite=1']]){
+  $('state').textContent='正在检测：'+name+' ……';const r=await run(q);report.runs[name]=r;const tr=$('runs').insertRow();
+  const fps=r.fps?r.fps.toFixed(1):'-';[name,r.error||fps+' 帧/秒',r.avgMs?r.avgMs.toFixed(1)+' ms':'-',r.renderMs!=null?r.renderMs+' ms':'-',r.scale!=null?(+r.scale).toFixed(2)+'（像素比 '+r.pr+'）':'-',r.calls??'-',r.quality||'-',(r.load/1000).toFixed(0)+' 秒'].forEach((v,i)=>{const c=tr.insertCell();c.textContent=v;if(i===1)c.className=r.fps>=30?'ok':'bad';});
+  $('out').value=JSON.stringify(report);}
+ $('state').textContent='检测完成。';
+ $('verdict').textContent=soft?'结论：浏览器正在用软件渲染（没有用显卡），这是卡顿的主要原因。':'结论：浏览器在使用显卡，卡顿来自画面本身的开销，需要按上表优化。';
+})().catch(e=>{$('state').textContent='检测出错：'+e;});
+$('copy').onclick=()=>{$('out').select();navigator.clipboard?.writeText($('out').value);};
+</script></body></html>
