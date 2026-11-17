@@ -109,3 +109,13 @@ py tools\build_assets.py                # 重建 assets/gen（只读接手包）
 - 命灯排与托盘已删除，改为两支命烛（`scene/props.js` 的 `lifeCandle`：烛身高度 = 命灯比例，低于三成火苗摇晃）；`props.setLife/lifeAnchor` 接口不变，数值只在悬停提示里出现。桌面上不再常显「鬼气 x/y」「牌堆」「魂瓮」文字，装饰蜡烛减为 3 支。
 - 画质新增 `potato`（极简）：`quality().plain === true`。检测到软件渲染（`quality.js` 的 `gpu.software`）时自动使用，并由 `ui/gpu-note.js` 提示如何打开硬件加速；连续 6 帧超过 250ms 时 `floorQuality()` 直接降到此档。此档下 `core/plain-materials.js` 把 MeshStandardMaterial 换成 MeshLambertMaterial（颜色对象共享、opacity 等属性代理回原材质）、关掉亮度为 0 的灯并补一盏环境光。无显卡机器实测 low 3.5 帧 → potato 14.5 帧。
 - 素材空位：`assets/video|music|cards|views/`，对应关系见 `docs/素材导入说明.md`（`node tools/asset_doc.cjs` 重新生成）。
+
+## 2026-11-18 独立审查后的修复（审查报告见仓库外的 review.md，要点如下）
+
+- 画质：窄屏分支不再覆盖玩家锁定的档位；自动降档最低到 low（potato 只给软件渲染和 `floorQuality`）；从 potato 切回其他档位时 `plain-materials.js` 的 `restoreScene()` 换回原材质和灯光，`body.plain-gfx` 跟着画质切换；`plain-gfx` / `lite` 下 CSS 不用任何 `backdrop-filter`，其余时候只有 `.sheet` 一层模糊。帧时间上限 50 → 100ms。
+- 约定：`plain-materials` 的替身材质与原材质**共用** `color` / `emissive` 对象，改颜色用 `.set()` / `.copy()`，不要 `mat.color = new Color()`。
+- 战斗 HUD：每回合开始 `ctx.hudPeek(3500)`；顶部中间常驻把手 `.hud-grip`（「⋯」）；peek 的全局监听只在战斗中生效。战斗中点击命烛 / 牌堆 / 魂瓮 / 香炉也显示提示（`battle-input.js` 的 `withTap`，触屏可用）。空格/回车在焦点位于按钮上时不结束回合。
+- 轮盘：拖动后吞掉随后的 click；面板可滚动时竖向滚轮留给面板（Shift 或横向滚动转轮盘）；打开时自动聚焦第一个轮盘，↑↓ 在轮盘间换焦点，回车触发主按钮；`@media (max-height: 820px)` 压缩高度。
+- 规则：见 `docs/balance.md` 末尾「独立审查后的改动与复测」（异兆 wound/dim、归巢一次性折扣 `b.xDeployDiscount`、首领技能顺延 `bossCastSlot`、鬼市卖经验、牌组下限 8、难度下限、鬼障缓入）。
+- 目录一节的旧数字以此处为准：指南 37 条（`guide-data.js`），规则测试 8 个（多了 `expansion_test`），加载顺序在 `playability` 与 `facade` 之间有 `expansion`，桌上是两支命烛而不是命灯排，成就 34 个。
+- 审查里没有处理的：规则层没有「战斗代次」（只在界面侧让「回到标题」等结算跑完）；上香仍是每场点一次；`xStun` 状态签用完不消失；仪式奖励满牌组时替换最后一张；导入存档校验较松；「法器」一词同时指御鬼者三件和旅途法器；极简画质下 3D 牌面文字很糊；`contractTrials` 等无入口的遗留代码未删。
