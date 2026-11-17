@@ -89,8 +89,8 @@ for(const [name,desc] of Object.entries(BOSS_TRAITS))BOSS_SKILLS[name]={name,kin
 const EXTRA_SKILLS=['阴风横扫','厄咒','业火缠身','封灵印','夺气','乱阵','行刑','威压','蚀灯','涤秽','结阵','噬魂'],MINION_SKILLS=['厄咒','结阵','夺气','阴风横扫'];
 const DIFFICULTIES={
  easy:{name:'简单',life:1,bite:.2,hp:1,atk:1,every:2,extra:0,count:0,rank:0,xp:1,elite:0,traits:[],minionTraits:[],desc:'敌人保持基础强度。按推荐培养，把鬼灵放到有敌人的路上，不放技能也能通关。'},
- normal:{name:'普通',life:1.3,bite:.22,strike:.163,hp:2.82,atk:2.63,every:2,extra:1,count:1,rank:0,xp:1.15,elite:0,ward:1,wardBase:.6,traits:[],minionTraits:[],desc:'敌人更耐打、更疼，首领多一个技能，第 9 幕起多一名敌人。全场有一层薄鬼障：当回合不主动施放技能或打出技能卡，普通攻击与空路直击只剩六成。需要适时释放鬼灵技能与卡牌。'},
- hard:{name:'困难',life:1.6,bite:.25,strike:.163,hp:3.67,atk:3.31,every:2,extra:1,count:1,rank:0,xp:1.3,elite:1,ward:1,wardBase:.4,traits:[],minionTraits:[],desc:'敌人更强，随从带有精英技能。鬼障更厚：当回合不施放技能，普通攻击与空路直击只剩四成。需要了解等级压制、站位与鬼气节奏，并会用技能。'},
+ normal:{name:'普通',life:1.3,bite:.22,strike:.163,hp:2.82,atk:2.4,every:2,extra:1,count:1,rank:0,xp:1.15,elite:0,ward:1,wardBase:.6,traits:[],minionTraits:[],desc:'敌人更耐打、更疼，首领多一个技能，第 9 幕起多一名敌人。全场有一层薄鬼障：当回合不主动施放技能或打出技能卡，普通攻击与空路直击只剩六成。需要适时释放鬼灵技能与卡牌。'},
+ hard:{name:'困难',life:1.6,bite:.25,strike:.163,hp:3.4,atk:2.9,every:2,extra:1,count:1,rank:0,xp:1.3,elite:1,ward:1,wardBase:.4,traits:[],minionTraits:[],desc:'敌人更强，随从带有精英技能。鬼障更厚：当回合不施放技能，普通攻击与空路直击只剩四成。需要了解等级压制、站位与鬼气节奏，并会用技能。'},
  nightmare:{name:'噩梦',life:2,bite:.3,strike:.126,hp:5.69,atk:4.74,every:1,extra:2,count:1,rank:0,xp:1.5,elite:2,ward:1,wardBase:0,traits:['狂怒','坚壁'],minionTraits:[],desc:'首领每回合施法，并带有狂怒与坚壁。鬼障完全合拢：当回合不主动施放技能或打出技能卡，普通攻击与空路直击全部无效。需要熟练衔接多名鬼灵的技能。'},
  taboo:{name:'禁忌',life:2.6,bite:.36,strike:.1,hp:10,atk:7.6,every:1,extra:3,count:1,rank:1,xp:2,elite:3,ward:2,wardBase:0,traits:['狂怒','坚壁','不死之躯'],minionTraits:['坚壁'],desc:'敌人在等级压制上高一级，首领拥有不死之躯。两层鬼障：当回合施放一次技能只恢复一半普攻效果，两次才完全破除。要求对规则有深入理解，常规打法无法通关。'}
 };
