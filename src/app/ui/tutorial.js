@@ -3,30 +3,38 @@ import * as THREE from 'three';
 import { slotPos } from '../battle/board-layout.js';
 import { play } from '../core/audio.js';
 
-const KEY = 'gc3d-tutorial-v1', NODE = 'a01-battle';
+const KEY = 'gc3d-tutorial-v1';
 const P = (x, y, z) => new THREE.Vector3(x, y, z);
 const row = (side, y) => [0, 1, 2, 3].map(l => slotPos(side, l).clone().setY(y));
-const STEPS = [
-  { title: '命灯', text: '这是你的第一场战斗。左下这排灯是你的命灯，对面那排是黑影的。让对面的灯全灭就赢，你的灯全灭就输。', at: [P(-3.42, .3, 1.66)], r: 120 },
-  { title: '鬼气', text: '香炉上的数字是鬼气。出牌要花鬼气，每回合开始会回复，回合越往后上限越高。', at: [P(-3.6, .5, .02)], r: 90 },
-  { title: '选一张鬼灵牌', text: '点下方手牌里的鬼灵牌（写着攻击和生命的那张）。', hand: true, done: s => s.selected != null || s.units > 0 },
-  { title: '放到一条路上', text: '再点你这一侧的任意一条空路，她就会显形。鬼灵只打正前方的敌人。', at: row('ally', .1), done: s => s.units > 0 },
-  { title: '看敌人的打算', text: '敌人头顶的小牌是它下回合要做的事：「攻」打它正前方的鬼灵，「灯」直击你的命灯，「术」要放技能，「停」不能行动。前方没人拦，它就直接打灯。', at: row('enemy', .9) },
-  { title: '技能牌', text: '手里其它的牌是技能牌。点一张，再按提示点目标就能打出；鬼气不够或不想出，可以留着。', hand: true },
-  { title: '结束回合', text: '点右下角的招魂铃（或按空格）结束回合。双方鬼灵会依次自动出手。', at: [P(3.62, .5, 1.62)], r: 90, done: s => s.turn > s.turn0 },
-  { title: '鬼灵技能与法器', text: '新回合会回复鬼气并抽一张牌。点已上场的鬼灵可以放她自己的技能；右上角三件法器是你本人的御鬼者技能，各有次数。', at: [P(3.6, .4, -1.65)], r: 130 },
-  { title: '查看详情', text: '右键（或长按）任何手牌、鬼灵、敌人都能看详情。左上角写着这一场的场地规则。更多说明在路线图底部的「指南」里。剩下的交给你。', last: true }
-];
+// A 课：第 1 幕首战，此时还没有鬼灵，只教命灯、鬼气、意图、技能牌、结束回合。
+// B 课：第一场手里有鬼灵牌的战斗，教部署与鬼灵技能。
+const LESSONS = {
+  a: [
+    { title: '命灯', text: '这是你的第一场战斗。左下这排灯是你的命灯，对面那排是黑影的。让对面的灯全灭就赢，你的灯全灭就输。', at: [P(-3.42, .3, 1.66)], r: 120 },
+    { title: '鬼气', text: '香炉上的数字是鬼气。出牌要花鬼气，每回合开始会回复，回合越往后上限越高。', at: [P(-3.6, .5, .02)], r: 90 },
+    { title: '看敌人的打算', text: '敌人头顶的小牌是它下回合要做的事：「攻」打它正前方的鬼灵，「灯」直击你的命灯，「术」要放技能，「停」不能行动。你现在还没有鬼灵，所以它会直接打灯。', at: row('enemy', .9) },
+    { title: '打出一张牌', text: '下方是你的手牌，左上角的数字是费用。点一张牌（比如「鬼刀」），再按提示点目标，就能打出。', hand: true, done: s => s.hand < s.hand0 },
+    { title: '结束回合', text: '牌出完或鬼气用完后，点右下角的招魂铃（或按空格）结束回合。接着轮到敌人行动。', at: [P(3.62, .5, 1.62)], r: 90, done: s => s.turn > s.turn0 },
+    { title: '御鬼者的法器', text: '新回合会回复鬼气并抽一张牌。右上角三件法器是你本人的技能，各有使用次数，点一下就能用。', at: [P(3.6, .4, -1.65)], r: 130 },
+    { title: '查看详情', text: '右键（或长按）任何手牌、鬼灵、敌人都能看详情。左上角写着这一场的场地规则。打完这一场，你会签下第一名鬼灵。', last: true }
+  ],
+  b: [
+    { title: '选一张鬼灵牌', text: '你有鬼灵了。点下方手牌里的鬼灵牌（写着攻击和生命的那张）。', hand: true, done: s => s.selected != null || s.units > 0 },
+    { title: '放到一条路上', text: '再点你这一侧的任意一条空路，她就会显形。', at: row('ally', .1), done: s => s.units > 0 },
+    { title: '正前方与空路', text: '结束回合时，鬼灵自动攻击正前方的敌人；前方是空路，就直击对面的命灯。敌人也一样，所以你空着的路会漏伤害到命灯上。', at: row('enemy', .5) },
+    { title: '鬼灵技能与魂瓮', text: '点已上场的鬼灵可以放她自己的技能，要花鬼气。鬼灵倒下会进左上角的魂瓮，「复苏」牌能把她叫回来。', at: [P(-3.85, .4, -1.42)], r: 110, last: true }
+  ]
+};
 
 export function createTutorial(ctx) {
   const box = document.createElement('div'); box.className = 'tut'; box.hidden = true;
   const ring = document.createElement('div'); ring.className = 'tut-ring'; ring.hidden = true;
   document.body.append(ring, box);
   const v = new THREE.Vector3();
-  let step = -1, raf = 0, turn0 = 1;
-  const seen = () => { try { return !!localStorage.getItem(KEY); } catch { return true; } };
+  let step = -1, raf = 0, turn0 = 1, hand0 = 0, lesson = 'a', STEPS = LESSONS.a, node = '';
+  const prefs = () => { try { const v = JSON.parse(localStorage.getItem(KEY) || '{}'); return v && typeof v === 'object' ? v : { a: 1, b: 1 }; } catch { return {}; } };
   const battle = () => globalThis.GC?.battle;
-  const snap = () => { const b = battle(); return { selected: globalThis.GC.selection?.selected ?? null, units: b ? b.units.filter(Boolean).length : 0, turn: b?.turn || 0, turn0 }; };
+  const snap = () => { const b = battle(); return { selected: globalThis.GC.selection?.selected ?? null, units: b ? b.units.filter(u => u && !u.token).length : 0, turn: b?.turn || 0, turn0, hand: b?.hand.length || 0, hand0 }; };
 
   function place() {
     const s = STEPS[step]; if (!s) return;
@@ -46,23 +54,28 @@ export function createTutorial(ctx) {
     box.querySelector('b').textContent = s.title; box.querySelector('p').textContent = s.text;
     place();
   }
-  function go(i) { if (i >= STEPS.length) return finish(); step = i; if (STEPS[i].done) turn0 = battle()?.turn || 1; render(); }
+  function go(i) { if (i >= STEPS.length) return finish(); step = i; if (STEPS[i].done) { turn0 = battle()?.turn || 1; hand0 = battle()?.hand.length || 0; } render(); }
   function finish() {
-    try { localStorage.setItem(KEY, '1'); } catch { }
+    try { const v = prefs(); v[lesson] = 1; localStorage.setItem(KEY, JSON.stringify(v)); } catch { }
     step = -1; box.hidden = ring.hidden = true; document.body.classList.remove('tut-on'); cancelAnimationFrame(raf); raf = 0;
   }
   function tick() {
     raf = requestAnimationFrame(tick);
     const b = battle();
-    if (!b || b.nodeId !== NODE || !ctx.battleActive) { box.hidden = ring.hidden = true; if (!b) { step = -1; document.body.classList.remove('tut-on'); cancelAnimationFrame(raf); raf = 0; } return; }
-    const covered = !!document.querySelector('.sheet, .story-bar') || ctx.cine?.active;
+    if (!b || b.nodeId !== node || !ctx.battleActive) { box.hidden = ring.hidden = true; if (!b) { step = -1; document.body.classList.remove('tut-on'); cancelAnimationFrame(raf); raf = 0; } return; }
+    const bar = document.querySelector('.story-bar'), covered = !!document.querySelector('.sheet') || (bar && bar.style.display !== 'none') || ctx.cine?.active;
     box.hidden = !!covered; if (covered) { ring.hidden = true; return; }
     const s = STEPS[step]; if (s?.done && s.done(snap())) { play('click'); go(step + 1); return; }
     place();
   }
-  function start() { if (step >= 0) return; document.body.classList.add('tut-on'); box.hidden = false; go(0); if (!raf) raf = requestAnimationFrame(tick); }
+  function start(which = 'a') { if (step >= 0 || !LESSONS[which]) return; lesson = which; STEPS = LESSONS[which]; node = battle()?.nodeId || ''; document.body.classList.add('tut-on'); box.hidden = false; go(0); if (!raf) raf = requestAnimationFrame(tick); }
   box.addEventListener('click', e => { const t = e.target.closest('[data-t]')?.dataset.t; if (!t) return; e.stopPropagation(); play('click'); if (t === 'skip') finish(); else go(step + 1); });
   box.addEventListener('pointerdown', e => e.stopPropagation());
-  ctx.on('battleSynced', () => { const b = battle(); if (step < 0 && b && b.nodeId === NODE && !b.testMode && b.turn === 1 && !seen()) start(); });
-  return { start, finish, reset() { try { localStorage.removeItem(KEY); } catch { } }, get step() { return step; }, get active() { return step >= 0; }, STEPS };
+  ctx.on('battleSynced', () => {
+    const b = battle(); if (step >= 0 || !b || b.testMode || !b.mainline || b.turn !== 1 || b.nodeId === 'endless-arena') return;
+    const v = prefs();
+    if (b.nodeId === 'a01-battle' && !v.a) start('a');
+    else if (!v.b && !b.units.some(Boolean) && b.hand.some(e => globalThis.GC.query.handSpirit(e))) start('b');
+  });
+  return { start, finish, reset() { try { localStorage.removeItem(KEY); } catch { } }, get step() { return step; }, get active() { return step >= 0; }, get lesson() { return lesson; }, LESSONS };
 }
