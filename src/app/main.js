@@ -67,6 +67,7 @@ async function boot() {
     ctx.director = createDirector(ctx);
     ctx.status = createStatusView(ctx);
     ctx.xhud = (await import('./battle/x-hud.js')).createXHud(ctx);
+    ctx.unitChips = (await import('./battle/unit-chips.js')).createUnitChips(ctx);
     ctx.input = createBattleInput(ctx);
     ctx.screens = createScreens(ctx);
     ctx.tutorial = (await import('./ui/tutorial.js')).createTutorial(ctx);
@@ -81,7 +82,7 @@ async function boot() {
     rig.update(dt, t); lights.update(dt, t); table.update(dt, t); props.update(dt, t); room.update(dt, t);
     opponent.update(dt, t, rig.camera); atmosphere.update(dt, t);
     updateCards(dt, t); updateApparitions(dt, t, rig.camera); updateFlames(dt, t, rig.camera); ctx.ward?.update(dt, t, rig.camera); ctx.cine?.update(dt, t);
-    ctx.battle.update(dt, t); ctx.director?.update?.(dt, t); ctx.status?.update?.(dt, t); ctx.input?.update?.(dt, t); ctx.screens?.update?.(dt, t);
+    ctx.battle.update(dt, t); ctx.director?.update?.(dt, t); ctx.status?.update?.(dt, t); ctx.input?.update?.(dt, t); ctx.screens?.update?.(dt, t); ctx.unitChips?.update();
     R.tune(stats.samples[stats.samples.length - 1]);
   });
   let skipped = 0;

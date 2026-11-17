@@ -101,7 +101,7 @@ export function createLights(scene, renderer) {
       c.position.set(u.x + Math.sin(t * 9 + u.seed) * .02, u.y + n * .015, u.z + Math.cos(t * 7.3 + u.seed) * .02);
     }
     back.intensity = 140; rimBack.intensity = 32 * state.dim * state.dim; hemi.intensity = .62;
-    key.intensity = state.keyBase * state.dim * (1 + Math.sin(t * 6.1) * .012 + Math.sin(t * 17) * .008);
+    key.intensity = state.keyBase * (quality().plain ? 1.9 : 1) * state.dim * (1 + Math.sin(t * 6.1) * .012 + Math.sin(t * 17) * .008);
   }
   return { group, key, moon, hemi, hand, candles, addCandle, update, state, bakeEnvironment };
 }

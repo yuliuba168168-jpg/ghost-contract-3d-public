@@ -519,3 +519,10 @@ body.plain-gfx.taboo .sheet-veil { background: radial-gradient(circle at 50% 42%
 .cell.card.on:has(.thumb) .thumb { box-shadow: 0 0 0 2px var(--gold), 0 0 24px rgba(201,162,90,.35), 0 6px 18px rgba(0,0,0,.5); }
 .cell.card.on:has(.thumb) > span { color: var(--gold-hi); }
 .cell.card.dead:has(.thumb) .thumb, .cell.card:disabled:has(.thumb) .thumb { filter: grayscale(.8) brightness(.55); }
+.unit-chip { gap: 4px; font-size: 16px; padding: 1px 7px 2px; }
+.unit-chip u { margin-left: 3px; }
+.unit-chip u:first-child { margin-left: 0; }
+.unit-chip .low { color: #ff5a40; }
+.unit-chip.enemy { border-color: rgba(184,40,28,.6); }
+body.hud-off .unit-chips, body.tut-on .unit-chips { }
+@media (max-height: 520px) { .unit-chip { font-size: 12px; padding: 0 4px 1px; } .unit-chip u { font-size: 10px; } }
