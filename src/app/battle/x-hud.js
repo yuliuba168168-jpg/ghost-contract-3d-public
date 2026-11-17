@@ -94,11 +94,27 @@ export function createXHud(ctx) {
     ctx.opponent?.play?.('wary', { tier: 'normal' });
   }
 
+  // ---- 羁绊合击 ----
+  const bondBar = document.createElement('div'); bondBar.className = 'bond-bar'; bondBar.hidden = true; ui.appendChild(bondBar);
+  let bondKey = '';
+  bondBar.addEventListener('click', e => { const k = e.target.closest('button')?.dataset.key; if (k) { play('click'); X().bondStrike(k); } });
+  function refreshBonds() {
+    const b = GC()?.battle, list = b && ctx.battleActive && X() ? X().bonds(b) : [], key = list.map(x => `${x.key}:${x.used}:${x.ready}`).join('|');
+    if (key === bondKey) return; bondKey = key; bondBar.hidden = !list.length;
+    bondBar.innerHTML = list.map(x => `<button data-key="${x.key}" class="${x.used ? 'used' : x.ready ? 'ready' : ''}" title="${x.desc}"><b>合击 · ${x.strike}</b><i>${x.used ? '已用' : x.cost + ' 鬼气'}</i><span>${x.name}：同场攻击 +10%</span></button>`).join('');
+  }
   ctx.xfx = {
     'field:change'(p) { ctx.overlay?.banner(`场地 · ${p.name}`, { tone: 'info', sub: p.desc, dur: 1500 }); play('dread'); badgeKey = ''; refreshBadge(); },
     'boss:phase'(p) {
       ctx.overlay?.banner(`${p.name} · ${p.phase}`, { tone: 'enemy', sub: p.desc, dur: 1700 }); ctx.overlay?.flash?.('#c2261d', .28, 700); ctx.rig?.shake?.(.08, 500); play('dread');
       ctx.opponent?.play?.('wardBlock');
+    },
+    async 'bond:strike'(p) {
+      const A = ctx.battle.get?.(p.a.uid), B = ctx.battle.get?.(p.b.uid);
+      ctx.overlay?.banner(`合击 · ${p.strike}`, { tone: 'gold', sub: p.name, dur: 1300 }); ctx.overlay?.flash?.('#ffd98a', .22, 600); play('skill');
+      for (const e of [A, B]) if (e) { e.app.flash?.('#ffd98a', 1.2, 700); ctx.particles?.rise(e.card.group.position.clone(), { count: 16, color: '#ffd98a', radius: .5 }); }
+      if (A && B) ctx.particles?.beam?.(A.card.group.position.clone().setY(.5), B.card.group.position.clone().setY(.5), { dur: 600, width: .05, color: '#ffd98a' });
+      ctx.rig?.shake?.(.05, 350); await new Promise(r => setTimeout(r, 900));
     },
     keyword(p) { const ent = ctx.battle.get?.(p.uid); if (ent) ctx.overlay?.floatText(ent.card.group.position.clone().setY(ent.card.group.position.y + .6), '亡语', { kind: 'info' }); },
     shadow(p) { say(p.event, { force: p.event !== 'turn', chance: p.event === 'turn' ? .4 : 1 }); }
@@ -111,8 +127,8 @@ export function createXHud(ctx) {
     else if (type === 'turn:start') { const b = GC().battle; if (b && b.will / b.maxWill < .3) say('lowLamp', { chance: .6 }); else if (b && b.enemyWill / b.maxEnemyWill < .3) say('enemyLow', { chance: .6 }); }
   });
   ctx.on('unitRemoved', drop);
-  ctx.on('battleSynced', () => { refreshIntents(); refreshBadge(); });
+  ctx.on('battleSynced', () => { refreshIntents(); refreshBadge(); refreshBonds(); });
   ctx.on('battleCleared', () => { badgeKey = 'x'; refreshBadge(); bubble.classList.remove('on'); });
-  ctx.on('refresh', () => { badgeKey = 'x'; refreshBadge(); });
+  ctx.on('refresh', () => { badgeKey = 'x'; refreshBadge(); bondKey = 'x'; refreshBonds(); });
   return { refreshIntents, refreshBadge, say };
 }

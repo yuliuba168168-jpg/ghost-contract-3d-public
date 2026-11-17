@@ -13,7 +13,7 @@ import { createEmblems } from '../fx/emblems.js';
 import { BOSS_EMBLEM } from '../fx/skill-sig.js';
 import { eyeColorFor } from '../scene/opponent.js';
 
-const AWAITED = new Set(['turn:start', 'draw', 'deploy', 'move', 'attack', 'direct', 'skill:cast', 'card:play', 'playerSkill', 'boss:cast', 'unit:skip', 'banner', 'deaths', 'return', 'enemy:return', 'status:tick', 'battle:win']);
+const AWAITED = new Set(['turn:start', 'draw', 'deploy', 'move', 'attack', 'direct', 'skill:cast', 'card:play', 'playerSkill', 'boss:cast', 'unit:skip', 'banner', 'deaths', 'return', 'enemy:return', 'status:tick', 'battle:win', 'bond:strike']);
 const fmt = n => compact(Math.round(Math.abs(n) * 10) / 10);
 
 export function createDirector(ctx) {
