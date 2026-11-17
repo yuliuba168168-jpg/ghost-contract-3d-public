@@ -31,16 +31,33 @@ export function createWheel(items, { index = 0, onChange = null, render = it => 
     cur = i; layout();
     if (!silent) onChange?.(items[cur], cur);
   }
+  let dragged = 0;   // 刚拖动过：吞掉紧随其后的那次 click，否则它会把轮盘又转回去
   el.addEventListener('click', ev => {
+    if (performance.now() - dragged < 350) { dragged = 0; ev.preventDefault(); ev.stopPropagation(); return; }
     const a = ev.target.closest('[data-step]'), c = ev.target.closest('.wheel-item'), d = ev.target.closest('.wheel-dots i');
     if (a) go(cur + +a.dataset.step); else if (d) go(+d.dataset.i); else if (c && +c.dataset.i !== cur) { ev.preventDefault(); ev.stopPropagation(); go(+c.dataset.i); }
   }, true);
-  el.addEventListener('keydown', ev => { if (ev.key === 'ArrowLeft') { go(cur - 1); ev.preventDefault(); } else if (ev.key === 'ArrowRight') { go(cur + 1); ev.preventDefault(); } });
+  el.addEventListener('keydown', ev => {
+    if (ev.target.closest('input, textarea, select')) return;
+    if (ev.key === 'ArrowLeft') { go(cur - 1); ev.preventDefault(); } else if (ev.key === 'ArrowRight') { go(cur + 1); ev.preventDefault(); }
+    else if (ev.key === 'ArrowUp' || ev.key === 'ArrowDown') {   // 同一面板里有几个轮盘时，上下键在它们之间换焦点
+      const all = [...(el.closest('.sheet') || document).querySelectorAll('.wheel')], k = all.indexOf(el) + (ev.key === 'ArrowDown' ? 1 : -1);
+      if (all[k]) { all[k].focus({ preventScroll: false }); ev.preventDefault(); }
+    } else if (ev.key === 'Enter' && ev.target === el) {        // 回车：当前项里的主按钮，没有就用面板的主按钮
+      const b = cells[cur].querySelector('button:not([disabled]), [data-act]') || el.closest('.sheet')?.querySelector('.ink-btn.primary:not([disabled])');
+      if (b) { b.click(); ev.preventDefault(); ev.stopPropagation(); }
+    }
+  });
+  // 打开时把焦点放到第一个轮盘上，方向键立刻可用（已有焦点在输入框或别的轮盘里时不抢）
+  setTimeout(() => { const f = document.activeElement; if (el.isConnected && !(f && f.closest && f.closest('.wheel, input, textarea, select'))) el.focus({ preventScroll: true }); }, 80);
   let wheelAt = 0;
-  el.addEventListener('wheel', ev => { ev.preventDefault(); const t = performance.now(); if (t - wheelAt < 160) return; wheelAt = t; go(cur + (ev.deltaY + ev.deltaX > 0 ? 1 : -1)); }, { passive: false });
+  // 面板本身能上下滚动时，竖向滚轮留给面板（按住 Shift 或横向滚动仍然转轮盘）；面板不需要滚动时滚轮直接转轮盘
+  const scrollable = () => { for (let p = el.parentElement; p && p !== document.body; p = p.parentElement) { const oy = getComputedStyle(p).overflowY; if ((oy === 'auto' || oy === 'scroll') && p.scrollHeight > p.clientHeight + 2) return true; } return false; };
+  el.addEventListener('wheel', ev => { if (!ev.shiftKey && Math.abs(ev.deltaX) <= Math.abs(ev.deltaY) && scrollable()) return; ev.preventDefault(); const t = performance.now(); if (t - wheelAt < 160) return; wheelAt = t; go(cur + (ev.deltaY + ev.deltaX > 0 ? 1 : -1)); }, { passive: false });
   let dragX = null;
   el.addEventListener('pointerdown', ev => { if (!ev.target.closest('button, a, input')) dragX = ev.clientX; });
-  addEventListener('pointerup', ev => { if (dragX == null) return; const dx = ev.clientX - dragX; dragX = null; if (Math.abs(dx) > 46) go(cur + (dx < 0 ? 1 : -1)); });
+  const drop = ev => { if (dragX == null) return; const dx = ev.clientX - dragX; dragX = null; if (ev.type === 'pointerup' && Math.abs(dx) > 46) { dragged = performance.now(); go(cur + (dx < 0 ? 1 : -1)); } if (!el.isConnected) { removeEventListener('pointerup', drop); removeEventListener('pointercancel', drop); } };
+  addEventListener('pointerup', drop); addEventListener('pointercancel', drop);
   layout();
   return { el, go, get index() { return cur; }, get item() { return items[cur]; }, cells };
 }

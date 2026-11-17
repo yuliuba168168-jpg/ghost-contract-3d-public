@@ -336,3 +336,13 @@ body.plain-gfx .sheet, body.lite .sheet { background: linear-gradient(180deg, rg
 .hud .hud-grip { position: absolute; left: 50%; top: 0; transform: translateX(-50%); width: 64px; height: 22px; padding: 0; border: 0; border-radius: 0 0 10px 10px; background: rgba(20, 17, 15, .42); color: rgba(240, 226, 196, .55); font-size: 16px; line-height: 16px; letter-spacing: 2px; cursor: pointer; pointer-events: auto; transition: opacity .35s, background .2s; }
 .hud .hud-grip:hover, .hud .hud-grip:focus-visible { background: rgba(60, 20, 16, .7); color: #f0e2c4; outline: none; }
 body.hud-peek .hud .hud-grip { opacity: 0; pointer-events: none; }
+
+/* 审查 M-15 / M-16：矮屏下压缩轮盘，三个轮盘和确认按钮不用滚动就能看全；键盘焦点所在的轮盘有明显标记 */
+.wheel:focus-visible .wheel-label, .wheel:focus .wheel-label { color: #f0e2c4; }
+.wheel:focus-visible .wheel-item.on { outline: 1px solid rgba(240, 226, 196, .75); outline-offset: 4px; }
+@media (max-height: 820px) {
+  .sheet.wheels .wheel { --wheel-h: 150px; margin: 0 0 2px; }
+  .sheet.wheels .wheel.compact { --wheel-h: 92px; }
+  .sheet.wheels .wheel-item p { font-size: 11px; line-height: 1.45; }
+  .sheet.wheels .sheet-body > p { margin: 4px 0; }
+}
