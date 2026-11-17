@@ -725,3 +725,23 @@ function xChooseOmen(id,i){const o=xOmen(id),opt=o?.options[i];if(!opt||opt.disa
 const xPrevSetup5=xSetupBattle;
 xSetupBattle=function(b){xPrevSetup5(b);if(state.xCurse&&b.mainline&&!b.testMode){state.xCurse=false;for(const e of b.enemies){e.atk=+(e.atk*1.15).toFixed(1);e.baseAtk=e.atk}b.log.unshift('异兆：敌人攻击提高15%')}};
 Object.assign(globalThis.GC_X,{OMENS:X_OMENS,shop:xShop,buy:xBuy,leaveNode:xLeaveNode,omen:xOmen,chooseOmen:xChooseOmen});
+
+// ---------- 局外解锁：开局馈赠 ----------
+const X_BOONS=[
+ ['coins','压箱钱','开局带80冥钱。','累计赢下10场战斗',s=>s.wins>=10],
+ ['relic','祖传法器','开局带一件法器。','打完主线第10幕',s=>s.maxAct>=10],
+ ['cards','旧牌匣','开局牌组多2张稀有卡。','达成8个成就',s=>xAchievements(s).filter(a=>a.done).length>=8],
+ ['xp','熟路','开局带400点经验。','无尽模式撑到第5波',s=>s.maxWave>=5]
+];
+let xBoonPick=null;
+function xBoons(){const s=xStats();return X_BOONS.map(([key,name,desc,need,test])=>({key,name,desc,need,unlocked:!!test(s)}))}
+function xSetBoon(key){const b=xBoons().find(o=>o.key===key);xBoonPick=b?.unlocked?key:null;return !!xBoonPick}
+function xBoonInto(t,key,seed){
+ if(key==='coins')t.coins=(t.coins||0)+80;else if(key==='xp')t.xp=(t.xp||0)+400;
+ else if(key==='relic'){const k=Object.keys(X_RELICS)[seed%Object.keys(X_RELICS).length];if(!(t.relics||=[]).includes(k))t.relics.push(k)}
+ else if(key==='cards'){const pool=Object.keys(SKILLS).filter(c=>SKILLS[c].ops&&SKILLS[c].rarity==='稀有');for(let i=0;i<2;i++)t.deck.push(pool[(seed+i*7)%pool.length])}
+ t.boon=key}
+const xPrevNewSlot=newSlot;
+newSlot=function(i,mode,name,difficulty){const key=xBoonPick;xBoonPick=null;const ok=xPrevNewSlot(i,mode,name,difficulty);
+ if(ok&&key&&mode!=='endless'){const seed=xHash(String(name||'')+key);xBoonInto(state,key,seed);if(state.checkpoint?.snapshot)xBoonInto(state.checkpoint.snapshot,key,seed);save()}return ok};
+Object.assign(globalThis.GC_X,{BOONS:X_BOONS,boons:xBoons,setBoon:xSetBoon});

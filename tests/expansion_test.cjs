@@ -138,5 +138,11 @@ async function fresh(){
    if(op==='mend')assert.ok(ps.spirits.every(s=>s.hp===Math.min(s.maxHp,s.maxHp*.5+s.maxHp*v)),`omen ${oi}/${k} mend`);if(op==='incense')assert.equal(ps.xIncense,true);if(op==='curse')assert.equal(ps.xCurse,true)}
   assert.equal(ps.coins,coins,`omen ${oi}/${k} coins`);assert.equal(ps.deck.length,deck,`omen ${oi}/${k} deck`);assert.equal((ps.relics||[]).length,relics,`omen ${oi}/${k} relics`);
  }
- console.log(`expansion_test PASS: ${played}/${ids.length} new cards played; ${phased} boss phases, ${seen.field.size} fields, ${seen.ward.size} ward rules, ${seen.beh.size} behaviors, intents, bond strike, pacts, affixes, daily, records, stats, achievements, table rites, relics, shop, all omen options, elite; burn, taunt, aura, multi, pierce, stun, deathrattle, bounce, lamp verified`);
+ // 开局馈赠
+ delete store['gc3d-stats-v1'];assert.ok(X.boons().every(o=>!o.unlocked),'boons locked on a fresh profile');assert.equal(X.setBoon('coins'),false);
+ store['gc3d-stats-v1']=JSON.stringify({wins:10,maxAct:10,maxWave:5});assert.deepEqual([...X.boons()].filter(o=>o.unlocked).map(o=>o.key).join(),'coins,relic,xp');
+ assert.equal(X.setBoon('coins'),true);ctx.newSlot(3,'normal','boon','easy');ps=A.getState();assert.equal(ps.coins,80);assert.equal(ps.checkpoint.snapshot.coins,80,'boon survives checkpoint rollback');
+ ctx.newSlot(3,'normal','boon2','easy');ps=A.getState();assert.ok(!ps.coins,'boon is one-shot');
+ X.setBoon('relic');ctx.newSlot(3,'hardcore','boon3','easy');ps=A.getState();assert.equal(ps.relics.length,1);X.setBoon('xp');ctx.newSlot(3,'endless','boon4','easy');ps=A.getState();assert.equal(ps.xp,10000,'no boon in endless');
+ console.log(`expansion_test PASS: ${played}/${ids.length} new cards played; ${phased} boss phases, ${seen.field.size} fields, ${seen.ward.size} ward rules, ${seen.beh.size} behaviors, intents, bond strike, pacts, affixes, daily, records, stats, achievements, table rites, relics, shop, all omen options, elite, boons; burn, taunt, aura, multi, pierce, stun, deathrattle, bounce, lamp verified`);
 })().catch(e=>{console.error(e);process.exit(1)});

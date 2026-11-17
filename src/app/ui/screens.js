@@ -119,13 +119,14 @@ export function createScreens(ctx) {
       baseEl.append(root);
     },
     slotDialog({ index, occupied }) {
-      let mode = 'normal', diff = 'easy';
+      let mode = 'normal', diff = 'easy', boon = '';
       const DF = GC.DIFFICULTIES;
+      const boonHtml = `<h3>开局馈赠（普通与极限模式，选一个或不选）</h3><div class="grid c4" id="boons">${(globalThis.GC_X?.boons() || []).map(o => `<button class="cell ${o.unlocked ? '' : 'dead'}" data-act="boon" data-arg="${o.key}" ${o.unlocked ? '' : 'disabled'}><b>${esc(o.name)}</b><p>${esc(o.desc)}</p><small>${o.unlocked ? '已解锁' : '解锁条件：' + esc(o.need)}</small></button>`).join('')}</div>`;
       const box = sheet('slotDialog', {
         kicker: `存档位 ${'壹贰叁肆'[index]}`, title: occupied ? '替换这段旅途' : '建立新旅途',
-        body: `${occupied ? '<p class="red">确认后将替换此位原有的旅途，其余三位不受影响。可先回标题导出备份。</p>' : ''}<div class="field"><span>旅途名称</span><input type="text" id="slotName" maxlength="24" value="旅途${index + 1}"></div><h3>模式</h3><div class="grid c3" id="modes">${Object.keys(MODE_DESC).map(m => `<button class="cell ${m === 'normal' ? 'on' : ''}" data-act="mode" data-arg="${m}"><b>${GC.MODE_NAMES[m]}</b><p>${MODE_DESC[m]}</p></button>`).join('')}</div><h3>难度</h3><div class="grid c5" id="diffs">${Object.keys(DF).map(d => `<button class="cell ${d === 'easy' ? 'on' : ''}" data-act="diff" data-arg="${d}"><b>${DF[d].name}</b><p>${DF[d].desc}</p></button>`).join('')}</div><p class="muted" style="margin-top:8px">难度可以在旅途中（战斗之外）随时调整。</p>`,
-        foot: [{ label: '返回', fn: () => A.returnToTitle() }, { label: '确认开始', primary: true, fn: () => A.confirmNewSlot(index, mode, box.querySelector('#slotName').value.trim() || `旅途${index + 1}`, diff) }],
-        acts: { mode: (m, el) => { mode = m; box.querySelectorAll('#modes .cell').forEach(c => c.classList.toggle('on', c === el)); }, diff: (d, el) => { diff = d; box.querySelectorAll('#diffs .cell').forEach(c => c.classList.toggle('on', c === el)); } }
+        body: `${occupied ? '<p class="red">确认后将替换此位原有的旅途，其余三位不受影响。可先回标题导出备份。</p>' : ''}<div class="field"><span>旅途名称</span><input type="text" id="slotName" maxlength="24" value="旅途${index + 1}"></div><h3>模式</h3><div class="grid c3" id="modes">${Object.keys(MODE_DESC).map(m => `<button class="cell ${m === 'normal' ? 'on' : ''}" data-act="mode" data-arg="${m}"><b>${GC.MODE_NAMES[m]}</b><p>${MODE_DESC[m]}</p></button>`).join('')}</div><h3>难度</h3><div class="grid c5" id="diffs">${Object.keys(DF).map(d => `<button class="cell ${d === 'easy' ? 'on' : ''}" data-act="diff" data-arg="${d}"><b>${DF[d].name}</b><p>${DF[d].desc}</p></button>`).join('')}</div><p class="muted" style="margin-top:8px">难度可以在旅途中（战斗之外）随时调整。</p>${boonHtml}`,
+        foot: [{ label: '返回', fn: () => A.returnToTitle() }, { label: '确认开始', primary: true, fn: () => { globalThis.GC_X?.setBoon(boon); A.confirmNewSlot(index, mode, box.querySelector('#slotName').value.trim() || `旅途${index + 1}`, diff); } }],
+        acts: { boon: (k, el) => { boon = boon === k ? '' : k; box.querySelectorAll('#boons .cell').forEach(c => c.classList.toggle('on', c === el && !!boon)); }, mode: (m, el) => { mode = m; box.querySelectorAll('#modes .cell').forEach(c => c.classList.toggle('on', c === el)); }, diff: (d, el) => { diff = d; box.querySelectorAll('#diffs .cell').forEach(c => c.classList.toggle('on', c === el)); } }
       });
     },
     difficulty() {
