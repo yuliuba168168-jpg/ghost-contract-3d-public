@@ -3,7 +3,7 @@
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 export function createWheel(items, { index = 0, onChange = null, render = it => `<b>${esc(it.name)}</b>`, itemWidth = 220, cls = '', label = '' } = {}) {
-  const n = items.length, step = 360 / Math.max(n, 5), radius = Math.round(itemWidth / 2 / Math.tan(Math.PI / Math.max(n, 5)) + 26);
+  const n = items.length;
   const el = document.createElement('div'); el.className = 'wheel ' + cls; el.tabIndex = 0; el.style.setProperty('--wheel-w', itemWidth + 'px');
   el.innerHTML = `${label ? `<div class="wheel-label">${esc(label)}</div>` : ''}<button class="wheel-arrow prev" data-step="-1" aria-label="上一项">‹</button><div class="wheel-stage"><div class="wheel-ring"></div></div><button class="wheel-arrow next" data-step="1" aria-label="下一项">›</button><div class="wheel-dots">${items.map((_, i) => `<i data-i="${i}"></i>`).join('')}</div>`;
   const ring = el.querySelector('.wheel-ring'), dots = [...el.querySelectorAll('.wheel-dots i')];
@@ -12,20 +12,23 @@ export function createWheel(items, { index = 0, onChange = null, render = it => 
     if (it.color) c.style.setProperty('--tone', it.color);
     c.innerHTML = render(it, i); ring.append(c); return c;
   });
-  let cur = Math.max(0, Math.min(n - 1, index)), turn = cur;   // turn：累计转过的格数（可超出 0..n-1，保证总是走最短的方向）
+  let cur = Math.max(0, Math.min(n - 1, index));
+  // 弧形排布：选中项正对玩家，两侧的项沿一段圆弧向后转开；从一端绕回另一端的项直接换位，不横穿整个画面
+  const prev = cells.map(() => null);
   function layout() {
-    ring.style.transform = `translateZ(${-radius}px) rotateY(${-turn * step}deg)`;
     cells.forEach((c, i) => {
       let d = ((i - cur) % n + n) % n; if (d > n / 2) d -= n;
-      c.style.transform = `rotateY(${i * step}deg) translateZ(${radius}px)`;
-      c.classList.toggle('on', i === cur); c.classList.toggle('near', Math.abs(d) === 1); c.classList.toggle('far', Math.abs(d) > 1);
+      const a = Math.abs(d), jump = prev[i] != null && Math.abs(prev[i] - d) > 1.5; prev[i] = d;
+      if (jump) { c.style.transition = 'none'; requestAnimationFrame(() => requestAnimationFrame(() => { c.style.transition = ''; })); }
+      c.style.transform = `translateX(${d * itemWidth * .82}px) translateZ(${-a * 150}px) rotateY(${-d * 34}deg)`;
+      c.style.zIndex = String(10 - a); c.style.visibility = a > 2 ? 'hidden' : '';
+      c.classList.toggle('on', i === cur); c.classList.toggle('near', a === 1); c.classList.toggle('far', a > 1);
     });
     dots.forEach((d, i) => d.classList.toggle('on', i === cur));
   }
   function go(i, silent = false) {
     i = ((i % n) + n) % n; if (i === cur) return;
-    let d = i - cur; if (d > n / 2) d -= n; if (d < -n / 2) d += n;
-    turn += d; cur = i; layout();
+    cur = i; layout();
     if (!silent) onChange?.(items[cur], cur);
   }
   el.addEventListener('click', ev => {
