@@ -91,7 +91,19 @@ export function createScreens(ctx) {
     if (on && !glowEl) { glowEl = document.createElement('div'); glowEl.className = 'taboo-glow'; glowEl.innerHTML = '<i></i><b>禁忌</b>'; (document.getElementById('ui') || document.body).append(glowEl); }
     if (glowEl) { glowEl.classList.toggle('on', !!on); document.body.classList.toggle('taboo', !!on); }
     ctx.overlay?.flash && on && ctx.overlay.flash('#c2261d', .35, 900);
+    // 3D 画面跟着染成血色（调色通道），关掉时还原
+    const g = ctx.R?.grade; if (!g?.uTintAmt) return;
+    const want = !!on; if (tabooWant === want) return; tabooWant = want;
+    if (want) g.uTint.value.set('#ff2a1a');
+    const a0 = g.uTintAmt.value, e0 = g.uEdgeDark.value, t0 = performance.now();
+    (function step() {
+      if (tabooWant !== want) return;
+      const k = Math.min(1, (performance.now() - t0) / 700), e = k * (2 - k);
+      g.uTintAmt.value = a0 + ((want ? .45 : 0) - a0) * e; g.uEdgeDark.value = e0 + ((want ? .55 : 0) - e0) * e;
+      if (k < 1) requestAnimationFrame(step); else if (!want) g.uTint.value.set('#ffffff');
+    })();
   }
+  let tabooWant = false;
   const slotLine = s => s ? `${GC.MODE_NAMES[s.mode]} · ${GC.DIFFICULTIES[s.difficulty]?.name || '简单'} · ${s.mode === 'endless' ? `第${s.wave}波` : (GC.NODES[s.current]?.title || '启程')}` : '尚未启程';
 
   const stage = (ctx.makeStoryStage || createStoryStage)(ctx); ctx.storyStage = stage;
