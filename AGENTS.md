@@ -99,3 +99,13 @@ py tools\build_assets.py                # 重建 assets/gen（只读接手包）
 
 - 方块版：`simple.html` + `src/simple/`，不建 WebGL，说明见 `docs/simple.md`。改 `ui/screens.js` 时注意它在方块版里拿到的是空壳 ctx（新增对 `ctx.xxx` 3D 对象的调用要同步加空壳）。
 - 试玩版：`?lite=1`（`启动试玩版.cmd`），仍是 3D，`core/quality.js` 的 `lite` 档 + 3 倍速 + 不播全屏演出。
+
+## 2026-11-17 第 8 阶段改动（平衡 / 界面 / 战斗画面 / 流畅度）
+
+- 平衡：`mainline.js` 的 `DIFFICULTIES` 重新定值，`tuned()` 新增按等级段拉平的 `FLAT_A/FLAT_H` 表和每档的 `flat`、`easeActs`；目标与实测见 `docs/balance.md`。工具：`node tools/balance_sim.cjs [局数] [难度]`（`SIM_OVER=1` 表示练到当前幕等级 +1）。
+- 浏览器自动通关：方块版页面里 `import('/tools/auto_play.js').then(m => m.run({ acts: 47, fork: 1, slot: 2 }))`，结果在 `window.__autoLog`（errors / stuck / battles / wins）。
+- 轮盘选择器 `ui/wheel.js`（`createWheel(items, { index, onChange, render, itemWidth, label })`）：标题页存档位、建立旅途的模式/难度/馈赠、旅途中调整难度都用它。难度主题色 `DIFF_TONE`、强度刻度 `DIFF_BARS`、禁忌红光 `tabooGlow()` 在 `ui/screens.js`。
+- 面板半透明、战斗 HUD 自动隐藏的样式都在 `styles/ui.css` 文件末尾（靠后覆盖前面的同名规则）。战斗中 `.hud-top/.hud-menu` 默认隐藏，鼠标移到屏幕上缘 96px 内或按 Esc/Tab 时 `body.hud-peek` 显示几秒（`battle-input.js`，`ctx.hudPeek()`）。
+- 命灯排与托盘已删除，改为两支命烛（`scene/props.js` 的 `lifeCandle`：烛身高度 = 命灯比例，低于三成火苗摇晃）；`props.setLife/lifeAnchor` 接口不变，数值只在悬停提示里出现。桌面上不再常显「鬼气 x/y」「牌堆」「魂瓮」文字，装饰蜡烛减为 3 支。
+- 画质新增 `potato`（极简）：`quality().plain === true`。检测到软件渲染（`quality.js` 的 `gpu.software`）时自动使用，并由 `ui/gpu-note.js` 提示如何打开硬件加速；连续 6 帧超过 250ms 时 `floorQuality()` 直接降到此档。此档下 `core/plain-materials.js` 把 MeshStandardMaterial 换成 MeshLambertMaterial（颜色对象共享、opacity 等属性代理回原材质）、关掉亮度为 0 的灯并补一盏环境光。无显卡机器实测 low 3.5 帧 → potato 14.5 帧。
+- 素材空位：`assets/video|music|cards|views/`，对应关系见 `docs/素材导入说明.md`（`node tools/asset_doc.cjs` 重新生成）。
