@@ -5,7 +5,7 @@ export const LEVELS = {
   medium: { name: 'medium', pixels: 1.5e6, minScale: .75, bloom: true, shadows: true, softShadows: false, shadowSize: 512, candleShadowSize: 512, candleShadows: 0, shadowEvery: 2, bloomScale: .5, candles: 2, dust: 220, fog: 2, mist: 14, ao: false, dof: false },
   low: { name: 'low', pixels: 1.0e6, minScale: .7, bloom: false, shadows: false, softShadows: false, shadowSize: 256, candleShadowSize: 256, candleShadows: 0, shadowEvery: 4, bloomScale: .5, candles: 1, dust: 90, fog: 1, mist: 10, ao: false, dof: false }
 };
-LEVELS.lite = { name: 'lite', pixels: .45e6, minScale: .6, bloom: false, shadows: false, softShadows: false, shadowSize: 256, candleShadowSize: 256, candleShadows: 0, shadowEvery: 8, bloomScale: .5, candles: 1, dust: 0, fog: 0, mist: 0, ao: false, dof: false };
+LEVELS.lite = { name: 'lite', pixels: 1.0e6, minScale: .75, bloom: false, shadows: false, softShadows: false, shadowSize: 256, candleShadowSize: 256, candleShadows: 0, shadowEvery: 8, bloomScale: .5, candles: 1, dust: 0, fog: 0, mist: 0, ao: false, dof: false };
 export const LITE = new URLSearchParams(location.search).get('lite') === '1';
 export const view = { h: innerHeight, pr: 1, scale: 1 };
 const listeners = new Set();
