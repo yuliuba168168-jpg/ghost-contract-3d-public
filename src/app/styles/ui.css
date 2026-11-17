@@ -208,3 +208,4 @@ table.t { width: 100%; border-collapse: collapse; font-size: 14px; } table.t th,
 .affix-line { display: block; margin-top: 4px; color: rgba(233, 226, 208, .6); font-size: 13px; }
 .affix-line b { margin-right: 8px; padding: 1px 7px; border: 1px solid rgba(194, 38, 29, .6); border-radius: 2px; color: #ff9d8c; font-weight: 600; }
 .ach .cell.off { opacity: .45; } .ach .cell.on b { color: #ffd98a; }
+.grid.c1 { grid-template-columns: 1fr; }
