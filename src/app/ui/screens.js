@@ -45,7 +45,7 @@ export function createScreens(ctx) {
 
   function closeSheet(instant) {
     document.querySelectorAll('.sheet-veil.out').forEach(e => e.remove());
-    if (sheetEl) { const el = sheetEl; sheetEl = null; sheetName = ''; if (instant || !el.classList.contains('sheet-veil')) el.remove(); else { el.classList.add('out'); el.style.pointerEvents = 'none'; setTimeout(() => el.remove(), 170); } } if (glowEl?.classList.contains('on')) tabooGlow(false); }   // 禁忌红光跟着面板一起收
+    if (sheetEl) { const el = sheetEl; sheetEl = null; sheetName = ''; if (instant || globalThis.__noSheetAnim || !el.classList.contains('sheet-veil')) el.remove(); else { el.classList.add('out'); el.style.pointerEvents = 'none'; setTimeout(() => el.remove(), 170); } } if (glowEl?.classList.contains('on')) tabooGlow(false); }   // 禁忌红光跟着面板一起收
   function sheet(name, { kicker = '', title = '', aside = '', body = '', foot = [], cls = '', acts = {} }) {
     closeSheet(true);
     ctx.input?.hideTags?.(); ctx.input?.hideTip?.();
