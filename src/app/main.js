@@ -69,6 +69,7 @@ async function boot() {
     ctx.xhud = (await import('./battle/x-hud.js')).createXHud(ctx);
     ctx.input = createBattleInput(ctx);
     ctx.screens = createScreens(ctx);
+    ctx.tutorial = (await import('./ui/tutorial.js')).createTutorial(ctx);
     ctx.mapView?.warm?.(); ctx.storyStage?.warm?.();
   }
   installBridge(ctx);
