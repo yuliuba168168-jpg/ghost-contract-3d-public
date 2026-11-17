@@ -83,5 +83,17 @@ async function fresh(){
  b.qi=5;const hpA=b.enemies[0].hp,hpB=b.enemies[1].hp;mark=rec.fx.length;assert.equal(await X.bondStrike('xuan+lingluo'),true);
  assert.ok(b.enemies[0].hp<hpA&&b.enemies[1].hp<hpB,'bond strike hits all');assert.equal(b.qi,3);assert.equal(fxOf(mark,'bond:strike').length,1);
  assert.equal(await X.bondStrike('xuan+lingluo'),false,'once per battle');assert.equal(GC.busy,false);
- console.log(`expansion_test PASS: ${played}/${ids.length} new cards played; ${phased} boss phases, ${seen.field.size} fields, ${seen.ward.size} ward rules, ${seen.beh.size} behaviors, intents, bond strike; burn, taunt, aura, multi, pierce, stun, deathrattle, bounce, lamp verified`);
+ // 契约条款
+ A.newSlot(1,'normal','pact','easy');let ps=A.getState();ctx.grantContract(A.ML.arcs[0].contracts[0]);
+ const pend=X.pendingPact();assert.ok(pend&&pend.options.length===4,'pending pact after contract');const pid=pend.id,own=ps.spirits.find(s=>s.id===pid);
+ assert.equal(X.choosePact('blood'),true);assert.equal(X.pactOf(pid),'blood');assert.equal(X.pendingPact(),null);
+ const pu=ctx.initUnit({...old.clone(own),uid:'pact-test',lane:0});assert.equal(pu.pact,'blood');assert.ok(Math.abs(pu.baseAtk/own.atk-1.2)<.02,'blood pact atk');assert.ok(Math.abs(pu.maxHp/own.maxHp-.85)<.06,'blood pact hp');
+ // 无尽词缀、每日挑战、成绩
+ const store={};ctx.localStorage.getItem=k=>store[k]??null;ctx.localStorage.setItem=(k,v)=>{store[k]=String(v)};
+ const di=X.dailyInfo('2026-11-17');assert.equal(di.squad.length,6);assert.equal(new Set(di.squad).size,6);assert.equal(di.deck.length,12);assert.equal(di.affixes.length,3);
+ assert.deepEqual(JSON.parse(JSON.stringify(X.dailyInfo('2026-11-17'))),JSON.parse(JSON.stringify(di)),'daily is deterministic');
+ assert.equal(X.startDaily(2,'easy'),true);ps=A.getState();assert.ok(ps.daily&&ps.mode==='endless');assert.equal(X.affixes().length,3);
+ ctx.startBattle('endless-arena');const eb=ps.battle;assert.equal(eb.affixes.length,3);ps.wave=4;assert.equal(X.affixes().length,4,'one more affix every 3 waves');
+ ctx.loseBattle();assert.equal(X.records().daily[ps.daily],3,'daily record = waves cleared');
+ console.log(`expansion_test PASS: ${played}/${ids.length} new cards played; ${phased} boss phases, ${seen.field.size} fields, ${seen.ward.size} ward rules, ${seen.beh.size} behaviors, intents, bond strike, pacts, affixes, daily, records; burn, taunt, aura, multi, pierce, stun, deathrattle, bounce, lamp verified`);
 })().catch(e=>{console.error(e);process.exit(1)});

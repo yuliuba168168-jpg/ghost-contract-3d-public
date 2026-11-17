@@ -515,10 +515,19 @@ grantContract=function(c){
  const had=new Set(state.spirits.map(s=>s.id));xPrevGrant(c);
  for(const s of state.spirits)if(!had.has(s.id)&&!state.pacts?.[s.id]&&!(state.pendingPacts||[]).includes(s.id)){(state.pendingPacts||=[]).push(s.id)}
  save()};
+function xApplyPact(u,fresh){
+ const p=u.pact;if(p!=='blood'&&p!=='bone')return;const am=p==='blood'?1.2:.9,hm=p==='blood'?.85:1.25,old=u.maxHp,ratio=old?u.hp/old:1;
+ u.atk=+(u.atk*am).toFixed(2);u.baseAtk=+(u.baseAtk*am).toFixed(2);u.maxHp=Math.max(1,+(old*hm).toFixed(1));u.baseMaxHp=+(u.baseMaxHp*hm).toFixed(1);
+ u.hp=fresh&&p==='blood'?Math.min(u.hp,u.maxHp):Math.max(1,+(u.maxHp*ratio).toFixed(1))}
 const xPrevInit=initUnit;
 initUnit=function(u){
- const fresh=!u.initialized,r=xPrevInit(u),p=fresh&&!u.token&&state.mainline?xPactOf(u.id):null;
- if(p==='blood'||p==='bone'){const am=p==='blood'?1.2:.9,hm=p==='blood'?.85:1.25,ratio=u.maxHp?u.hp/u.maxHp:1;u.atk=+(u.atk*am).toFixed(2);u.baseAtk=+(u.baseAtk*am).toFixed(2);u.maxHp=Math.max(1,Math.round(u.maxHp*hm));u.baseMaxHp=u.maxHp;u.hp=Math.max(1,u.maxHp*ratio);u.pact=p}
+ const fresh=!u.initialized,r=xPrevInit(u),p=fresh&&!u.token&&u.uid&&state.mainline?xPactOf(u.id):null;
+ if(p){u.pact=p;xApplyPact(u,true)}
+ return r};
+const xPrevUpgradeInBattle=upgradeInBattle;
+upgradeInBattle=function(i){
+ const s=state.spirits[i],r=xPrevUpgradeInBattle(i),b=state.battle;if(r===false||!s||!b)return r;
+ for(const u of [...b.units.filter(Boolean),...b.hand.map(handSpirit).filter(Boolean),...b.draw.map(handSpirit).filter(Boolean)])if(u.id===s.id&&u.pact&&u.initialized)xApplyPact(u,false);
  return r};
 const xPrevSetup=xSetupBattle;
 xSetupBattle=function(b){
