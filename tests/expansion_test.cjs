@@ -74,5 +74,14 @@ async function fresh(){
  assert.equal(seen.phase.size,6);assert.ok(seen.field.size>=6,'fields '+seen.field.size);assert.ok(seen.ward.size>=5,'ward rules '+seen.ward.size);assert.ok(seen.beh.size>=10,'behaviors '+seen.beh.size);
  // 破障条件：火障在有敌人灼烧时多破一层
  A.setState(old.clone(old.DEFAULT));b=await fresh();b.ward=1;b.wardBase=0;b.wardRule='fire';assert.equal(ctx.wardFactor(b),0);ctx.addEffect(b.enemies[0],'ghostFire','火',2,{ratio:.1});assert.equal(ctx.wardFactor(b),1,'fire ward rule');
- console.log(`expansion_test PASS: ${played}/${ids.length} new cards played; ${phased} boss phases, ${seen.field.size} fields, ${seen.ward.size} ward rules, ${seen.beh.size} behaviors, intents; burn, taunt, aura, multi, pierce, stun, deathrattle, bounce, lamp verified`);
+ // 羁绊合击：萱华 + 绫罗
+ old.setState(old.clone(old.DEFAULT));
+ GC.actions.startTestBattle({playerHp:10,qi:10,xp:1000,enemyHp:999999,allies:[{on:true,id:'xuan',rank:'S级'},{on:true,id:'lingluo',rank:'S级'}],enemies:[0,1].map(i=>({on:true,name:'木桩'+(i+1),rank:'F级',potential:1,atk:1,hp:100000,pos:String(i)})),cards:[],draw:[]});
+ b=GC.state.battle;GC.actions.selectHand(0);GC.actions.allyLane(0);for(let i=0;i<5&&GC.busy;i++)await tick();assert.equal(X.bonds(b).length,0,'one spirit: no bond');
+ const solo=ctx.effectiveAttack(b.units[0]);GC.actions.selectHand(0);GC.actions.allyLane(1);for(let i=0;i<5&&GC.busy;i++)await tick();
+ const bonds=X.bonds(b);assert.equal(bonds.length,1);assert.equal(bonds[0].key,'xuan+lingluo');assert.ok(Math.abs(ctx.effectiveAttack(b.units[0])/solo-1.1)<1e-9,'bond +10%');
+ b.qi=5;const hpA=b.enemies[0].hp,hpB=b.enemies[1].hp;mark=rec.fx.length;assert.equal(await X.bondStrike('xuan+lingluo'),true);
+ assert.ok(b.enemies[0].hp<hpA&&b.enemies[1].hp<hpB,'bond strike hits all');assert.equal(b.qi,3);assert.equal(fxOf(mark,'bond:strike').length,1);
+ assert.equal(await X.bondStrike('xuan+lingluo'),false,'once per battle');assert.equal(GC.busy,false);
+ console.log(`expansion_test PASS: ${played}/${ids.length} new cards played; ${phased} boss phases, ${seen.field.size} fields, ${seen.ward.size} ward rules, ${seen.beh.size} behaviors, intents, bond strike; burn, taunt, aura, multi, pierce, stun, deathrattle, bounce, lamp verified`);
 })().catch(e=>{console.error(e);process.exit(1)});

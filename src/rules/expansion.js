@@ -456,3 +456,46 @@ function xKeywordsOf(u){return Object.keys(X_KEYWORDS).filter(k=>u?.keywords?.in
 globalThis.GC_X={ARCH:X_ARCH,KEYWORDS:X_KEYWORDS,TOKENS:X_TOKENS,BEHAVIORS:X_BEHAVIORS,FIELDS:X_FIELDS,WARD:X_WARD,PHASES:X_PHASES,
  intents:xIntents,keywordsOf:xKeywordsOf,field:(b=state.battle)=>b?.field?{id:b.field,name:X_FIELDS[b.field][0],desc:X_FIELDS[b.field][1]}:null,
  wardRule:(b=state.battle)=>b?.ward&&b.wardRule?{id:b.wardRule,name:X_WARD[b.wardRule][0],desc:X_WARD[b.wardRule][1],met:X_WARD[b.wardRule][2](b)}:null};
+
+// ---------- 羁绊与合击 ----------
+// [甲, 乙, 羁绊名, 合击名, 类型, 合击描述]；同场时两人攻击各+10%，每场可发动一次合击（2 鬼气）
+const X_BONDS=[
+ ['mengpo','yeshuang','黄泉同路','渡魂','heal','己方全体恢复30%生命，并获得15%护盾。'],
+ ['yunmeng','ningdie','云梦蝶影','庄周梦蝶','control','敌方全体下一次行动停止。'],
+ ['taiyin','artemis','双月同天','月蚀','lamp','直接熄灭敌方10%的命灯。'],
+ ['xuenv','weila','雪国旧事','永冬','all','对敌方全体造成合计攻击90%的伤害，并令其2回合内各有40%概率被冻结。'],
+ ['tong','nannan','两小无猜','捉迷藏','single','对生命最高的敌人造成合计攻击260%的伤害。'],
+ ['xuan','lingluo','红妆旧梦','缠红','all','对敌方全体造成合计攻击100%的伤害。'],
+ ['yuzao','mengling','镜花水月','狐梦','control','敌方全体下一次行动停止。'],
+ ['lucifer','angel','堕天双翼','黑白审判','single','对生命最高的敌人造成合计攻击300%的伤害。'],
+ ['moonqueen','xiyi','帝后同辇','凤权','lamp','直接熄灭敌方10%的命灯。'],
+ ['jiangwei','xiaorou','相依为命','不离','heal','己方全体恢复30%生命，并获得15%护盾。'],
+ ['qingzhu','isuna','规律与爱','以爱为律','all','对敌方全体造成合计攻击100%的伤害。']
+];
+function xBondKey(d){return d[0]+'+'+d[1]}
+function xBondPair(b,d){const a=xAllies(b).find(u=>u.id===d[0]&&!u.token),c=xAllies(b).find(u=>u.id===d[1]&&!u.token);return a&&c?[a,c]:null}
+function xBonds(b=state.battle){if(!b)return [];return X_BONDS.map(d=>({d,pair:xBondPair(b,d)})).filter(x=>x.pair).map(({d,pair})=>({key:xBondKey(d),name:d[2],strike:d[3],kind:d[4],desc:d[5],cost:2,used:!!b.bondUsed?.[xBondKey(d)],ready:!b.bondUsed?.[xBondKey(d)]&&b.qi>=2,uids:pair.map(u=>u.uid)}))}
+const xPrevEffAtk4=effectiveAttack;
+effectiveAttack=function(u){let v=xPrevEffAtk4(u);const b=state.battle;if(b&&u&&!u.token&&u.lane>=0&&b.units[u.lane]===u&&X_BONDS.some(d=>(d[0]===u.id||d[1]===u.id)&&xBondPair(b,d)))v*=1.1;return v};
+async function xBondStrike(key){
+ if(busy)return false;const b=state.battle,d=X_BONDS.find(x=>xBondKey(x)===key),pair=b&&d&&xBondPair(b,d);
+ if(!pair){globalThis.GC_BRIDGE.notify('羁绊的两名鬼灵需要同时在场','warn');return false}
+ if(b.bondUsed?.[key]){globalThis.GC_BRIDGE.notify('这个合击本场已经用过','warn');return false}
+ if(b.qi<2){globalThis.GC_BRIDGE.notify('合击需要2点鬼气','warn');return false}
+ busy=true;
+ try{
+  b.qi-=2;(b.bondUsed||={})[key]=true;b.bondsUsed=(b.bondsUsed||0)+1;const [a,c]=pair,kind=d[4],total=effectiveAttack(a)+effectiveAttack(c),src={name:d[3],atk:total,baseAtk:total,maxHp:1,hp:1,effects:{},pseudo:true};
+  b.log.unshift(`${a.name}与${c.name}发动合击【${d[3]}】：${d[5]}`);soundCue('skill');noteCast(d[3]);
+  await globalThis.GC_BRIDGE.fx('bond:strike',{key,name:d[2],strike:d[3],kind,a:{uid:a.uid,side:'ally',lane:a.lane},b:{uid:c.uid,side:'ally',lane:c.lane}});
+  const hit=(e,r)=>{const v=dealRawDamage(a,e,src.atk*r*rankMultiplier(a,e)*receivedMultiplier(e),d[3],true,true);xFloat(e,'enemy',v?`-${formatNum(v)}`:'免疫',v?'damage':'info')};
+  if(kind==='heal')for(const u of xAllies(b)){u.hp=Math.min(u.maxHp,u.hp+u.maxHp*.3);u.shield=(u.shield||0)+u.maxHp*.15;addEffect(u,'umbrellaShield',d[3],null);xFloat(u,'ally','渡','heal')}
+  else if(kind==='control')for(const e of xFoes(b)){addEffect(e,'xStun',d[3],null,{skip:1});xFloat(e,'enemy','停')}
+  else if(kind==='lamp'){b.enemyWill-=b.maxEnemyWill*.1;globalThis.GC_BRIDGE.fx('float',{target:'enemyWill',text:`-${formatNum(b.maxEnemyWill*.1)}`,kind:'damage'})}
+  else if(kind==='all'){const r=key==='xuenv+weila'?.9:1;for(const e of xFoes(b)){hit(e,r);if(key==='xuenv+weila'&&!e.dead)addEffect(e,'ice',d[3],2,{freezeChance:.4})}}
+  else if(kind==='single'){const e=xFoes(b).sort((x,y)=>y.hp-x.hp)[0];if(e)hit(e,key==='lucifer+angel'?3:2.6)}
+  save();await animatePendingDeaths();cleanup();renderBattle();
+  if((globalThis.MAINLINE_RUNTIME?.allEnemiesDefeated(b)??b.enemies.every(e=>e.dead))||b.enemyWill<=0)await winBattle();
+  return true;
+ }finally{busy=false}
+}
+Object.assign(globalThis.GC_X,{BONDS:X_BONDS,bonds:xBonds,bondStrike:xBondStrike});
