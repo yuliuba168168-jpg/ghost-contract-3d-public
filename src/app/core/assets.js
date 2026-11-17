@@ -15,10 +15,14 @@ function loadImage(url) {
 }
 
 export async function loadAssets(onProgress) {
-  manifest = await fetch('assets/gen/manifest.json').then(r => r.json());
+  manifest = await fetch('assets/gen/manifest.json').then(r => r.ok ? r.json() : null).catch(() => null) || { views: {}, art: {} };
+  manifest.views ||= {}; manifest.art ||= {};
   const jobs = [];
   for (const [id, views] of Object.entries(manifest.views)) for (const [pose, info] of Object.entries(views)) jobs.push([`view:${id}:${pose}`, 'assets/gen/' + info.file]);
   for (const [id, info] of Object.entries(manifest.art)) jobs.push([`art:${id}`, 'assets/gen/' + info.file]);
+  // 新卡面：assets/cards/<id>.png|webp|jpg 存在时覆盖管线产物（也让原本无图的鬼灵有卡面）
+  const custom = await fetch('/__list?dir=assets/cards').then(r => r.ok ? r.json() : []).catch(() => []);
+  for (const f of custom) { const m = /^([a-z0-9_]+)\.(png|webp|jpe?g)$/i.exec(f); if (m) jobs.push([`art:${m[1].toLowerCase()}`, 'assets/cards/' + f]); }
   let done = 0;
   await Promise.all(jobs.map(async ([key, url]) => {
     const img = await loadImage(url);

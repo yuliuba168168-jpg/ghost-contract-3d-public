@@ -90,3 +90,7 @@ py tools\build_assets.py                # 重建 assets/gen（只读接手包）
 - 新手引导 `src/app/ui/tutorial.js`（`ctx.tutorial`）：`a01-battle` 第 1 回合且 `localStorage['gc3d-tutorial-v1']` 为空时启动，10 步；高亮圈用相机投影世界坐标。设置里「重置提示与教学」会清掉该键。`.story-bar` 常驻 DOM（`display:none`），判断剧情是否在显示要看 `style.display`。
 - 首战之前 `a01-story` 的 `continueMainlineEvent` 会先契约童童；自动化脚本若跳过它，首战手里没有鬼灵牌。
 - 界面：`screens.js` 新增 `shop` `omen` `relicPick`；路线图 HUD 显示冥钱与法器数；「鬼灵与卡牌」里列出法器。指南共 37 条（`playability_test` 断言的是规则侧 `PLAY_GUIDE` 的 26 条，未变）。
+
+### 素材接入（按文件名自动加载）
+
+见 `docs/assets.md`。`assets/music/`、`assets/video/`、`assets/cards/` 里按约定命名的文件在刷新后自动生效；`serve.cjs` 新增 `/__list?dir=assets/...`（只允许 assets 下）和音视频 MIME，改过 `serve.cjs` 后要重启它。浏览器自动播放限制：用 CDP 验证出声时 `Runtime.evaluate` 要带 `userGesture:true`。`assets/gen/manifest.json` 缺失时不再报错。
