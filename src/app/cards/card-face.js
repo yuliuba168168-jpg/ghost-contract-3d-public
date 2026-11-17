@@ -98,6 +98,49 @@ export function artIdFor(unit) {
   return hasArt(unit.id) ? unit.id : null;
 }
 
+// 无立绘鬼灵的占位：每个类型一种背景母题，名字首字做成拓片，类型字做落款印
+function motif(g, rnd, type) {
+  const cx = CW / 2, cy = 236;
+  g.save(); g.lineCap = 'round';
+  const disc = (color, r, a) => { const m = g.createRadialGradient(cx, cy, r * .2, cx, cy, r); m.addColorStop(0, color); m.addColorStop(.82, color); m.addColorStop(1, 'rgba(0,0,0,0)'); g.globalAlpha = a; g.fillStyle = m; g.beginPath(); g.arc(cx, cy, r, 0, 7); g.fill(); g.globalAlpha = 1; };
+  if (type === '善灵') {
+    disc('#8ea0c0', 150, .5);
+    g.strokeStyle = 'rgba(236,228,210,.34)'; g.lineWidth = 3;
+    for (let i = 0; i < 3; i++) { const y = cy + 60 + i * 44, o = (rnd() - .5) * 60; g.beginPath(); g.moveTo(40, y); g.bezierCurveTo(150 + o, y - 34, 250 + o, y + 34, CW / 2 + o, y); g.bezierCurveTo(330 + o, y - 30, 420 + o, y + 26, CW - 40, y - 6); g.stroke(); }
+  } else if (type === '恶灵') {
+    disc('#6e160f', 156, .85);
+    g.strokeStyle = 'rgba(10,6,5,.8)'; g.lineWidth = 3;
+    for (let i = 0, n = 6 + (rnd() * 3 | 0); i < n; i++) { let a = rnd() * 7, r = 14 + rnd() * 30, px = cx + Math.cos(a) * r, py = cy + Math.sin(a) * r; g.beginPath(); g.moveTo(px, py); for (let k = 0; k < 5; k++) { a += (rnd() - .5) * 1.1; r = 22 + rnd() * 26; px += Math.cos(a) * r; py += Math.sin(a) * r; g.lineTo(px, py); } g.stroke(); }
+  } else if (type === '规律鬼') {
+    g.strokeStyle = 'rgba(236,228,210,.26)'; g.lineWidth = 2;
+    for (let i = 0; i < 4; i++) { g.setLineDash([4 + i * 5, 10 + i * 4]); g.beginPath(); g.arc(cx, cy, 56 + i * 38, 0, 7); g.stroke(); }
+    g.setLineDash([]); g.strokeStyle = 'rgba(201,162,90,.6)'; g.lineWidth = 6;
+    for (let i = 0; i < 8; i++) { g.save(); g.translate(cx, cy); g.rotate(i / 8 * Math.PI * 2); const broken = rnd() < .5; g.beginPath(); if (broken) { g.moveTo(-26, -198); g.lineTo(-6, -198); g.moveTo(6, -198); g.lineTo(26, -198); } else { g.moveTo(-26, -198); g.lineTo(26, -198); } g.stroke(); g.restore(); }
+  } else if (type === '邪神') {
+    disc('#2a0f1c', 170, .9);
+    g.strokeStyle = 'rgba(8,5,6,.85)';
+    for (let i = 0; i < 5; i++) { const a0 = i / 5 * Math.PI * 2 + rnd(), bend = (rnd() - .5) * 2.2; for (let k = 0; k < 14; k++) { const t0 = k / 14, t1 = (k + 1) / 14, pt = t => { const a = a0 + bend * t * t, r = 20 + t * 230; return [cx + Math.cos(a) * r, cy + Math.sin(a) * r]; }; const [x0, y0] = pt(t0), [x1, y1] = pt(t1); g.lineWidth = 22 * (1 - t0) + 2; g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke(); } }
+  } else if (type === '正神') {
+    disc('#c9a25a', 120, .28);
+    g.strokeStyle = 'rgba(232,200,138,.5)'; g.lineWidth = 2;
+    for (let i = 0; i < 24; i++) { const a = i / 24 * Math.PI * 2, r0 = 96, r1 = i % 2 ? 190 : 232; g.beginPath(); g.moveTo(cx + Math.cos(a) * r0, cy + Math.sin(a) * r0); g.lineTo(cx + Math.cos(a) * r1, cy + Math.sin(a) * r1); g.stroke(); }
+    g.beginPath(); g.arc(cx, cy, 96, 0, 7); g.stroke();
+  } else {
+    for (const rot of [-.62, .62]) { g.save(); g.translate(cx, cy); g.rotate(rot); g.fillStyle = 'rgba(203,191,159,.5)'; g.fillRect(-330, -30, 660, 60); g.strokeStyle = 'rgba(110,22,15,.7)'; g.lineWidth = 2; g.strokeRect(-330, -24, 660, 48); g.fillStyle = 'rgba(184,40,28,.75)'; g.font = `bold 34px ${FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle'; for (let i = -4; i <= 4; i++) g.fillText('封', i * 70, 2); g.restore(); }
+  }
+  g.restore();
+}
+const rubCache = new Map();
+function rubbing(ch) {
+  if (rubCache.has(ch)) return rubCache.get(ch);
+  const [c, g] = makeCanvas(360, 360), rnd = mulberry(ch.charCodeAt(0) * 7 + 3);
+  g.fillStyle = 'rgba(236,228,210,.86)'; g.font = `bold 300px ${FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(ch, 180, 190);
+  g.globalCompositeOperation = 'destination-out';
+  for (let i = 0; i < 2600; i++) { g.globalAlpha = .35 + rnd() * .65; g.beginPath(); g.arc(rnd() * 360, rnd() * 360, .6 + rnd() * rnd() * 5, 0, 7); g.fill(); }
+  g.globalAlpha = .5; for (let i = 0; i < 9; i++) { g.fillRect(0, rnd() * 360, 360, 1 + rnd() * 2); }
+  rubCache.set(ch, c); return c;
+}
+
 function drawArt(g, unit, rnd) {
   const x = 30, y = 30, w = CW - 60, h = 446, style = TYPE_STYLE[unit.type] || TYPE_STYLE['恶灵'];
   g.save(); nichePath(g); g.clip();
@@ -114,9 +157,9 @@ function drawArt(g, unit, rnd) {
     g.drawImage(v, CW / 2 - dw / 2, y + 14, dw, dh);
   } else if (unit.spirit) {
     inkWash(g, rnd, x, y, w, h, ['#0d0a09', '#2a1a14', '#3d1712', '#15100e', style.color]);
-    g.strokeStyle = 'rgba(233,226,208,.14)'; g.lineWidth = 2;
-    for (let i = 0; i < 5; i++) { g.beginPath(); g.arc(CW / 2, 250, 60 + i * 34, 0, 7); g.stroke(); }
-    seal(g, CW / 2, 250, 190, unit.name[0], CIN);
+    motif(g, rnd, unit.type);
+    g.drawImage(rubbing(unit.name[0]), CW / 2 - 180, 70);
+    seal(g, CW - 118, 398, 104, style.char, CIN);
   } else {
     inkWash(g, rnd, x, y, w, h, ['#07070a', '#141316', '#0d0b0c', '#0a0a0d']);
     const cx = CW / 2, cy = 250;
@@ -136,9 +179,8 @@ function drawUnitStatic(unit) {
   speckle(g, rnd, 1500, '#3a302a', '#000');
   drawArt(g, unit, rnd);
   g.lineJoin = 'round';
-  nichePath(g); g.strokeStyle = 'rgba(233,226,208,.85)'; g.lineWidth = 3; g.stroke();
-  g.strokeStyle = style.color; g.globalAlpha = .55; g.lineWidth = 2; g.strokeRect(13, 13, CW - 26, CH - 26); g.globalAlpha = 1;
-  g.strokeStyle = 'rgba(233,226,208,.28)'; g.lineWidth = 1.5; g.strokeRect(19, 19, CW - 38, CH - 38);
+  nichePath(g); g.strokeStyle = 'rgba(233,226,208,.45)'; g.lineWidth = 2; g.stroke();
+  g.strokeStyle = style.color; g.globalAlpha = .7; g.lineWidth = 2; g.strokeRect(13, 13, CW - 26, CH - 26); g.globalAlpha = 1;
 
   const name = unit.name || '';
   g.textAlign = 'center'; g.textBaseline = 'middle';
@@ -207,25 +249,21 @@ export function drawUnitFace(canvas, d) {
   g.textBaseline = 'alphabetic'; g.lineJoin = 'round';
   g.textAlign = 'left'; g.fillStyle = BONE;
   const atk = compact(d.baseAtk);
-  fit(g, atk, 148, 96, NUM); g.fillText(atk, 106, 606);
+  fit(g, atk, 150, 104, NUM); g.fillText(atk, 106, 612);
   const ratio = Math.max(0, Math.min(1, d.hp / Math.max(1, d.maxHp))), low = ratio < .25, mid = ratio < .5;
   const hp = compact(d.hp), max = '/' + compact(d.maxHp);
-  g.font = `bold 30px ${NUM}`; const mw = Math.min(70, g.measureText(max).width);
-  const s = fit(g, hp, 150 - mw, 72, NUM);
+  g.font = `bold 38px ${NUM}`; const mw = Math.min(84, g.measureText(max).width);
+  const s = fit(g, hp, 166 - mw, 84, NUM);
   const hw = g.measureText(hp).width;
-  g.fillStyle = low ? '#ff5a40' : mid ? '#ffc27a' : BONE; g.fillText(hp, 326, 606 - (72 - s) * .2);
-  g.fillStyle = 'rgba(233,226,208,.62)'; fit(g, max, 70, 30, NUM); g.fillText(max, 326 + hw + 4, 606);
-  g.fillStyle = '#24221f'; g.beginPath(); g.roundRect(40, 646, CW - 80, 30, 6); g.fill();
+  g.fillStyle = low ? '#ff5a40' : mid ? '#ffc27a' : BONE; g.fillText(hp, 326, 612 - (84 - s) * .2);
+  g.fillStyle = 'rgba(233,226,208,.75)'; fit(g, max, 84, 38, NUM); g.fillText(max, 326 + hw + 4, 612);
+  g.fillStyle = '#1c1916'; g.beginPath(); g.roundRect(40, 668, CW - 80, 14, 3); g.fill();
   if (ratio > 0) {
     const bar = g.createLinearGradient(40, 0, CW - 40, 0);
-    bar.addColorStop(0, low ? '#ff3b24' : '#b3241a'); bar.addColorStop(1, low ? '#ff7a50' : mid ? '#e0703a' : '#d8402e');
-    g.fillStyle = bar; g.beginPath(); g.roundRect(40, 646, Math.max(10, (CW - 80) * ratio), 30, 6); g.fill();
-    g.fillStyle = 'rgba(255,255,255,.18)'; g.fillRect(44, 649, Math.max(2, (CW - 88) * ratio), 6);
+    bar.addColorStop(0, low ? '#ff3b24' : mid ? '#a8301c' : '#7a1810'); bar.addColorStop(1, low ? '#ff7a50' : mid ? '#e0703a' : '#b8281c');
+    g.fillStyle = bar; g.beginPath(); g.roundRect(40, 668, Math.max(8, (CW - 80) * ratio), 14, 3); g.fill();
   }
-  if (d.shield > 0) { g.strokeStyle = '#c9d2de'; g.lineWidth = 4; g.beginPath(); g.roundRect(38, 644, CW - 76, 34, 7); g.stroke(); }
-  g.strokeStyle = 'rgba(233,226,208,.3)'; g.lineWidth = 1.5; g.beginPath(); g.roundRect(40, 646, CW - 80, 30, 6); g.stroke();
-  g.fillStyle = 'rgba(233,226,208,.5)'; g.font = `22px ${FONT}`; g.textAlign = 'center';
-  g.fillText('原  攻', 150, 712); g.fillText('生  命', 380, 712);
+  if (d.shield > 0) { g.strokeStyle = '#c9d2de'; g.lineWidth = 3; g.beginPath(); g.roundRect(37, 665, CW - 74, 20, 5); g.stroke(); }
 }
 
 const ICONS = {
