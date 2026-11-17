@@ -1,0 +1,13 @@
+{
+  "name": "ghost-contract-3d",
+  "private": true,
+  "version": "0.0.0",
+  "description": "3D remake presentation layer for the Ghost Contract card campaign",
+  "type": "commonjs",
+  "dependencies": {
+    "three": "0.187.0"
+  },
+  "devDependencies": {
+    "puppeteer-core": "25.16.0"
+  }
+}

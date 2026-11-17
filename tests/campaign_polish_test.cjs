@@ -1,0 +1,23 @@
+const fs=require('fs'),vm=require('vm'),path=require('path'),assert=require('node:assert/strict');
+const RULES=path.join(__dirname,'..','src','rules');
+const ctx={console,localStorage:{getItem:()=>null,setItem:()=>{}},setTimeout,clearTimeout,queueMicrotask,__HEADLESS__:true};vm.createContext(ctx);
+for(const name of ['bridge','codex','vfx','app'])vm.runInContext(fs.readFileSync(path.join(RULES,name+'.js'),'utf8'),ctx,{filename:name+'.js'});
+vm.runInContext(`preferences.speed=10000;`,ctx);
+const api=ctx.__CAMPAIGN_TEST__;
+function unit(id,rank='神阶',atk=100,hp=100){const c=ctx.GAME_DATA.spirits.find(s=>s.id===id);return api.initUnit({id,uid:'p-'+id,name:c.name,rankName:rank,rankIndex:ctx.GAME_DATA.rankIndex(rank),potential:c.potential,type:c.type,atk,baseAtk:atk,maxHp:hp,hp,lane:0,dead:false})}
+function battle(units=[],enemies=[]){const st=api.clone(api.DEFAULT);st.battle={testMode:true,nodeId:'test',turn:1,qi:100,maxQi:10,deployedCount:0,will:10,maxWill:10,enemyWill:10,maxEnemyWill:10,units:[...units,...Array(4-units.length).fill(null)],enemies,removedEnemies:[],hand:[],draw:[],grave:[],log:[],playerSkillsUsed:{}};api.setState(st);return st.battle}
+async function main(){
+ const angel=unit('angel');api.initUnit(angel);assert.equal(angel.atk,175);assert.equal(angel.maxHp,175);
+ const lucifer=unit('lucifer');api.initUnit(lucifer);assert.equal(lucifer.atk,180);
+ const xuan=unit('xuan');xuan.cooldowns['鬼火+']=4;xuan.dodgeCharges=1;xuan.onceUsed['鬼主权杖']=true;api.addAttackBonus(xuan,'blade',.1);api.addEffect(xuan,'eye','鬼瞳',2,{receivedBonus:.334});xuan.shield=30;let b=battle([xuan]);api.returnUnitToHand(xuan);b.units[0]=null;await api.deployGhost(0,2);const re=b.units[2];assert.equal(re.cooldowns['鬼火+'],4);assert.equal(re.dodgeCharges,1);assert.ok(re.onceUsed['鬼主权杖']);assert.ok(re.effects.eye);assert.equal(re.shield,0);assert.equal(api.effectiveAttack(re),100);assert.equal(b.deployedCount,1);assert.equal(api.spiritCost(),2);
+ const tong=unit('tong','D级');b=battle([tong]);api.addAttackBonus(tong,'blade',.1);api.addAttackBonus(tong,'blade',.1);api.addEffect(tong,'form','邪灵形态',2,{attackBonus:.2});assert.equal(Math.round(api.effectiveAttack(tong)),140);api.expireEffect(tong,'form',tong.effects.form);assert.equal(api.effectiveAttack(tong),120);
+ const ning=unit('ningdie');b=battle([ning]);api.addAttackBonus(ning,'blade',.1);assert.equal(Math.round(api.effectiveAttack(ning)),275);b.will=5;assert.equal(Math.round(api.effectiveAttack(ning)),138);
+ assert.equal(api.spiritStats('nannan','禁忌',1).hp,100000);assert.equal(api.spiritStats('nannan','禁忌',1).atk,100);assert.ok(ctx.GAME_DATA.unlockedSkills('nannan','禁忌').includes('绝望'));
+ const e1=unit('tong','圣灵二阶',200,1000),e2=unit('tong','圣灵三阶',200,1000);e1.uid='te1';e2.uid='te2';e1.effects={};e2.effects={};b=battle([],[e1,e2]);vm.runInContext('Math.random=()=>.7',ctx);api.applyDespair();assert.equal(e1.hp,100);assert.equal(e2.hp,1000);assert.ok(b.despairWorld);
+ const source=unit('xuan','A级',10,100),target=unit('tong','A级',1,10000);target.effects={};target.uid='te0';b=battle([source],[target]);vm.runInContext('Math.random=()=>.99',ctx);api.addEffect(target,'ghostFire','鬼火',2,{sourceUid:source.uid,sourceSnapshot:source,ratio:.56});const before=target.hp;await api.advanceStatuses();const first=before-target.hp;api.addAttackBonus(source,'blade',.5);api.addEffect(target,'eye','鬼瞳',2,{receivedBonus:.334});const mid=target.hp;await api.advanceStatuses();assert.ok(mid-target.hp>first*1.9);assert.ok(!target.effects.ghostFire);
+ const weila=unit('weila'),saved=unit('xuan');saved.cooldowns['鬼火+']=3;saved.dodgeCharges=0;saved.shield=22;api.addEffect(saved,'eye','鬼瞳',2,{receivedBonus:.334});saved.rollbackSnapshot=api.clone(saved);saved.dead=true;saved.hp=0;b=battle([saved],[{uid:'te0',hp:100,dead:false}]);api.cleanup();const restored=b.hand[0].unit;assert.equal(restored.hp,100);assert.equal(restored.shield,22);assert.equal(restored.cooldowns['鬼火+'],3);await api.deployGhost(0,1);assert.equal(b.units[1].shield,22);assert.equal(b.units[1].cooldowns['鬼火+'],3);assert.equal(b.units[1].dodgeCharges,0);
+ // Regression scope: the user explicitly left these old behaviors in place.
+ const old=api.clone(api.DEFAULT);api.setState(old);api.addSpirit('tong',1);api.startBattle('classFight');assert.equal(old.battle.enemies[0].rankIndex,undefined);assert.equal(old.battle.enemies[0].hp,2);assert.equal(old.battle.enemies[0].atk,1);
+ console.log('PASS: single initialization, additive buffs, bounce preservation, rollback, Nannan stats, probability despair, dynamic 2-turn fire, untouched formal enemies.');
+}
+main().catch(e=>{console.error(e);process.exitCode=1});

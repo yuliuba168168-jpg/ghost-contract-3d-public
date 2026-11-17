@@ -1,0 +1,77 @@
+const assert=require('node:assert/strict');
+const fs=require('fs'),vm=require('vm'),path=require('path');
+const store={};
+const RULES=path.join(__dirname,'..','src','rules');
+const ctx={console,setTimeout,clearTimeout,queueMicrotask,__HEADLESS__:true,localStorage:{getItem:k=>store[k]||null,setItem:(k,v)=>store[k]=v}};
+vm.createContext(ctx);
+for(const name of ['bridge','codex','vfx','app'])vm.runInContext(fs.readFileSync(path.join(RULES,name+'.js'),'utf8'),ctx,{filename:name+'.js'});
+const api=ctx.__CAMPAIGN_TEST__;
+assert.equal(ctx.GAME_DATA.ranks.length,23,'等级数量错误');
+assert.equal(ctx.GAME_DATA.spirits.length,22,'鬼灵数量错误');
+assert.equal(ctx.GAME_DATA.cards.length,14,'卡牌数量错误');
+assert.ok(ctx.GAME_DATA.unlockedSkills('moonqueen','深渊三阶').includes('女王领域'),'获得月阙女王时应拥有女王领域');
+assert.ok(!ctx.GAME_DATA.unlockedSkills('isuna','噩梦一阶').includes('时间梦境'),'时间梦境不应提前解锁');
+assert.ok(ctx.GAME_DATA.unlockedSkills('isuna','噩梦二阶').includes('时间梦境'),'时间梦境应在噩梦二阶解锁');
+for(const spirit of ctx.GAME_DATA.spirits)for(const [,names] of spirit.unlocks)for(const name of names)assert.ok(ctx.GHOST_VFX.definitions[name],`${spirit.name}的${name}缺少释放或触发特效`);
+for(const chain of ctx.GAME_DATA.upgradeChains){const variants=chain.map(name=>ctx.GHOST_VFX.definitions[name]);if(variants.length<2)continue;for(const variant of variants.slice(1)){assert.equal(variant.motion,variants[0].motion,`${chain.join('、')}升级后释放动作不一致`);assert.equal(variant.scope,variants[0].scope,`${chain.join('、')}升级后作用范围表现不一致`)}}
+const vfxCard=ctx.GHOST_VFX.cardVisual({id:'test',name:'测试敌人',effects:{eye:{label:'鬼瞳',turns:2},queenField:{label:'女王领域',turns:5}}});
+assert.ok(vfxCard.themes.includes('eye'),'持续效果应改变卡牌主题');
+assert.ok(vfxCard.badges.some(x=>/鬼瞳.*2/.test(x)),'鬼瞳应在卡面显示名称与倒计时');
+assert.ok(vfxCard.badges.some(x=>/女王领域.*5/.test(x)),'女王领域应在卡面显示名称与倒计时');
+const divineBlood=ctx.GHOST_VFX.cardVisual({id:'boosted',name:'强化鬼灵',effects:{divineFire:{label:'神火',turns:null},bloodSacrifice:{label:'血祭增幅',turns:null}}});
+assert.ok(divineBlood.themes.includes('divinefire'),'神火目标应显示金色光效');
+assert.ok(divineBlood.themes.includes('bloodsacrifice'),'血祭增幅目标应显示血红光效');
+assert.deepEqual(Array.from(ctx.GAME_DATA.unlockedSkills('qingzhu','圣灵三阶').filter(x=>x.startsWith('解析'))),['解析++++'],'解析升级后必须移除旧技能');
+assert.ok(!ctx.GAME_DATA.unlockedSkills('tong','噩梦一阶').includes('邪灵形态'),'女武神形态应替代邪灵形态');
+assert.equal(ctx.GAME_DATA.skillDefs['女王领域'].duration,5,'女王领域应持续5回合');
+assert.match(ctx.GAME_DATA.skillDefs['前世+++'].desc,/75%/,'前世+++应增加75%');
+const angel=api.initUnit({id:'angel',name:'天使',rankName:'神阶',rankIndex:22,atk:100,baseAtk:100,maxHp:100,hp:100});
+assert.equal(angel.atk,175,'前世+++攻击增幅错误');
+assert.equal(angel.maxHp,175,'前世+++生命增幅错误');
+assert.ok(Object.keys(api.NODES).length>=35,'战役节点数量不足');
+for(const [id,node] of Object.entries(api.NODES)){
+  if(['event','battle','boss','reward','ending'].includes(node.type))assert.ok(api.STORY[node.story],`${id}缺少剧情`);
+  for(const next of node.next)assert.ok(api.NODES[next],`${id}指向不存在的节点${next}`);
+}
+const reached=new Set(),queue=['start'];
+while(queue.length){const id=queue.shift();if(reached.has(id))continue;reached.add(id);queue.push(...api.NODES[id].next)}
+assert.equal(reached.size,Object.keys(api.NODES).length,'存在无法到达的路线节点');
+api.setState(api.clone(api.DEFAULT));
+api.applyEffect('contractTong','awaken');
+let state=api.getState();
+assert.equal(state.spirits[0].id,'tong');
+assert.equal(state.spirits[0].rankName,'F级');
+assert.equal(state.spirits[0].potential,6);
+assert.equal(state.spirits[0].maxHp,2);
+assert.equal(state.spirits[0].atk,1);
+api.startBattle('classFight');
+state=api.getState();
+assert.equal(state.battle.qi,3);
+assert.equal(state.battle.enemies[0].hp,2);
+assert.equal(state.battle.enemies[0].atk,1);
+assert.ok(state.battle.hand.includes('tong'));
+assert.ok(state.battle.hand.filter(x=>ctx.GAME_DATA.spirits.some(s=>s.id===x)).length>=1,'已有鬼灵必须从手牌开始');
+assert.equal(state.battle.units.filter(Boolean).length,0,'战斗开始时鬼灵不应直接上场');
+assert.equal(api.spiritCost(),1,'第一个部署鬼灵消耗1鬼气');
+state.battle.deployedCount=3;assert.equal(api.spiritCost(),4,'部署第X个鬼灵应消耗X鬼气');
+state.battle=null;state.available=['oldBuilding','foreignHouse','villa'];
+api.completeNode('villa');
+assert.deepEqual(Array.from(api.getState().available),['camp1']);
+api.applyEffect('contractXuan','contractXuan');
+const xuan=api.getState().spirits.find(x=>x.id==='xuan');
+assert.equal(xuan.rankName,'A级');assert.equal(xuan.maxHp,14);assert.equal(xuan.atk,7);
+assert.equal(api.maxHp(20),10,'鬼灵生命不得超过10');
+assert.equal(api.enemyHp(20),10,'敌方生命不得超过10');
+for(const rows of Object.values(api.ACT_ROWS))for(const row of rows)for(const id of row)assert.ok(api.NODES[id],`地图缺少节点${id}`);
+api.applyEffect('unlockHorse','general');
+assert.ok(api.getState().horse&&api.getState().deck.includes('horse'));
+assert.equal(api.critProfile({potential:1}).chance,.02,'1潜力暴击率应为2%');
+assert.equal(api.critProfile({potential:6}).chance,.10,'6潜力暴击率应为10%');
+assert.equal(api.critProfile({potential:1}).multiplier,1.4,'1潜力暴击伤害应为140%');
+assert.equal(api.critProfile({potential:6}).multiplier,2,'6潜力暴击伤害应为200%');
+vm.runInContext('globalThis.__origRandom=Math.random;Math.random=()=>rolls.shift()',ctx);
+try{
+  ctx.rolls=[0,.99];assert.equal(api.rollAttackDamage({name:'低潜力',potential:1},100),99,'最低波动应削减1%');
+  ctx.rolls=[0,0];assert.equal(api.rollAttackDamage({name:'高潜力',potential:6},100),198,'6潜力暴击应按200%结算');
+}finally{vm.runInContext('Math.random=__origRandom',ctx)}
+console.log('PASS campaign graph, story coverage, contracts, enemy scaling, branch locking, unlocks, damage variance and critical hits');

@@ -1,0 +1,379 @@
+{
+ "views": {
+  "tong": {
+   "front": {
+    "file": "views/tong_front.webp",
+    "w": 520,
+    "h": 720
+   },
+   "side": {
+    "file": "views/tong_side.webp",
+    "w": 356,
+    "h": 720
+   },
+   "back": {
+    "file": "views/tong_back.webp",
+    "w": 450,
+    "h": 720
+   }
+  },
+  "xuan": {
+   "front": {
+    "file": "views/xuan_front.webp",
+    "w": 418,
+    "h": 720
+   },
+   "side": {
+    "file": "views/xuan_side.webp",
+    "w": 288,
+    "h": 720
+   },
+   "back": {
+    "file": "views/xuan_back.webp",
+    "w": 387,
+    "h": 720
+   }
+  },
+  "lingluo": {
+   "front": {
+    "file": "views/lingluo_front.webp",
+    "w": 361,
+    "h": 720
+   },
+   "side": {
+    "file": "views/lingluo_side.webp",
+    "w": 229,
+    "h": 720
+   },
+   "back": {
+    "file": "views/lingluo_back.webp",
+    "w": 353,
+    "h": 720
+   }
+  },
+  "jiangwei": {
+   "front": {
+    "file": "views/jiangwei_front.webp",
+    "w": 405,
+    "h": 720
+   },
+   "side": {
+    "file": "views/jiangwei_side.webp",
+    "w": 241,
+    "h": 720
+   },
+   "back": {
+    "file": "views/jiangwei_back.webp",
+    "w": 363,
+    "h": 720
+   }
+  },
+  "qingzhu": {
+   "front": {
+    "file": "views/qingzhu_front.webp",
+    "w": 347,
+    "h": 720
+   },
+   "side": {
+    "file": "views/qingzhu_side.webp",
+    "w": 211,
+    "h": 720
+   },
+   "back": {
+    "file": "views/qingzhu_back.webp",
+    "w": 326,
+    "h": 720
+   }
+  },
+  "isuna": {
+   "front": {
+    "file": "views/isuna_front.webp",
+    "w": 374,
+    "h": 720
+   },
+   "side": {
+    "file": "views/isuna_side.webp",
+    "w": 229,
+    "h": 720
+   },
+   "back": {
+    "file": "views/isuna_back.webp",
+    "w": 357,
+    "h": 720
+   }
+  },
+  "xiaorou": {
+   "front": {
+    "file": "views/xiaorou_front.webp",
+    "w": 379,
+    "h": 720
+   },
+   "side": {
+    "file": "views/xiaorou_side.webp",
+    "w": 292,
+    "h": 720
+   },
+   "back": {
+    "file": "views/xiaorou_back.webp",
+    "w": 382,
+    "h": 720
+   }
+  },
+  "yeshuang": {
+   "front": {
+    "file": "views/yeshuang_front.webp",
+    "w": 405,
+    "h": 720
+   },
+   "side": {
+    "file": "views/yeshuang_side.webp",
+    "w": 221,
+    "h": 720
+   },
+   "back": {
+    "file": "views/yeshuang_back.webp",
+    "w": 386,
+    "h": 720
+   }
+  },
+  "angel": {
+   "front": {
+    "file": "views/angel_front.webp",
+    "w": 422,
+    "h": 720
+   },
+   "side": {
+    "file": "views/angel_side.webp",
+    "w": 270,
+    "h": 720
+   },
+   "back": {
+    "file": "views/angel_back.webp",
+    "w": 390,
+    "h": 720
+   }
+  },
+  "ningdie": {
+   "front": {
+    "file": "views/ningdie_front.webp",
+    "w": 406,
+    "h": 720
+   },
+   "side": {
+    "file": "views/ningdie_side.webp",
+    "w": 226,
+    "h": 720
+   },
+   "back": {
+    "file": "views/ningdie_back.webp",
+    "w": 409,
+    "h": 720
+   }
+  },
+  "mengling": {
+   "front": {
+    "file": "views/mengling_front.webp",
+    "w": 412,
+    "h": 720
+   },
+   "side": {
+    "file": "views/mengling_side.webp",
+    "w": 283,
+    "h": 720
+   },
+   "back": {
+    "file": "views/mengling_back.webp",
+    "w": 394,
+    "h": 720
+   }
+  },
+  "xuenv": {
+   "front": {
+    "file": "views/xuenv_front.webp",
+    "w": 586,
+    "h": 720
+   },
+   "side": {
+    "file": "views/xuenv_side.webp",
+    "w": 342,
+    "h": 720
+   },
+   "back": {
+    "file": "views/xuenv_back.webp",
+    "w": 526,
+    "h": 720
+   }
+  },
+  "yuzao": {
+   "front": {
+    "file": "views/yuzao_front.webp",
+    "w": 557,
+    "h": 720
+   },
+   "side": {
+    "file": "views/yuzao_side.webp",
+    "w": 334,
+    "h": 720
+   },
+   "back": {
+    "file": "views/yuzao_back.webp",
+    "w": 570,
+    "h": 720
+   }
+  },
+  "lucifer": {
+   "front": {
+    "file": "views/lucifer_front.webp",
+    "w": 402,
+    "h": 720
+   },
+   "side": {
+    "file": "views/lucifer_side.webp",
+    "w": 230,
+    "h": 720
+   },
+   "back": {
+    "file": "views/lucifer_back.webp",
+    "w": 397,
+    "h": 720
+   }
+  }
+ },
+ "art": {
+  "isuna": {
+   "file": "art/isuna.webp",
+   "w": 640,
+   "h": 556,
+   "focus": [
+    0.5,
+    0.3
+   ]
+  },
+  "ningdie": {
+   "file": "art/ningdie.webp",
+   "w": 640,
+   "h": 557,
+   "focus": [
+    0.5,
+    0.3
+   ]
+  },
+  "yeshuang": {
+   "file": "art/yeshuang.webp",
+   "w": 640,
+   "h": 556,
+   "focus": [
+    0.5,
+    0.3
+   ]
+  },
+  "xiaorou": {
+   "file": "art/xiaorou.webp",
+   "w": 640,
+   "h": 556,
+   "focus": [
+    0.5,
+    0.3
+   ]
+  },
+  "mengling": {
+   "file": "art/mengling.webp",
+   "w": 640,
+   "h": 556,
+   "focus": [
+    0.5,
+    0.3
+   ]
+  },
+  "jiangwei": {
+   "file": "art/jiangwei.webp",
+   "w": 640,
+   "h": 556,
+   "focus": [
+    0.5,
+    0.3
+   ]
+  },
+  "yuzao": {
+   "file": "art/yuzao.webp",
+   "w": 640,
+   "h": 556,
+   "focus": [
+    0.5,
+    0.3
+   ]
+  },
+  "lingluo": {
+   "file": "art/lingluo.webp",
+   "w": 640,
+   "h": 556,
+   "focus": [
+    0.5,
+    0.3
+   ]
+  },
+  "xuan": {
+   "file": "art/xuan.webp",
+   "w": 640,
+   "h": 556,
+   "focus": [
+    0.5,
+    0.3
+   ]
+  },
+  "lucifer": {
+   "file": "art/lucifer.webp",
+   "w": 640,
+   "h": 556,
+   "focus": [
+    0.5,
+    0.3
+   ]
+  },
+  "xuenv": {
+   "file": "art/xuenv.webp",
+   "w": 640,
+   "h": 556,
+   "focus": [
+    0.5,
+    0.3
+   ]
+  },
+  "qingzhu": {
+   "file": "art/qingzhu.webp",
+   "w": 640,
+   "h": 556,
+   "focus": [
+    0.5,
+    0.3
+   ]
+  },
+  "tong": {
+   "file": "art/tong.webp",
+   "w": 640,
+   "h": 556,
+   "focus": [
+    0.5,
+    0.3
+   ]
+  },
+  "tong_evil": {
+   "file": "art/tong_evil.webp",
+   "w": 640,
+   "h": 556,
+   "focus": [
+    0.5,
+    0.3
+   ]
+  },
+  "tong_valkyrie": {
+   "file": "art/tong_valkyrie.webp",
+   "w": 640,
+   "h": 556,
+   "focus": [
+    0.5,
+    0.3
+   ]
+  }
+ }
+}

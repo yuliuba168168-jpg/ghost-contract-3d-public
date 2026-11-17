@@ -1,0 +1,30 @@
+// Checks the dynamic-resolution controller with synthetic frame times, and that grading works on the low tier.
+const { open, sleep } = require('./play.cjs');
+const assert = require('node:assert/strict');
+(async () => {
+  const g = await open('?dev=battle');
+  await g.idle(); await sleep(500);
+  const feed = (ms, windows) => g.ev((ms, windows) => { for (let i = 0; i < windows * 40; i++) __gc.R.tune(ms); return { scale: __gc.R.scale, q: __gcStats().quality, pr: __gcStats().pr }; }, ms, windows);
+  const start = await feed(16.7, 5);
+  assert.equal(start.scale, 1); assert.equal(start.q, 'cinema');
+  const slow1 = await feed(24, 2);
+  assert.ok(slow1.scale < 1 && slow1.scale >= .72, JSON.stringify(slow1));
+  const held = await feed(16.7, 10);
+  assert.equal(held.scale, slow1.scale, 'must not scale back up immediately');
+  const up = await feed(16.7, 40);
+  assert.ok(up.scale > slow1.scale, 'scales back up after a long stable period: ' + JSON.stringify(up));
+  const floor = await feed(40, 12);
+  assert.equal(floor.q, 'medium', 'drops a tier once the resolution floor is not enough: ' + JSON.stringify(floor));
+  const floor2 = await feed(40, 16);
+  assert.equal(floor2.q, 'low'); assert.ok(floor2.scale <= .75);
+  const stay = await feed(40, 20);
+  assert.equal(stay.q, 'low');
+  await sleep(600);
+  const spread = desat => g.page.evaluate(async desat => { __gc.keepDesat = true; __gc.R.grade.uDesat.value = desat; const c = document.createElement('canvas'); c.width = 64; c.height = 36; const x = c.getContext('2d'); await new Promise(r => requestAnimationFrame(r)); __gc.R.render(0, 1); x.drawImage(document.getElementById('stage'), 0, 0, 64, 36); const d = x.getImageData(0, 0, 64, 36).data; let s = 0; for (let i = 0; i < d.length; i += 4) s += Math.max(d[i], d[i + 1], d[i + 2]) - Math.min(d[i], d[i + 1], d[i + 2]); return s / (d.length / 4); }, desat);
+  const colour = await spread(0), sat = await spread(.9);
+  await g.shot('perf_low_desat');
+  assert.ok(sat < colour * .35, `low tier must still desaturate (channel spread ${colour.toFixed(1)} -> ${sat.toFixed(1)})`);
+  await g.ev(() => { localStorage.removeItem('gc3d-quality-v3'); });
+  console.log('PASS tune', JSON.stringify({ slow1, up, floor, floor2, colour: +colour.toFixed(1), sat: +sat.toFixed(1) }));
+  await g.done();
+})().catch(e => { console.error(e); process.exit(1); });

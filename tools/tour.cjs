@@ -1,0 +1,24 @@
+const { open, sleep } = require('./play.cjs');
+(async () => {
+  let g = await open('');
+  await sleep(2200); await g.shot('m4_home');
+  await g.clickText('鬼灵图鉴'); await sleep(600); await g.shot('m4_codex');
+  await g.ev(() => document.querySelector('.sheet [data-act=sp][data-arg=xuan]').click()); await sleep(500); await g.shot('m4_codex_spirit');
+  await g.clickText('返回图鉴'); await g.clickText('回到标题');
+  await g.clickText('演武台'); await sleep(500); await g.shot('m4_testlab');
+  await g.clickText('回到标题');
+  await g.clickText('设置'); await sleep(400); await g.shot('m4_settings'); await g.clickText('保存');
+  await g.clickText('建立新旅途'); await g.clickText('确认开始'); await sleep(2000); await g.shot('m4_map');
+  await g.ev(() => GC.actions.enterNode(GC.state.available[0])); await sleep(500); await g.clickText('继续'); await sleep(900);
+  await g.clickText('鬼灵与卡牌'); await sleep(500); await g.shot('m4_collection');
+  await g.ev(() => document.querySelector('.sheet [data-act=spirit]').click()); await sleep(500); await g.shot('m4_owned');
+  await g.done();
+  g = await open('?dev=battle', { size: [844, 390] });
+  await g.idle(); await sleep(800); await g.shot('m5_mobile_battle');
+  await g.clickWorld(-.65, .02, .7); await sleep(600); await g.shot('m5_mobile_tags');
+  await g.done();
+  g = await open('', { size: [844, 390] });
+  await sleep(2000); await g.shot('m5_mobile_home');
+  await g.clickText('建立新旅途'); await sleep(300); await g.shot('m5_mobile_slot'); await g.clickText('确认开始'); await sleep(2000); await g.shot('m5_mobile_map');
+  await g.done();
+})().catch(e => { console.error(e); process.exit(1); });
