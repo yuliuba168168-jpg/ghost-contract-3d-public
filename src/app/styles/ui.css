@@ -281,10 +281,10 @@ body.tut-on .guide-tip { display: none !important; }
 /* 建立旅途 / 调整难度：轮盘面板 */
 .sheet.wheels .wheel { margin: 6px 0 10px; }
 .sheet.wheels .wheel.off { opacity: .3; pointer-events: none; filter: grayscale(1); }
-.diff-bars { display: flex; gap: 12px; justify-content: center; margin-top: 6px; font-size: 12px; letter-spacing: .1em; color: rgba(233, 226, 208, .6); }
+.diff-bars { display: flex; gap: 8px; justify-content: center; margin-top: 6px; font-size: 12px; letter-spacing: .1em; color: rgba(233, 226, 208, .6); }
 .diff-bars span { display: flex; flex-direction: column; align-items: center; gap: 3px; }
 .bars { display: inline-flex; gap: 2px; }
-.bars u { width: 7px; height: 10px; background: rgba(233, 226, 208, .14); text-decoration: none; transform: skewX(-12deg); }
+.bars u { width: 5px; height: 9px; background: rgba(233, 226, 208, .14); text-decoration: none; transform: skewX(-12deg); }
 .bars u.on { background: var(--tone); box-shadow: 0 0 6px color-mix(in srgb, var(--tone) 60%, transparent); }
 .wheel-item.diff-taboo.on { animation: tabooPulse 1.6s ease-in-out infinite; }
 .wheel-item.diff-taboo.on b { text-shadow: 0 0 18px #ff2a1a, 0 0 4px #fff; }
