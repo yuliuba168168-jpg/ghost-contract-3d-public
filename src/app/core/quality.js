@@ -30,7 +30,7 @@ export function initQuality() {
   const saved = forced || localStorage.getItem(KEY);
   if (saved && LEVELS[saved]) { current = LEVELS[saved]; locked = !!forced || localStorage.getItem(KEY + '-locked') === '1'; }
   if (gpu.software && !locked) current = LEVELS.potato;
-  else if (Math.min(innerWidth, innerHeight) < 500) current = LEVELS.medium;
+  else if (!locked && Math.min(innerWidth, innerHeight) < 500 && (current.name === 'cinema' || current.name === 'high')) current = LEVELS.medium;   // 窄屏只往下压，不覆盖玩家锁定的档位
   return current;
 }
 export function quality() { return current; }
