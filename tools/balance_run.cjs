@@ -1,9 +1,14 @@
 // 平衡模拟的路线循环与统计（由 balance_sim.cjs 载入）。
-const { A, GC, Q, X, GX, ORDER, FORK, PACT, VERBOSE, RETRY, playTurn, setSeed } = require('./balance_sim.cjs');
-const N = +(process.argv[2] || 2), DIFFS = process.argv[3] ? process.argv[3].split(',') : ORDER;
+const { A, GC, Q, X, GX, ORDER, FORK, PACT, VERBOSE: VERB0, RETRY, playTurn, setSeed } = require('./balance_sim.cjs');
+const VERBOSE = +process.env.SIM_VERBOSE || 0, N = +(process.argv[2] || 2), DIFFS = process.argv[3] ? process.argv[3].split(',') : ORDER;
 const FORK_ORDER = ['explore', 'trial', 'shop', 'omen'];
 
 function pickSquad(st) { st.squad = st.spirits.filter(s => s.id !== 'nannan' && !s.dead).sort((a, b) => b.rankIndex - a.rankIndex || b.atk - a.atk).slice(0, 6).map(s => s.id); }
+// 只练出战的前 4 只：一级一级轮流升，直到到达本幕等级或经验不够
+function train(st, arcIndex) {
+  const target = Math.max(0, A.ML.arcs[arcIndex].rank), top = st.squad.map(i => st.spirits.find(s => s.id === i)).slice(0, 4);
+  for (let g = 0; g < 200; g++) { const s = top.filter(x => x.rankIndex < target).sort((a, b) => a.rankIndex - b.rankIndex)[0]; if (!s || !Q.upgradeGhostRecord(s)) break; }
+}
 function takeRewards(st) {
   const r = st.pendingSettlement; if (!r) return;
   for (let k = 0; k < 6 && r.remaining > 0; k++) {
@@ -25,13 +30,16 @@ function shop(st, id, stat) {
   GX.leaveNode(id);
 }
 async function fight(st0, id, stat, forced) {
-  let st = st0; pickSquad(st); const n = GC.NODES[id]; if (n.arc != null) A.trainTeam(n.arc);
+  let st = st0; pickSquad(st); const n = GC.NODES[id]; if (n.arc != null) { train(st, n.arc); pickSquad(st); }
+  if (process.env.SIM_RANKS && n.arc != null && /-battle$/.test(id)) { const arc = A.ML.arcs[n.arc], sq = st.squad.map(i => st.spirits.find(s => s.id === i)), top = sq.slice(0, 4), low = Math.min(...top.map(s => s.rankIndex)); if (low < arc.rank) console.log(`   GAP act ${n.act}: 幕 rank ${arc.rank}，前四只 ${top.map(s => s.rankIndex).join('/')}，余经验 ${Math.round(st.xp)}，升下一级需 ${GC.GD.ranks[low].upgradeXp}，出战 ${sq.length} 只`); }
   A.startBattle(id); const b = st.battle; if (!b) return { won: false, st };
   if (forced) { A.winBattle(); st = A.getState(); takeRewards(st); return { won: true, st, forced: true }; }
   const live = () => A.getState().battle === b; let turn = 0;
   while (live() && turn++ < 45) { await playTurn(b, live); if (live()) await X.endTurn(); }
+  const snap = VERBOSE > 1 ? { rank: A.ML.arcs[n.arc]?.rank, squad: st.squad.map(i => st.spirits.find(s => s.id === i)).map(s => s.rankIndex).join('/'), xp: Math.round(st.xp), foes: b.enemies.map(e => `${Math.round(e.maxHp)}hp/${e.baseAtk ?? e.atk}atk${e.bossSkills?.length ? '*' + e.bossSkills.length : ''}`).join(' '), mine: st.squad.slice(0, 4).map(i => st.spirits.find(s => s.id === i)).map(s => `${Math.round(s.maxHp)}hp/${s.atk}atk`).join(' '), foeWill: Math.round(b.enemyWill) + '/' + Math.round(b.maxEnemyWill), will: Math.round(b.will) + '/' + Math.round(b.maxWill) } : null;
   if (live()) { b.will = 0; A.loseBattle(); }
   st = A.getState(); const won = !!st.pendingSettlement && !st.battle;
+  if (snap && !won) console.log('   LOST', id, 'turn', turn, JSON.stringify(snap));
   if (won) { stat.turns += turn; stat.lamp += b.will / b.maxWill; takeRewards(st); }
   return { won, st, turn };
 }
@@ -50,7 +58,7 @@ async function campaign(diff, it) {
       if (!forced) { stat.tries++; if (t === 1) { stat.fights++; if (r.won) stat.first++; else stat.lost.push(n.act + (n.elite ? 'e' : n.type === 'boss' ? 'b' : '')); } if (r.won) stat.wins++; }
       else stat.stuck.push(n.act + (n.elite ? 'e' : ''));
       if (!r.won && A.getState().available.includes(id) && t > RETRY + 2) break;   // 回滚失效的保险
-    } else if (n.type === 'camp') { X.campHeal(id); if (n.arc != null) A.trainTeam(n.arc); X.campLeave(id); }
+    } else if (n.type === 'camp') { X.campHeal(id); X.campLeave(id); }
     else if (n.type === 'reward') { A.claimInvestigation(id); takeRewards(A.getState()); }
     else if (n.type === 'shop') shop(st, id, stat);
     else if (n.type === 'omen') { const o = GX.omen(id), ok = o.options.filter(x => !x.disabled); if (!GX.chooseOmen(id, ok[(n.act || 0) % ok.length].index)) GX.leaveNode(id); }

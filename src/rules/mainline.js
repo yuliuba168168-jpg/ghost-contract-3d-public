@@ -224,7 +224,9 @@ function grantTraining(arcIndex){
  const target=Math.max(0,ML.arcs[arcIndex].rank),s=state.spirits.filter(s=>s.id!=='nannan').sort((a,b)=>a.rankIndex-b.rankIndex).slice(0,4);
  const budget=s.reduce((sum,g)=>sum+upgradeBudget(g,target),0);state.xp+=budget;state.trainClaims[key]=budget;state.log.unshift(`本幕修行补给：${budget}经验（用于现有伙伴成长）`);save();return budget;
 }
-function trainTeam(arcIndex){const target=Math.max(0,ML.arcs[arcIndex].rank);for(const s of state.spirits.filter(s=>s.id!=='nannan').sort((a,b)=>a.rankIndex-b.rankIndex).slice(0,4))while(s.rankIndex<target&&state.xp>=GD.ranks[s.rankIndex].upgradeXp)upgradeGhostRecord(s);save();}
+// 一键修行：优先练出战队伍里最强的 4 只（没有编队时取全队最强 4 只），从等级最低的开始一级一级升，经验不会摊到替补身上。
+function trainTeam(arcIndex){const target=Math.max(0,ML.arcs[arcIndex].rank),all=state.spirits.filter(s=>s.id!=='nannan'&&!s.dead),squad=all.filter(s=>(state.squad||[]).includes(s.id)),top=(squad.length?squad:all).sort((a,b)=>b.rankIndex-a.rankIndex||b.atk-a.atk).slice(0,4);
+ for(let g=0;g<400;g++){const s=top.filter(x=>x.rankIndex<target).sort((a,b)=>a.rankIndex-b.rankIndex)[0];if(!s||state.xp<GD.ranks[s.rankIndex].upgradeXp||!upgradeGhostRecord(s))break}save();}
 function upgradeGhostRecord(s){const r=GD.ranks[s.rankIndex],next=GD.ranks[s.rankIndex+1];if(s.id==='nannan'||!next||state.xp<r.upgradeXp)return false;state.xp-=r.upgradeXp;s.rankIndex++;s.rankName=next.name;s.level=s.rankIndex+1;const st=spiritStats(s.id,s.rankName,s.potential);s.maxHp=s.hp=st.hp;s.atk=st.atk;s.dead=false;return true;}
 let trainingCtx=null;
 function showTraining(arcIndex,back=renderMap){
