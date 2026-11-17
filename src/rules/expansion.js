@@ -95,3 +95,114 @@ const X_TOKENS={
  paper:['纸人',.3,.2,['taunt']],straw:['草人',.25,.1,['taunt','death'],{death:['draw',1]}],bone:['骨兵',.4,.6,[]],
  lantern:['引魂灯',.3,0,['aura'],{noAttack:true}],bride:['纸嫁娘',.35,.4,['death'],{death:['blast',.6]}],gate:['门神',1.2,.8,['taunt'],{reduction:.3}]
 };
+
+// ---------- 卡牌解释器 ----------
+let xSeq=0;
+function xAllies(b){return b.units.filter(u=>u&&!u.dead)}
+function xFoes(b){return b.enemies.filter(e=>!e.dead)}
+function xSource(b){const best=xAllies(b).filter(u=>!u.token).sort((a,c)=>effectiveAttack(c)-effectiveAttack(a))[0];if(best)return best;const atk=(b.directScale||1)*1.4;return {name:'符咒',atk,baseAtk:atk,maxHp:atk*10,hp:atk*10,effects:{},pseudo:true}}
+function xAmount(src,t,ratio){return src.pseudo?src.atk*ratio*receivedMultiplier(t):skillDamage(src,t,ratio)}
+function xHit(b,src,t,ratio,label){return dealRawDamage(src,t,xAmount(src,t,ratio),label,true,true)}
+function xBurning(e){return !!e.effects?.ghostFire}
+function xControlled(e){return !!(e.effects?.ice||skipEffect(e))}
+function xHasKey(u,k){return !!(u&&!u.dead&&(u.keywords?.includes(k)||u.effects?.['kw-'+k]))}
+function xSpawn(b,kind,lane,from){
+ const t=X_TOKENS[kind],ref=from||xSource(b),hp=Math.max(1,Math.round((ref.baseMaxHp||ref.maxHp)*(from?kind:t[1]))),atk=+((ref.baseAtk||ref.atk)*(from?kind:t[2])).toFixed(1);
+ const u={uid:`t${Date.now()}-${++xSeq}`,id:from?from.id:'token-'+kind,token:from?'shadow':kind,name:from?from.name+'之影':t[0],type:from?from.type:'召唤物',rankName:ref.rankName,rankIndex:ref.rankIndex,level:ref.level,potential:1,maxHp:hp,hp,baseMaxHp:hp,atk,baseAtk:atk,lane,dead:false,effects:{},cooldowns:{},onceUsed:{},keywords:from?[]:[...t[3]],initialized:true,noSkills:true};
+ if(!from&&t[4]?.death)u.deathrattle=t[4].death;if(!from&&t[4]?.noAttack)u.noAttack=true;if(!from&&t[4]?.reduction)addEffect(u,'tokenHide','门神',null,{reduction:t[4].reduction});
+ b.units[lane]=u;return u}
+function xEmptyLane(b){return [0,1,2,3].find(i=>!b.units[i])}
+function xApply(b,op,t,src,ctx){
+ const [k,a,c,d]=op,L=ctx.card.name;
+ switch(k){
+  case 'dmg':xHit(b,src,t,a,L);break;
+  case 'dmgIf':xHit(b,src,t,(a==='burning'?xBurning(t):xControlled(t))?c:d,L);break;
+  case 'burn':addEffect(t,'ghostFire',L,c,{sourceUid:src.uid,sourceSnapshot:src.pseudo?src:clone(src),ratio:a});break;
+  case 'freeze':addEffect(t,'ice',L,c,{freezeChance:a});break;
+  case 'stun':addEffect(t,'xStun',L,null,{skip:a});break;
+  case 'vuln':addEffect(t,'xVuln',L,c,{receivedBonus:a});break;
+  case 'weaken':addEffect(t,'xWeak',L,c,{outgoingReduction:a});break;
+  case 'heal':t.hp=Math.min(t.maxHp,t.hp+t.maxHp*a);break;
+  case 'healFull':t.hp=t.maxHp;break;
+  case 'shield':t.shield=(t.shield||0)+t.maxHp*a;addEffect(t,'umbrellaShield',L,null);break;
+  case 'guard':addEffect(t,'xGuard',L,c,{reduction:a});break;
+  case 'dodge':addEffect(t,'butterfly',L,c,{dodge:a});break;
+  case 'atk':addAttackBonus(t,'x-'+ctx.id,a);addEffect(t,'x-'+ctx.id,`${L} 攻击+${Math.round(a*100)}%`,null);break;
+  case 'atkT':addEffect(t,'xEdge',L,c,{attackBonus:a});break;
+  case 'selfVuln':addEffect(t,'xEdgeCost',L+'·代价',c,{receivedBonus:a});break;
+  case 'extra':t.extra=(t.extra||0)+a;break;
+  case 'keyword':addEffect(t,'kw-'+a,X_KEYWORDS[a].name,c);break;
+  case 'pay':t.hp=Math.max(1,t.hp-t.hp*a);break;
+  case 'kill':t.hp=0;t.dead=true;t.sacrificed=true;break;
+  case 'cd':for(const n of Object.keys(t.cooldowns||{}))t.cooldowns[n]=Math.max(0,t.cooldowns[n]-a);break;
+  case 'resetCd':for(const n of Object.keys(t.cooldowns||{}))t.cooldowns[n]=0;break;
+  case 'cleanse':for(const [key,e] of Object.entries(t.effects||{}))if(e.receivedBonus||e.outgoingReduction||e.skip||e.burnPct||key==='bossBurn')delete t.effects[key];break;
+  case 'deathrattle':t.deathrattle=[a,c];addEffect(t,'kw-death','亡语·'+L,null);break;
+  case 'snapshot':{const s=clone(t);delete s.rollbackSnapshot;t.rollbackSnapshot=s;addEffect(t,'rollback',L,null);break}
+  case 'dispel':t.shield=0;for(const [key,e] of Object.entries(t.effects||{}))if(e.attackBonus||key.toLowerCase().includes('shield')||key==='bossFortify')delete t.effects[key];break;
+  case 'execute':if(t.hp/t.maxHp<a&&!t.bossSkills?.length){t.hp=0;t.dead=true}else xHit(b,src,t,c,L);break;
+  case 'detonate':if(xBurning(t)){xHit(b,src,t,a,L);removeEffect(t,'ghostFire')}else xHit(b,src,t,c,L);break;
+  case 'push':{const to=[t.lane-1,t.lane+1].find(i=>i>=0&&i<4&&!b.enemies.some(e=>!e.dead&&e.lane===i));if(to!=null)t.lane=to;break}
+ }
+}
+function xRun(b,ops,target,ctx){
+ const src=xSource(b);let msg=ctx.card.desc;
+ for(const op of ops){
+  const [k,a,c,d]=op;
+  if(k==='all'){for(const e of xFoes(b))xApply(b,op.slice(1),e,src,ctx)}
+  else if(k==='allies'){for(const u of xAllies(b))xApply(b,op.slice(1),u,src,ctx)}
+  else if(k==='others'){for(const u of xAllies(b))if(u!==target)xApply(b,op.slice(1),u,src,ctx)}
+  else if(k==='tokens'){for(const u of xAllies(b))if(u.token)xApply(b,op.slice(1),u,src,ctx)}
+  else if(k==='draw')drawCards(a);
+  else if(k==='drawIf'){if(a==='burning'?xBurning(target):xControlled(target))drawCards(c)}
+  else if(k==='qi')b.qi+=a;
+  else if(k==='maxQi')b.maxQi+=a;
+  else if(k==='qiPerBurn')b.qi+=Math.min(a,xFoes(b).filter(xBurning).length);
+  else if(k==='extendBurn'){for(const e of xFoes(b))if(e.effects?.ghostFire)e.effects.ghostFire.turns=(e.effects.ghostFire.turns||0)+a}
+  else if(k==='randomHits'){for(let i=0;i<a;i++){const pool=xFoes(b);if(!pool.length)break;const e=pool[Math.floor(Math.random()*pool.length)];xHit(b,src,e,c,ctx.card.name);if(!e.dead&&d)xApply(b,d,e,src,ctx)}}
+  else if(k==='chain'){xFoes(b).sort((x,y)=>x.lane-y.lane).forEach((e,i)=>xHit(b,src,e,a[Math.min(i,a.length-1)],ctx.card.name))}
+  else if(k==='summon'){const lane=xEmptyLane(b);if(lane!=null)xSpawn(b,a,lane)}
+  else if(k==='summonAll'){for(let i=0;i<4;i++)if(!b.units[i])xSpawn(b,a,i)}
+  else if(k==='shadow'){const lane=xEmptyLane(b);if(lane!=null)xSpawn(b,a,lane,target)}
+  else if(k==='bounce'){if(target.token){b.units[target.lane]=null}else{ctx.returned.push(target);b.units[target.lane]=null;returnUnitToHand(target)}}
+  else if(k==='bounceAll'){for(const u of xAllies(b)){b.units[u.lane]=null;if(!u.token){ctx.returned.push(u);returnUnitToHand(u)}}}
+  else if(k==='cheapDeploy')b.deployedCount=Math.max(0,b.deployedCount-a);
+  else if(k==='will')b.enemyWill-=b.maxEnemyWill*a;
+  else if(k==='healWill')b.will=Math.min(b.maxWill,b.will+b.maxWill*a);
+  else if(k==='payWill')b.will=Math.max(1,b.will-b.maxWill*a);
+  else if(k==='willExecute'){if(b.enemyWill/b.maxEnemyWill<a)b.enemyWill=0;else b.enemyWill-=b.maxEnemyWill*c}
+  else if(k==='payStrike'){const lost=target.hp*a;target.hp=Math.max(1,target.hp-lost);const e=b.enemies.find(x=>!x.dead&&x.lane===target.lane);if(e)dealRawDamage(target,e,lost*c*receivedMultiplier(e),ctx.card.name,true,true)}
+  else if(k==='ward'){if(b.ward){if(b.wardTurn!==b.turn){b.wardTurn=b.turn;b.wardCasts=0}b.wardCasts+=a}}
+  else if(k==='needToken'){}
+  else if(target)xApply(b,op,target,src,ctx);
+ }
+ return msg}
+// 出牌前校验；返回提示文字表示不能打出
+function xBlocked(b,c,target){
+ const ops=c.ops.map(o=>o[0]);
+ if(c.target==='ally'&&!target)return '需要选择一名己方鬼灵';
+ if(c.target==='enemy'&&!target)return '需要选择一名敌人';
+ if(ops.includes('needToken')&&!target.token)return '只能献出召唤物';
+ if((ops.includes('summon')||ops.includes('shadow'))&&xEmptyLane(b)==null)return '没有空路可以召唤';
+ if(ops.includes('summonAll')&&xEmptyLane(b)==null)return '没有空路可以召唤';
+ if(ops.includes('push')&&![target.lane-1,target.lane+1].some(i=>i>=0&&i<4&&!b.enemies.some(e=>!e.dead&&e.lane===i)))return '相邻没有空路';
+ if(ops.includes('snapshot')&&target.token)return '召唤物无法被记录';
+ return ''}
+async function xPlayCard(index,lane){
+ if(busy)return;const b=state.battle,id=b.hand[index],c=SKILLS[id];if(!c||b.qi<c.cost)return;
+ const target=c.target==='ally'?b.units[lane]:c.target==='enemy'?b.enemies.find(e=>!e.dead&&e.lane===lane):null,why=xBlocked(b,c,target);
+ if(why){globalThis.GC_BRIDGE.notify(why,'warn');return}
+ busy=true;const handBefore=b.hand.length,ctx={id,card:c,returned:[]};
+ try{
+  soundCue('skill');b.qi-=c.cost;b.hand.splice(index,1);const message=xRun(b,c.ops,target,ctx);b.log.unshift(`${c.name}：${message}`);b.cardsPlayed=(b.cardsPlayed||0)+1;
+  selected=null;targetMode=null;noteCast(c.name);save();await animatePendingDeaths();renderBattle();
+  await globalThis.GC_BRIDGE.fx('card:play',{cardId:id,handIndex:index,target:target?{uid:target.uid,side:c.target==='e
+nemy'?'enemy':'ally',lane:target.lane}:null,message});
+  globalThis.GC_BRIDGE.fx('burst',{uid:target?target.uid:null,side:c.target==='enemy'?'enemy':'ally',lane:target?target.lane:null,glyph:'◈',tone:'#e4cf8a'});
+  await animatePendingDeaths();for(const u of ctx.returned)await globalThis.GC_BRIDGE.fx('return',{uid:u.uid,id:u.id,kind:'return',handIndex:b.hand.length-1});
+  if(b.hand.length>handBefore-1)await globalThis.GC_BRIDGE.fx('draw',{count:b.hand.length-(handBefore-1)});
+  cleanup();renderBattle();if((globalThis.MAINLINE_RUNTIME?.allEnemiesDefeated(b)??b.enemies.every(e=>e.dead))||b.enemyWill<=0)await winBattle();
+ }finally{busy=false}
+}
+const xPrevPlaySkill=playSkill;
+playSkill=function(index,lane){const b=state.battle,id=b?.hand[index],c=typeof id==='string'?SKILLS[id]:null;return c?.ops?xPlayCard(index,lane):xPrevPlaySkill(index,lane)};
