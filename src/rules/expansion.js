@@ -546,10 +546,10 @@ const X_AFFIX_KEYS=Object.keys(X_AFFIXES),X_RECORD_KEY='gc3d-records-v1';
 function xAffixes(wave=state.wave||1,seed=state.dailySeed||0){const n=Math.min(X_AFFIX_KEYS.length,(state.daily?3:0)+Math.floor((wave-1)/3)),out=[];for(let i=0;out.length<n&&i<40;i++){const k=X_AFFIX_KEYS[(seed+i*3+Math.floor(i/8))%X_AFFIX_KEYS.length];if(!out.includes(k))out.push(k)}return out.map(k=>({key:k,name:X_AFFIXES[k][0],desc:X_AFFIXES[k][1]}))}
 function xRecords(){try{const v=JSON.parse(localStorage.getItem(X_RECORD_KEY)||'null');if(v&&Array.isArray(v.endless)&&v.daily)return v}catch{}return {endless:[],daily:{}}}
 function xRecord(wave){
- const r=xRecords(),date=new Date().toISOString().slice(0,10),entry={wave,date,difficulty:difficultyOf(),name:state.name||''};
+ const r=xRecords(),date=xToday(),entry={wave,date,difficulty:difficultyOf(),name:state.name||''};
  if(state.daily)r.daily[state.daily]=Math.max(r.daily[state.daily]||0,wave);else{r.endless.push(entry);r.endless.sort((a,c)=>c.wave-a.wave);r.endless=r.endless.slice(0,10)}
  try{localStorage.setItem(X_RECORD_KEY,JSON.stringify(r))}catch{}return r}
-function xToday(){return new Date().toISOString().slice(0,10)}
+function xToday(){const d=new Date(),p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`}
 function xDailyInfo(date=xToday()){const seed=xHash(date),ids=GD.spirits.map(s=>s.id),squad=[],deck=[],pool=Object.keys(SKILLS).filter(id=>SKILLS[id].ops);for(let i=0;squad.length<6;i++){const id=ids[(seed+i*7)%ids.length];if(!squad.includes(id))squad.push(id)}for(let i=0;deck.length<12;i++)deck.push(pool[(seed+i*11)%pool.length]);
  const save0=state.daily,seed0=state.dailySeed;state.daily=date;state.dailySeed=seed;const affixes=xAffixes(1,seed);state.daily=save0;state.dailySeed=seed0;
  return {date,seed,squad,deck,affixes,best:xRecords().daily[date]||0}}
