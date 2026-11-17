@@ -499,3 +499,30 @@ async function xBondStrike(key){
  }finally{busy=false}
 }
 Object.assign(globalThis.GC_X,{BONDS:X_BONDS,bonds:xBonds,bondStrike:xBondStrike});
+
+// ---------- 契约条款（契约抉择）----------
+const X_PACTS={
+ blood:['血契','攻击 +20%，最大生命 -15%。','以血为墨。她更锋利，也更容易碎。'],
+ bone:['骨契','最大生命 +25%，攻击 -10%。','以骨为凭。她站得更久，出手更慢。'],
+ lamp:['灯契','她出战的每场战斗：开局多1点鬼气，但我方命灯先熄6%。','以灯为押。借来的气，要用光来还。'],
+ plain:['素契','没有增益，也没有代价。','只写名字，不添一笔。']
+};
+function xPactOf(id){return state.pacts?.[id]||null}
+function xPendingPact(){const id=state.pendingPacts?.[0];if(!id)return null;const s=GD.spirits.find(x=>x.id===id);return {id,name:s?.name||id,options:Object.entries(X_PACTS).map(([key,[name,desc,flavor]])=>({key,name,desc,flavor}))}}
+function xChoosePact(key){const id=state.pendingPacts?.[0];if(!id||!X_PACTS[key])return false;(state.pacts||={})[id]=key;state.pendingPacts.shift();state.log.unshift(`与${GD.spirits.find(x=>x.id===id)?.name||id}立下${X_PACTS[key][0]}`);save();return true}
+const xPrevGrant=grantContract;
+grantContract=function(c){
+ const had=new Set(state.spirits.map(s=>s.id));xPrevGrant(c);
+ for(const s of state.spirits)if(!had.has(s.id)&&!state.pacts?.[s.id]&&!(state.pendingPacts||[]).includes(s.id)){(state.pendingPacts||=[]).push(s.id)}
+ save()};
+const xPrevInit=initUnit;
+initUnit=function(u){
+ const fresh=!u.initialized,r=xPrevInit(u),p=fresh&&!u.token&&state.mainline?xPactOf(u.id):null;
+ if(p==='blood'||p==='bone'){const am=p==='blood'?1.2:.9,hm=p==='blood'?.85:1.25,ratio=u.maxHp?u.hp/u.maxHp:1;u.atk=+(u.atk*am).toFixed(2);u.baseAtk=+(u.baseAtk*am).toFixed(2);u.maxHp=Math.max(1,Math.round(u.maxHp*hm));u.baseMaxHp=u.maxHp;u.hp=Math.max(1,u.maxHp*ratio);u.pact=p}
+ return r};
+const xPrevSetup=xSetupBattle;
+xSetupBattle=function(b){
+ xPrevSetup(b);const ids=state.spirits.filter(s=>!s.dead&&(!state.squad?.length||state.squad.includes(s.id))).slice(0,6).map(s=>s.id).filter(id=>xPactOf(id)==='lamp');
+ if(ids.length){b.qi+=ids.length;b.will=Math.max(1,b.will-b.maxWill*.06*ids.length);b.log.unshift(`灯契：开局多${ids.length}点鬼气，命灯先熄${6*ids.length}%`)}
+};
+Object.assign(globalThis.GC_X,{PACTS:X_PACTS,pactOf:xPactOf,pendingPact:xPendingPact,choosePact:xChoosePact});
