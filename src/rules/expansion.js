@@ -689,7 +689,8 @@ const X_OMENS=[
 ];
 ML.arcs.forEach((a,i)=>{
  const p=a.id,fork=p+'-fork',camp=p+'-camp',trial=p+'-trial',shop=p+'-shop',omen=p+'-omen';if(!NODES[fork]||NODES[shop])return;
- NODES[shop]={act:a.act,title:'鬼市',type:'shop',next:[camp],arc:i,mainline:true};NODES[omen]={act:a.act,title:'异兆 · '+X_OMENS[i%X_OMENS.length][0],type:'omen',next:[camp],arc:i,mainline:true,omen:i%X_OMENS.length};
+ STORY[shop]='岔路尽头支着几顶没有灯的棚子。摊主们不说话，只把价钱写在纸上。冥钱在这里才花得出去：可以换牌、换法器，也可以请人把一张不想要的牌烧掉。';STORY[omen]=X_OMENS[i%X_OMENS.length][1];
+ NODES[shop]={act:a.act,title:'鬼市',type:'shop',story:shop,next:[camp],arc:i,mainline:true};NODES[omen]={act:a.act,title:'异兆 · '+X_OMENS[i%X_OMENS.length][0],type:'omen',story:omen,next:[camp],arc:i,mainline:true,omen:i%X_OMENS.length};
  NODES[fork].next=[p+'-explore',trial,shop,omen,camp];NODES[trial].elite=true;NODES[trial].title='精英 · 余波清理';
  ACT_ROWS[a.act]=ACT_ROWS[a.act].map(row=>row.includes(trial)?[...row,shop,omen]:row);MAIN_KEYS.add(shop);MAIN_KEYS.add(omen)});
 function xSiblings(id){const n=NODES[id],a=n&&ML.arcs[n.arc||0];return a?['-explore','-trial','-shop','-omen','-camp'].map(s=>a.id+s):[]}
