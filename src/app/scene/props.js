@@ -101,7 +101,9 @@ export function createProps(scene, lights) {
     group.add(g);
     return { group: g, stem, pool, wick, h, flame: f, top: new THREE.Vector3(x, h + .15, z) };
   }
-  const decor = [[-4.05, -2.25, 1.35, .13, 9], [-3.45, -2.5, .7, .1, 0], [4.05, -2.3, 1.05, .12, 0], [3.42, -2.52, 1.5, .1, 0], [-4.22, .92, .62, .11, 6], [4.26, .78, .85, .11, 6], [-2.65, -2.52, .42, .09, 0]];
+  // 装饰蜡烛只留三支（左后一高一矮、右前一支）；其余位置让给两支命烛，桌面更干净
+  const decor = [[-4.05, -2.25, 1.35, .13, 9], [-3.45, -2.5, .7, .1, 0], [4.26, .78, .85, .11, 6]];
+  lights.addCandle(-3.42, 1.55, 1.66, 6);   // 我方命烛的烛光（原先左前装饰蜡烛的那盏灯）
   for (const [x, z, h, r, power] of decor) { const c = candle(x, z, h, r); if (power) lights.addCandle(x - Math.sin(c.group.rotation.z) * (h + .35), (h + .35) * Math.cos(c.group.rotation.z), z, power); }
 
   // 命烛：双方各一支，代替原来的二十盏命灯和数字。蜡烧得越短、火越小，命越薄；剩不到三成时火苗乱抖。具体数值只在鼠标悬停时提示。
@@ -187,7 +189,7 @@ export function createProps(scene, lights) {
     if (qi.value === value && qi.max === max) return;
     qi.value = value; qi.max = max;
     sockets.forEach((s, i) => { s.cup.visible = i < Math.min(10, Math.max(max, value)); s.flame.target = i < value ? 1 : 0; });
-    qiLabel.set(`鬼气 ${value}/${max}`, '#aeb9cc');
+    // 不再显示「鬼气 7/10」文字：十只小灯盏亮着几只就是几点鬼气，悬停香炉可看数值
   }
   function qiAnchor(i = 0, target = new THREE.Vector3()) { return sockets[Math.max(0, Math.min(9, i))].cup.getWorldPosition(target).add(new THREE.Vector3(0, .15, 0)); }
 
@@ -240,7 +242,7 @@ export function createProps(scene, lights) {
       const h = Math.max(.012, n * .016);
       deckBody.scale.y = h; deckBody.position.y = h / 2; deckTop.position.y = h + .001;
       deck.visible = n > 0 || true; deckBody.visible = deckTop.visible = n > 0;
-      deckLabel.position.y = h + .42; deckLabel.set(`牌堆 ${n}`);
+      deckLabel.position.y = h + .42; deckLabel.set('');
     },
     topPosition(target = new THREE.Vector3()) { return target.set(3.5, deckBody.scale.y + .02, .1); }
   };
@@ -255,7 +257,7 @@ export function createProps(scene, lights) {
   urnGlow.scale.setScalar(1.1); urnGlow.position.y = .8; urnGlow.userData.noPick = true; urn.add(urnGlow);
   const urnLabel = makeLabel('', { scale: .8 }); urnLabel.position.y = 1.15; urn.add(urnLabel);
   group.add(urn);
-  const urnApi = { group: urn, count: -1, glow: urnGlow, setCount(n) { if (n === urnApi.count) return; urnApi.count = n; urnLabel.set(n ? `魂瓮 ${n}` : ''); tween(urnGlow.material, { opacity: n ? .5 : 0 }, { dur: 600 }); }, mouth(target = new THREE.Vector3()) { return target.set(-3.85, .8, -1.42); } };
+  const urnApi = { group: urn, count: -1, glow: urnGlow, setCount(n) { if (n === urnApi.count) return; urnApi.count = n; urnLabel.set(''); tween(urnGlow.material, { opacity: n ? .5 : 0 }, { dur: 600 }); }, mouth(target = new THREE.Vector3()) { return target.set(-3.85, .8, -1.42); } };
 
   function plaque(char, color) {
     const [c, g] = makeCanvas(128, 200);
