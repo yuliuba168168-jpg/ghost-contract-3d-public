@@ -87,14 +87,17 @@ export function createBattleInput(ctx) {
   }));
   // 命烛不显示数字，悬停时才提示具体数值
   const lifeNum = n => n >= 100000 ? (Math.round(n / 1000) / 10) + '万' : n >= 100 ? String(Math.round(n)) : String(Math.round(n * 10) / 10);
-  for (const side of ['ally', 'enemy']) register(props.life[side].group, {
+  // 触屏没有悬停：战斗中点一下命烛 / 牌堆 / 魂瓮 / 香炉也显示同样的提示，几秒后收起
+  let forceTip = false, tapTimer = 0;
+  const withTap = spec => ({ ...spec, onClick: () => { spec.onClick?.(); if (!GC.battle || !spec.onHover) return; forceTip = true; try { spec.onHover(); } finally { forceTip = false; } clearTimeout(tapTimer); tapTimer = setTimeout(hideTip, 2800); } });
+  for (const side of ['ally', 'enemy']) register(props.life[side].group, withTap({
     enabled: () => !!GC.battle,
     onHover: () => { const b = GC.battle; if (!b) return; const v = side === 'ally' ? b.will : b.enemyWill, m = side === 'ally' ? b.maxWill : b.maxEnemyWill; showTipAt(props.lifeAnchor(side).setY(1.7), `<b>${side === 'ally' ? '你的命烛' : '黑影的命烛'}</b><em>${lifeNum(Math.max(0, v))} / ${lifeNum(m)}</em><p>${side === 'ally' ? '烛灭即败。敌人走空路时会直击它。' : '烛灭即胜。鬼灵正前方没有敌人时会直击它。'}</p>`); },
     onOut: hideTip
-  });
-  register(props.deck.group, { enabled: () => !!GC.battle, onHover: () => showTipAt(props.deck.group.position.clone().setY(.9), `<b>牌堆</b><p>余 ${GC.battle?.draw.length ?? 0} 张。每回合开始抽 1 张，手牌上限 12。</p>`), onOut: hideTip });
-  register(props.urn.group, { enabled: () => !!GC.battle || idle(), onClick: () => { if (!GC.battle) touch('urn', props.urn.group.position); }, onHover: () => !GC.battle ? showTipAt(props.urn.group.position.clone().setY(1.3), '<b>魂瓮</b><p>叩一叩。</p>') : showTipAt(props.urn.group.position.clone().setY(1.3), `<b>魂瓮</b><p>${(GC.battle?.grave || []).map(u => esc(typeof u === 'string' ? Q.spirit(u)?.name : u.name)).join('、') || '尚无阵亡的鬼灵'}</p>`), onOut: hideTip });
-  register(props.censer, { enabled: () => !!GC.battle || idle(), onClick: () => { if (!GC.battle) touch('censer', props.censer.position); }, onHover: () => { const b = GC.battle; if (!b) return showTipAt(props.censer.position.clone().setY(1.5), '<b>香炉</b><p>上一炷香。</p>'); showTipAt(props.censer.position.clone().setY(1.5), `<b>鬼气 ${b.qi}/${b.maxQi}</b><p>本场第 ${b.deployedCount + 1} 次显形需 ${Q.spiritCost()} 鬼气；左右移动每格 1 鬼气，相邻换位不耗鬼气。</p>`); }, onOut: hideTip });
+  }));
+  register(props.deck.group, withTap({ enabled: () => !!GC.battle, onHover: () => showTipAt(props.deck.group.position.clone().setY(.9), `<b>牌堆</b><p>余 ${GC.battle?.draw.length ?? 0} 张。每回合开始抽 1 张，手牌上限 12。</p>`), onOut: hideTip }));
+  register(props.urn.group, withTap({ enabled: () => !!GC.battle || idle(), onClick: () => { if (!GC.battle) touch('urn', props.urn.group.position); }, onHover: () => !GC.battle ? showTipAt(props.urn.group.position.clone().setY(1.3), '<b>魂瓮</b><p>叩一叩。</p>') : showTipAt(props.urn.group.position.clone().setY(1.3), `<b>魂瓮</b><p>${(GC.battle?.grave || []).map(u => esc(typeof u === 'string' ? Q.spirit(u)?.name : u.name)).join('、') || '尚无阵亡的鬼灵'}</p>`), onOut: hideTip }));
+  register(props.censer, withTap({ enabled: () => !!GC.battle || idle(), onClick: () => { if (!GC.battle) touch('censer', props.censer.position); }, onHover: () => { const b = GC.battle; if (!b) return showTipAt(props.censer.position.clone().setY(1.5), '<b>香炉</b><p>上一炷香。</p>'); showTipAt(props.censer.position.clone().setY(1.5), `<b>鬼气 ${b.qi}/${b.maxQi}</b><p>本场第 ${b.deployedCount + 1} 次显形需 ${Q.spiritCost()} 鬼气；左右移动每格 1 鬼气，相邻换位不耗鬼气。</p>`); }, onOut: hideTip }));
 
   function endTurn() {
     unlockAudio();
@@ -119,7 +122,7 @@ export function createBattleInput(ctx) {
     return `<b>${esc(u.name)}</b><em>${esc(u.rankName || '')} · ${esc(u.type || '')}${ent?.removed ? ' · 时间删除中' : ''}</em><p>原攻 ${compact(base)}　现攻 ${compact(Math.round(eff * 10) / 10)}　生命 ${compact(Math.round(u.hp * 10) / 10)}/${compact(u.maxHp)}${u.shield ? `　护盾 ${compact(Math.round(u.shield))}` : ''}</p><p>${esc(Q.statusText(u))}</p>${boss}<p class="muted">右键 / 长按 查看完整详情</p>`;
   }
   function showTip(ent) { if (matchMedia('(hover: none)').matches || tagEnt === ent) return; tipAnchor = () => ent.card.group.position.clone().setY(.2).add(new THREE.Vector3(0, 0, -.8)); tip.innerHTML = unitTip(ent.unit, ent); tip.style.display = ''; placeTip(); }
-  function showTipAt(world, html) { if (matchMedia('(hover: none)').matches) return; tipAnchor = () => world; tip.innerHTML = html; tip.style.display = ''; placeTip(); }
+  function showTipAt(world, html) { if (!forceTip && matchMedia('(hover: none)').matches) return; tipAnchor = () => world; tip.innerHTML = html; tip.style.display = ''; placeTip(); }
   function hideTip() { tipAnchor = null; tip.style.display = 'none'; }
   function placeTip() {
     if (!tipAnchor) return;
