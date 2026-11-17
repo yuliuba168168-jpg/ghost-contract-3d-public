@@ -61,7 +61,7 @@ export function createBattleInput(ctx) {
     } else if (m.startsWith('exactEnemy:') || m.startsWith('confuseSecond:') || m === 'enemy') act(() => A.enemyTarget(ent.uid));
     else detail(ent);
   }
-  const touch = (kind, pos) => { const r = globalThis.GC_X?.touchProp(kind); if (!r) return; play(kind === 'bell' ? 'paper' : 'click'); ctx.xhud?.propSay(r, pos); ctx.emit('refresh'); };
+  const touch = (kind, pos) => { const r = globalThis.GC_X?.touchProp(kind); if (!r) return; play(kind === 'bell' ? 'paper' : 'click'); ctx.xhud?.propSay(r, pos); if (r.rite || kind !== 'bell') A.renderMap(); };
   const idle = () => !GC.battle && !ctx.screens?.modalOpen && !!GC.state?.mainline && ctx.screens?.base === 'map';
   register(props.bell.group, {
     enabled: () => !!GC.battle || idle(),
