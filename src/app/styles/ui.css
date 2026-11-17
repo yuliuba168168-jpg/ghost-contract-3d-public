@@ -301,3 +301,16 @@ body.taboo .sheet { border-color: rgba(255, 60, 40, .6); box-shadow: 0 0 90px rg
 body.taboo .sheet::before { background: #ff2a1a; box-shadow: 0 0 24px #ff2a1a; }
 body.taboo .sheet-head .kicker { color: #ff4a36; }
 body.taboo .ink-btn.primary { background: #a80f08; border-color: #ff5a44; box-shadow: 0 0 22px rgba(255, 40, 24, .55); }
+
+/* 战斗中功能性文字自动隐藏（鼠标移到屏幕上缘 / Esc / Tab 才出现）；装饰字与黑影台词不受影响 */
+.hud .hud-top, .hud .hud-menu { opacity: 0; transform: translateY(-10px); transition: opacity .45s, transform .45s; }
+.hud .hud-menu { pointer-events: none; }
+body.hud-peek .hud .hud-top, body.hud-peek .hud .hud-menu, .hud .hud-menu:focus-within { opacity: 1; transform: none; }
+body.hud-peek .hud .hud-menu, .hud .hud-menu:focus-within { pointer-events: auto; }
+
+/* 面板统一改为半透明毛玻璃 */
+.sheet-veil { background: radial-gradient(circle at 50% 40%, rgba(10, 9, 8, .28), rgba(10, 9, 8, .72)); }
+.sheet { background: linear-gradient(180deg, rgba(33, 29, 25, .68), rgba(14, 12, 11, .8)); backdrop-filter: blur(14px) saturate(1.15); -webkit-backdrop-filter: blur(14px) saturate(1.15); box-shadow: 0 30px 90px rgba(0, 0, 0, .7), inset 0 0 0 1px rgba(233, 226, 208, .05); }
+.cell { background: rgba(233, 226, 208, .055); backdrop-filter: blur(2px); }
+.ink-btn { background: rgba(18, 16, 14, .55); backdrop-filter: blur(6px); }
+.ink-btn.primary { background: rgba(194, 38, 29, .88); }

@@ -9,6 +9,13 @@ export function createBattleInput(ctx) {
   const { battle: view, props, table } = ctx, GC = globalThis.GC, A = GC.actions, Q = GC.query;
   const ui = document.getElementById('ui');
   const hud = document.createElement('div'); hud.className = 'hud'; hud.style.display = 'none';
+  // 功能性文字（回合、标题、右上角按钮）在战斗中默认隐藏：鼠标移到屏幕上缘、按 Esc / Tab、或刚进入战斗时显示几秒
+  let peekTimer = 0;
+  const peek = (ms = 2600) => { document.body.classList.add('hud-peek'); clearTimeout(peekTimer); peekTimer = setTimeout(() => document.body.classList.remove('hud-peek'), ms); };
+  addEventListener('pointermove', e => { if (e.clientY < 96) peek(1500); }, { passive: true });
+  addEventListener('pointerdown', e => { if (e.clientY < 96) peek(4000); }, { passive: true });
+  addEventListener('keydown', e => { if (e.key === 'Escape' || e.key === 'Tab') peek(4500); });
+  ctx.hudPeek = peek;
   hud.innerHTML = `<div class="hud-top"><div class="hud-turn"><small>回合</small><b id="hudTurn">1</b></div><div class="hud-title"><b id="hudTitle"></b><span id="hudSub"></span></div></div><div class="hud-menu" id="hudMenu"></div>`;
   const tags = document.createElement('div'); tags.className = 'tags'; tags.style.display = 'none';
   const tip = document.createElement('div'); tip.className = 'tip'; tip.style.display = 'none';
