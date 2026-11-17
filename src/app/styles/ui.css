@@ -321,7 +321,7 @@ body.hud-peek .hud .hud-menu, .hud .hud-menu:focus-within { pointer-events: auto
 .sheet.wheels { max-height: 95vh; }
 .sheet.wheels .sheet-body { padding-top: 10px; padding-bottom: 8px; }
 .sheet.wheels .wheel { margin: 2px 0 4px; --wheel-h: 186px; }
-.sheet.wheels .wheel:first-child { --wheel-h: 112px; }
+.sheet.wheels .wheel.compact { --wheel-h: 112px; }
 .sheet.wheels .wheel-item { padding: 10px 14px; }
 .sheet.wheels .wheel-item p { font-size: 12px; line-height: 1.5; }
 .sheet.wheels .wheel-stage { height: calc(var(--wheel-h) + 14px); }
