@@ -320,7 +320,7 @@ body.hud-peek .hud .hud-menu, .hud .hud-menu:focus-within { pointer-events: auto
 .sheet-veil { background: radial-gradient(circle at 50% 40%, rgba(10, 9, 8, .45), rgba(10, 9, 8, .82)); }
 .sheet.wheels { max-height: 95vh; }
 .sheet.wheels .sheet-body { padding-top: 10px; padding-bottom: 8px; }
-.sheet.wheels .wheel { margin: 2px 0 4px; --wheel-h: 172px; }
+.sheet.wheels .wheel { margin: 2px 0 4px; --wheel-h: 186px; }
 .sheet.wheels .wheel:first-child { --wheel-h: 112px; }
 .sheet.wheels .wheel-item { padding: 10px 14px; }
 .sheet.wheels .wheel-item p { font-size: 12px; line-height: 1.5; }
