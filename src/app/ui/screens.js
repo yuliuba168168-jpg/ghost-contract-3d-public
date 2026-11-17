@@ -245,7 +245,7 @@ export function createScreens(ctx) {
       sheet('battleLog', { kicker: '战况', title: `第 ${b.turn} 回合`, cls: 'narrow', body: `<div class="log">${b.log.slice(0, 120).map(x => `<p>${esc(x)}</p>`).join('')}</div>`, foot: [{ label: '返回战场', primary: true, fn: () => closeSheet() }] });
     },
     leaveBattle() {
-      sheet('leaveBattle', { kicker: '离开战斗', title: '回到标题？', cls: 'narrow', body: '<p>旅途会保存在本回合开始时的状态。之后从同一存档位「继续旅途」即可回到这场战斗。</p>', foot: [{ label: '留在战场', fn: () => closeSheet() }, { label: '回到标题', primary: true, fn: () => A.renderHome() }] });
+      sheet('leaveBattle', { kicker: '离开战斗', title: '回到标题？', cls: 'narrow', body: '<p>旅途会保存在本回合开始时的状态。之后从同一存档位「继续旅途」即可回到这场战斗。</p>', foot: [{ label: '留在战场', fn: () => closeSheet() }, { label: '回到标题', primary: true, fn: async () => { closeSheet(); if (GC.busy) toast('等这一手结算完就回标题…'); for (let i = 0; i < 240 && GC.busy; i++) await new Promise(r => setTimeout(r, 50)); A.renderHome(); } }] });   // 结算途中不切存档：等规则层的异步链跑完，避免旧链改到之后读入的存档
     },
     rewards() {
       const r = GC.state.pendingReward; if (!r) return;
