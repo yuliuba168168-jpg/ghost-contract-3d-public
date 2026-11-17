@@ -58,11 +58,11 @@ export function createXHud(ctx) {
       const it = ent.vanishing ? null : by.get(ent.uid); let strip = strips.get(ent);
       if (!it) { if (strip) strip.mesh.visible = false; continue; }
       if (!strip) {
-        geo ||= new THREE.PlaneGeometry(1.04, 1.04 * H / W);
         const [canvas] = makeCanvas(W, H), tex = canvasTexture(canvas);
-        const mesh = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false }));
-        mesh.position.set(0, CARD_H / 2 + .13, -.006); mesh.renderOrder = 3; mesh.userData.noPick = true;
-        ent.card.group.add(mesh); strip = { mesh, canvas, tex, key: null }; strips.set(ent, strip);
+        const mesh = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, depthTest: false }));
+        mesh.layers.set(1); mesh.scale.set(1.5, 1.5 * H / W, 1); mesh.renderOrder = 21; mesh.userData.noPick = true;
+        mesh.position.set(0, (ent.app.height || 1.6) + .2, 0);
+        ent.app.group.add(mesh); strip = { mesh, canvas, tex, key: null }; strips.set(ent, strip);
       }
       const parts = describe(it), key = parts.map(p => p.text).join('|');
       strip.mesh.visible = true;
