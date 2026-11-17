@@ -35,16 +35,21 @@ function pickButton() {
   const any = sheet.filter(b => !skip.test(b.textContent));
   const node = q('.sm-node.open');
   const home = q('.slot .ink-btn').filter(b => /继续旅途|建立新旅途/.test(b.textContent));
-  return pri[0] || any[0] || node[0] || home[0] || sheet.find(b => /离开|跳过|返回/.test(b.textContent)) || null;
+  const list = [...pri, ...any, ...node, ...home, ...sheet.filter(b => /离开|跳过|返回/.test(b.textContent))];
+  // 同一个界面上点过没反应的按钮（如篝火里的「按推荐培养」）往后排，换下一个
+  const fresh = list.find(b => !tried.has(sig(b)));
+  const btn = fresh || list[0] || null; if (btn) tried.add(sig(btn)); return btn;
 }
+const tried = new Set(), sig = b => (b.textContent || '').slice(0, 20) + '|' + (GC.state?.current || '') + '|' + (GC.state?.available || []).join() + '|' + (GC.state?.xp || 0) + '|' + (GC.state?.coins || 0);
 export async function run({ acts = 46, maxSteps = 6000 } = {}) {
-  let lastKey = '', same = 0, t0 = performance.now();
+  let lastKey = '', same = 0, trained = -1, t0 = performance.now(); const lost = {};
   for (let step = 0; step < maxSteps; step++) {
     const st = GC.state, act = st ? Math.max(0, ...(st.completed || []).map(i => GC.NODES[i]?.act || 0)) : 0;
     if (st && !log.acts[act]) log.acts[act] = Math.round((performance.now() - t0) / 1000);
     if (act >= acts || (st && st.completed?.some(i => GC.NODES[i]?.type === 'ending'))) break;
     await idle();
-    if (GC.battle) { log.battles++; const b = GC.battle; for (let t = 0; t < 40 && GC.battle === b; t++) await playTurn(); if (GC.battle === b) { log.stuck.push('battle>40 turns ' + b.nodeId); for (const e of b.enemies) { e.hp = 0; e.dead = true; } await GC.actions.endTurn(); await idle(); } else log.wins++; continue; }
+    if (st && !GC.battle) { const arc = (st.available || []).map(i => GC.NODES[i]?.arc).find(v => v != null); if (arc != null && arc !== trained) { trained = arc; try { GC.actions.trainTeam(arc); } catch (e) { log.errors.push('trainTeam: ' + e.message); } } }
+    if (GC.battle) { log.battles++; const b = GC.battle; const id = b.nodeId, force = (lost[id] || 0) >= 3; if (force) { log.stuck.push('forced ' + id); for (const e of b.enemies) { e.hp = 0; e.dead = true; } await GC.actions.endTurn(); await idle(); } for (let t = 0; t < 40 && GC.battle === b; t++) await playTurn(); if (GC.battle === b) { log.stuck.push('battle>40 turns ' + id); for (const e of b.enemies) { e.hp = 0; e.dead = true; } await GC.actions.endTurn(); await idle(); } if (GC.state?.pendingSettlement || GC.state?.completed?.includes(id)) log.wins++; else { lost[id] = (lost[id] || 0) + 1; trained = -1; } continue; }
     const btn = pickButton(), key = (btn?.textContent || 'none').slice(0, 20) + '|' + (st?.current || '') + '|' + (st?.available || []).join();
     same = key === lastKey ? same + 1 : 0; lastKey = key; log.last = key;
     if (same > 25) { log.stuck.push('no progress: ' + key); break; }
