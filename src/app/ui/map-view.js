@@ -98,12 +98,14 @@ export function createMapView(ctx, labelRoot) {
   function kindOf(id, n) { if (n.contract) return 'contract'; if (id.endsWith('-fork')) return 'fork'; return n.type; }
   function describe(id, n) {
     const GD = globalThis.GC.GD;
-    if (n.type === 'battle' || n.type === 'boss') return `${n.type === 'boss' ? '首领战' : '战斗'} · ${GD.ranks[n.rank]?.name || ''} · ${n.cards || 1}轮奖励`;
+    if (n.type === 'battle' || n.type === 'boss') return `${n.type === 'boss' ? '首领战' : n.elite ? '精英战 · 掉法器' : '战斗'} · ${GD.ranks[n.rank]?.name || ''} · ${n.cards || 1}轮奖励`;
     if (n.contract) return '必经契约';
     if (n.type === 'camp') return '恢复 · 存档点';
     if (n.type === 'reward') return '调查 · 经验与卡牌';
     if (n.type === 'ending') return '阶段性尾声';
-    return id.endsWith('-fork') ? '三条路任选其一' : '剧情';
+    if (n.type === 'shop') return '买卖 · 花冥钱';
+    if (n.type === 'omen') return '遭遇 · 有得有失';
+    return id.endsWith('-fork') ? '四个去处任选其一' : '剧情';
   }
   function releaseNode(n, smoke = true) {
     unregister(n.hit); n.hit.removeFromParent();
