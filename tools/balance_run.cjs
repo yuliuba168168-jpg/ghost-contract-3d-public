@@ -62,7 +62,7 @@ async function campaign(diff, it) {
     } else if (n.type === 'camp') { X.campHeal(id); X.campLeave(id); }
     else if (n.type === 'reward') { A.claimInvestigation(id); takeRewards(A.getState()); }
     else if (n.type === 'shop') shop(st, id, stat);
-    else if (n.type === 'omen') { const o = GX.omen(id), ok = o.options.filter(x => !x.disabled); if (!GX.chooseOmen(id, ok[(n.act || 0) % ok.length].index)) GX.leaveNode(id); }
+    else if (n.type === 'omen') { const o = GX.omen(id), all = o.options.filter(x => !x.disabled), costly = x => GX.OMENS[n.omen][2][x.index][2].some(op => op[0] === 'wound' || op[0] === 'dim' || op[0] === 'curse'), safe = all.filter(x => !costly(x)), ok = ['nightmare', 'taboo'].includes(st.difficulty) && safe.length ? safe : all; if (!GX.chooseOmen(id, ok[(n.act || 0) % ok.length].index)) GX.leaveNode(id); }
     else if (n.type === 'ending') { A.finishEnding(); break; }
     else { A.continueMainlineEvent(id); while (GX.pendingPact()) GX.choosePact(PACT); }
   }
