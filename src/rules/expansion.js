@@ -196,8 +196,7 @@ async function xPlayCard(index,lane){
  try{
   soundCue('skill');b.qi-=c.cost;b.hand.splice(index,1);const message=xRun(b,c.ops,target,ctx);b.log.unshift(`${c.name}：${message}`);b.cardsPlayed=(b.cardsPlayed||0)+1;
   selected=null;targetMode=null;noteCast(c.name);save();await animatePendingDeaths();renderBattle();
-  await globalThis.GC_BRIDGE.fx('card:play',{cardId:id,handIndex:index,target:target?{uid:target.uid,side:c.target==='e
-nemy'?'enemy':'ally',lane:target.lane}:null,message});
+  await globalThis.GC_BRIDGE.fx('card:play',{cardId:id,handIndex:index,target:target?{uid:target.uid,side:c.target==='enemy'?'enemy':'ally',lane:target.lane}:null,message});
   globalThis.GC_BRIDGE.fx('burst',{uid:target?target.uid:null,side:c.target==='enemy'?'enemy':'ally',lane:target?target.lane:null,glyph:'◈',tone:'#e4cf8a'});
   await animatePendingDeaths();for(const u of ctx.returned)await globalThis.GC_BRIDGE.fx('return',{uid:u.uid,id:u.id,kind:'return',handIndex:b.hand.length-1});
   if(b.hand.length>handBefore-1)await globalThis.GC_BRIDGE.fx('draw',{count:b.hand.length-(handBefore-1)});
