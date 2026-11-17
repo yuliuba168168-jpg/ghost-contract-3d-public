@@ -124,7 +124,9 @@ async function fresh(){
  const om=X.omen(p0+'-omen');assert.ok(om.options.length>=2);const res=X.chooseOmen(p0+'-omen',om.options.length-1);assert.ok(res&&res.label);
  assert.ok(ps.completed.includes(p0+'-omen'));assert.deepEqual([...ps.available],[p0+'-camp'],'siblings locked after omen');assert.equal(X.chooseOmen(p0+'-omen',0),null);
  const er=ctx.enemyRoster(p0+'-trial');assert.ok(er[0].name.startsWith('精英'));
- ps.available=[p0+'-trial'];ps.current=p0+'-trial';ctx.startBattle(p0+'-trial');b=ps.battle;for(const e of b.enemies){e.hp=0;e.dead=true}await ctx.winBattle();
+ ps.available=[p0+'-trial'];ps.current=p0+'-trial';ctx.startBattle(p0+'-trial');b=ps.battle;for(const e of b.enemies){e.hp=0;e.dead=true}
+ // 精英法器有按幕数的上限（第 1 幕 2 件）：这里已有 3 件，先把节点临时当作第 20 幕来验证「给法器」这条分支
+ const en=GC.NODES[p0+'-trial'],act0=en.act;en.act=20;await ctx.winBattle();en.act=act0;
  const pr=X.pendingRelic();assert.ok(pr&&pr.length===3,'elite win offers 3 relics');assert.equal(X.chooseRelic(pr[0].key),true);assert.equal(X.pendingRelic(),null);assert.equal(X.relics().length,4);
  // 异兆：每个事件的每个选项都真的生效
  for(let oi=0;oi<X.OMENS.length;oi++)for(let k=0;k<X.OMENS[oi][2].length;k++){
@@ -132,7 +134,7 @@ async function fresh(){
   ps.available=[node];ps.coins=200;ps.will=5;ps.xp=0;for(const s of ps.spirits)s.hp=s.maxHp*.5;const before={deck:ps.deck.length,relics:(ps.relics||[]).length};
   const r=X.chooseOmen(node,k);assert.ok(r,`omen ${oi}/${k} resolves`);
   let coins=200,deck=before.deck,relics=before.relics;
-  for(const [op,v] of ops){if(op==='coins')coins+=v;if(op==='pay')coins-=v;if(op==='card')deck++;if(op==='losecard')deck--;if(op==='relic')relics++;
+  for(const [op,v] of ops){if(op==='coins')coins+=X.omenAmount(v,node);if(op==='pay')coins-=X.omenAmount(v,node);if(op==='card')deck++;if(op==='losecard')deck--;if(op==='relic')relics++;
    if(op==='xp')assert.equal(ps.xp,v,`omen ${oi}/${k} xp`);if(op==='will')assert.equal(ps.will,Math.max(1,Math.min(10,5+v)),`omen ${oi}/${k} will`);
    if(op==='heal')assert.ok(ps.spirits.every(s=>s.hp===s.maxHp),`omen ${oi}/${k} heal`);if(op==='hurt')assert.ok(ps.spirits.every(s=>s.hp===Math.max(1,+(s.maxHp*.5-s.maxHp*v).toFixed(1))),`omen ${oi}/${k} hurt`);
    if(op==='mend')assert.ok(ps.spirits.every(s=>s.hp===Math.min(s.maxHp,s.maxHp*.5+s.maxHp*v)),`omen ${oi}/${k} mend`);if(op==='incense')assert.equal(ps.xIncense,true);if(op==='curse')assert.equal(ps.xCurse,true)}

@@ -668,7 +668,8 @@ winBattle=async function(){
  const r=await xPrevWin2();if(!real||b.xPaid)return r;b.xPaid=true;
  if(coins){state.coins=(state.coins||0)+coins;state.log.unshift(`获得冥钱 ${coins}`)}
  if(xHasRelic('salve'))for(const s of state.spirits)if(!s.dead)s.hp=Math.min(s.maxHp,s.hp+s.maxHp*.1);
- if(elite){const offer=xRelicOffer(3,seed);if(offer.length)state.pendingRelic=offer}
+ // 精英战的法器按幕数有上限（第 1 幕 2 件，之后约每 3.5 幕多 1 件）；到上限或已集齐时改给 3 倍冥钱，避免前十几幕就把 15 件拿全。
+ if(elite){const cap=2+Math.floor((NODES[b.nodeId].act||1)/3.5),offer=(state.relics?.length||0)<cap?xRelicOffer(3,seed):[];if(offer.length)state.pendingRelic=offer;else{const extra=coins*2;state.coins=(state.coins||0)+extra;state.log.unshift(`法器已到本幕上限，改得冥钱 ${extra}`)}}
  save();return r};
 function xPendingRelic(){return state.pendingRelic?.length?state.pendingRelic.map(k=>({key:k,name:X_RELICS[k][0],desc:X_RELICS[k][1]})):null}
 function xChooseRelic(k){if(!state.pendingRelic?.includes(k))return false;xGainRelic(k);state.pendingRelic=null;save();return true}
@@ -701,9 +702,12 @@ const xPrevEnter=enterNode;
 enterNode=function(id){const n=NODES[id];if(!state.mainline||!n||!['shop','omen'].includes(n.type))return xPrevEnter(id);if(busy||state.pendingSettlement||!state.available.includes(id))return;state.current=id;save();globalThis.GC_BRIDGE.ui(n.type,{id})};
 const xPrevRoster2=enemyRoster;
 enemyRoster=function(id){const list=xPrevRoster2(id);if(NODES[id]?.elite&&list.length&&!list.xElite){for(const e of list){e.maxHp=Math.round(e.maxHp*1.25);e.hp=e.maxHp;e.atk=+(e.atk*1.1).toFixed(1);e.baseAtk=e.atk}list[0].name='精英 · '+list[0].name.replace(/^精英 · /,'')}return list};
-function xPriceOf(v){return Math.round(v*(xHasRelic('coinstring')?.8:1))}
+// 物价随幕数上涨（第 1 幕 ×1，第 46 幕 ×3.7），与冥钱收入的增长对齐；法器每多一件再贵两成。
+function xActMult(id){return 1+(Math.max(1,NODES[id]?.act||1)-1)*.06}
+function xPriceOf(v,id){return Math.round(v*xActMult(id)*(xHasRelic('coinstring')?.8:1))}
+function xOmenAmount(v,id){return Math.round(v*xActMult(id)/5)*5}
 function xShopStock(id){const all=state.shopStock||={};if(all[id])return all[id];const seed=xHash(id)+xHash(state.name||''),ids=Object.keys(SKILLS).filter(k=>SKILLS[k].ops),cards=[];for(let i=0;cards.length<4&&i<40;i++){const k=ids[(seed+i*13)%ids.length];if(!cards.includes(k))cards.push(k)}return all[id]={cards,relics:xRelicOffer(2,seed),sold:[]}}
-function xShop(id=state.current){if(NODES[id]?.type!=='shop')return null;const s=xShopStock(id),items=[...s.cards.map(k=>({kind:'card',key:k,name:SKILLS[k].name,desc:SKILLS[k].desc,rarity:SKILLS[k].rarity,price:xPriceOf(X_PRICE[SKILLS[k].rarity]||30)})),...s.relics.map(k=>({kind:'relic',key:k,name:X_RELICS[k][0],desc:X_RELICS[k][1],price:xPriceOf(90)})),{kind:'remove',key:'remove',name:'烧掉一张牌',desc:'从牌组里移除你选的一张牌。',price:xPriceOf(40)},{kind:'heal',key:'heal',name:'一碗热汤',desc:'全队恢复全部生命。',price:xPriceOf(35)}];
+function xShop(id=state.current){if(NODES[id]?.type!=='shop')return null;const s=xShopStock(id),items=[...s.cards.map(k=>({kind:'card',key:k,name:SKILLS[k].name,desc:SKILLS[k].desc,rarity:SKILLS[k].rarity,price:xPriceOf(X_PRICE[SKILLS[k].rarity]||30,id)})),...s.relics.map(k=>({kind:'relic',key:k,name:X_RELICS[k][0],desc:X_RELICS[k][1],price:xPriceOf(90*(1+.2*(state.relics?.length||0)),id)})),{kind:'remove',key:'remove',name:'烧掉一张牌',desc:'从牌组里移除你选的一张牌。',price:xPriceOf(40,id)},{kind:'heal',key:'heal',name:'一碗热汤',desc:'全队恢复全部生命。',price:xPriceOf(35,id)}];
  return {id,coins:state.coins||0,items:items.map((it,i)=>({...it,index:i,sold:s.sold.includes(it.kind+':'+it.key)||(it.kind==='relic'&&xHasRelic(it.key))}))}}
 function xBuy(id,index,deckIndex){const shop=xShop(id),it=shop?.items[index];if(!it||it.sold||state.available.indexOf(id)<0)return false;if((state.coins||0)<it.price){globalThis.GC_BRIDGE.notify('冥钱不够','warn');return false}
  if(it.kind==='card'){if(state.deck.length>=25){globalThis.GC_BRIDGE.notify('牌组已满，先烧掉一张牌','warn');return false}state.deck.push(it.key)}
@@ -712,10 +716,10 @@ function xBuy(id,index,deckIndex){const shop=xShop(id),it=shop?.items[index];if(
  else fullHeal();
  state.coins-=it.price;state.shopStock[id].sold.push(it.kind+':'+it.key);save();return true}
 function xLeaveNode(id=state.current){if(!['shop','omen'].includes(NODES[id]?.type)||!state.available.includes(id))return false;completeNode(id);renderMap();return true}
-function xOmen(id=state.current){const n=NODES[id];if(n?.type!=='omen')return null;const [title,text,opts]=X_OMENS[n.omen];return {id,title,text,options:opts.map(([label,desc,ops],i)=>({index:i,label,desc,disabled:ops.some(o=>o[0]==='pay'&&(state.coins||0)<o[1])||ops.some(o=>o[0]==='losecard')&&state.deck.length<=1}))}}
+function xOmen(id=state.current){const n=NODES[id];if(n?.type!=='omen')return null;const [title,text,opts]=X_OMENS[n.omen];return {id,title,text,options:opts.map(([label,desc,ops],i)=>({index:i,label,desc:desc.replace(/(\d+)冥钱/g,(m,v)=>xOmenAmount(+v,id)+'冥钱'),disabled:ops.some(o=>o[0]==='pay'&&(state.coins||0)<xOmenAmount(o[1],id))||ops.some(o=>o[0]==='losecard')&&state.deck.length<=1}))}}
 function xChooseOmen(id,i){const o=xOmen(id),opt=o?.options[i];if(!opt||opt.disabled||!state.available.includes(id))return null;const n=NODES[id],[label,desc,ops]=X_OMENS[n.omen][2][i],got=[];
  for(const [k,v] of ops){
-  if(k==='coins')state.coins=(state.coins||0)+v;else if(k==='pay')state.coins-=v;else if(k==='xp')state.xp+=v;else if(k==='will')state.will=Math.max(1,Math.min(10,state.will+v));
+  if(k==='coins')state.coins=(state.coins||0)+xOmenAmount(v,id);else if(k==='pay')state.coins-=xOmenAmount(v,id);else if(k==='xp')state.xp+=v;else if(k==='will')state.will=Math.max(1,Math.min(10,state.will+v));
   else if(k==='hurt'){for(const s of state.spirits)if(!s.dead)s.hp=Math.max(1,+(s.hp-s.maxHp*v).toFixed(1))}
   else if(k==='mend'){for(const s of state.spirits)if(!s.dead)s.hp=Math.min(s.maxHp,s.hp+s.maxHp*v)}
   else if(k==='heal')fullHeal();else if(k==='incense')state.xIncense=true;else if(k==='curse')state.xCurse=true;else if(k==='losecard')got.push('失去【'+SKILLS[state.deck.pop()]?.name+'】');
@@ -724,7 +728,7 @@ function xChooseOmen(id,i){const o=xOmen(id),opt=o?.options[i];if(!opt||opt.disa
  state.log.unshift(`异兆【${o.title}】：${label}`);completeNode(id);save();return {label,text:desc,got}}
 const xPrevSetup5=xSetupBattle;
 xSetupBattle=function(b){xPrevSetup5(b);if(state.xCurse&&b.mainline&&!b.testMode){state.xCurse=false;for(const e of b.enemies){e.atk=+(e.atk*1.15).toFixed(1);e.baseAtk=e.atk}b.log.unshift('异兆：敌人攻击提高15%')}};
-Object.assign(globalThis.GC_X,{OMENS:X_OMENS,shop:xShop,buy:xBuy,leaveNode:xLeaveNode,omen:xOmen,chooseOmen:xChooseOmen});
+Object.assign(globalThis.GC_X,{OMENS:X_OMENS,omenAmount:xOmenAmount,priceMult:xActMult,shop:xShop,buy:xBuy,leaveNode:xLeaveNode,omen:xOmen,chooseOmen:xChooseOmen});
 
 // ---------- 局外解锁：开局馈赠 ----------
 const X_BOONS=[
