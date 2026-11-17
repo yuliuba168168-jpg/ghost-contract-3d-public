@@ -110,6 +110,7 @@ function xSpawn(b,kind,lane,from){
  const t=X_TOKENS[kind],ref=from||xSource(b),hp=Math.max(1,Math.round((ref.baseMaxHp||ref.maxHp)*(from?kind:t[1]))),atk=+((ref.baseAtk||ref.atk)*(from?kind:t[2])).toFixed(1);
  const u={uid:`t${Date.now()}-${++xSeq}`,id:from?'token-shadow':'token-'+kind,artId:from?from.id:null,token:from?'shadow':kind,name:from?from.name+'之影':t[0],type:from?from.type:'召唤物',rankName:ref.rankName,rankIndex:ref.rankIndex,level:ref.level,potential:1,maxHp:hp,hp,baseMaxHp:hp,atk,baseAtk:atk,lane,dead:false,effects:{},cooldowns:{},onceUsed:{},keywords:from?[]:[...t[3]],initialized:true,noSkills:true};
  if(!from&&t[4]?.death)u.deathrattle=t[4].death;if(!from&&t[4]?.noAttack)u.noAttack=true;if(!from&&t[4]?.reduction)addEffect(u,'tokenHide','门神',null,{reduction:t[4].reduction});
+ for(const k of u.keywords)addEffect(u,'kw-'+k,X_KEYWORDS[k].name,null);
  b.units[lane]=u;return u}
 function xEmptyLane(b){return [0,1,2,3].find(i=>!b.units[i])}
 function xApply(b,op,t,src,ctx){
@@ -406,7 +407,7 @@ cleanup=function(){
  if(b){if(b.units.some(u=>u?.dead))b.xBloodTurn=b.turn;for(const e of xFoes(b))if(e.phase2&&!e.phased&&e.hp/e.maxHp<=.5)xPhase(b,e)}
  xPrevCleanup3();
 };
-function xSay(b,event,extra){}
+function xSay(b,event){globalThis.GC_BRIDGE.fx('shadow',{event,turn:b.turn})}
 
 // ---------- 战斗开场布置 ----------
 function xSetupBattle(b){

@@ -94,6 +94,7 @@ export function artIdFor(unit) {
     if (form === '邪灵形态' && hasArt('tong_evil')) return 'tong_evil';
     if (form === '女武神形态' && hasArt('tong_valkyrie')) return 'tong_valkyrie';
   }
+  if (unit.artId && hasArt(unit.artId)) return unit.artId;
   return hasArt(unit.id) ? unit.id : null;
 }
 

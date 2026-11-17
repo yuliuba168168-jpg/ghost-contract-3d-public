@@ -508,7 +508,8 @@ export function createDirector(ctx) {
   };
 
   function handle(type, payload) {
-    const fn = handlers[type];
+    ctx.emit('fx', type, payload);
+    const fn = handlers[type] || ctx.xfx?.[type];
     if (!fn) return Promise.resolve();
     if (!AWAITED.has(type)) {
       const r = fn(payload);

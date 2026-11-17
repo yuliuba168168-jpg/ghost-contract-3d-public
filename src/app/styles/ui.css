@@ -187,3 +187,13 @@ table.t { width: 100%; border-collapse: collapse; font-size: 14px; } table.t th,
 .story-extra .split > div { margin-bottom: 8px; }
 
 .cine-click { position: fixed; inset: 0; z-index: 70; cursor: pointer; pointer-events: auto; }
+
+/* 扩展 HUD */
+.field-badge { position: fixed; left: 14px; top: 64px; z-index: 40; max-width: 250px; padding: 7px 11px 8px; background: rgba(10, 9, 16, .74); border-left: 2px solid #8f9bff; border-radius: 3px; color: #e9e2d0; font: 13px/1.45 "STKaiti", "KaiTi", serif; pointer-events: auto; }
+.field-badge b { display: block; letter-spacing: .08em; color: #cfd6ff; }
+.field-badge b + span + b { margin-top: 6px; color: #ff9d8c; }
+.field-badge b.met { color: #7fe0b0; }
+.field-badge span { display: block; color: rgba(233, 226, 208, .72); font-size: 12px; }
+.shadow-say { position: fixed; left: 50%; top: 17%; z-index: 41; transform: translate(-50%, 0); max-width: min(560px, 80vw); padding: 8px 20px; color: #f1e6d2; font: 600 19px/1.5 "STKaiti", "KaiTi", serif; letter-spacing: .14em; text-shadow: 0 0 12px #000, 0 0 3px #000, 0 0 22px rgba(194, 38, 29, .55); opacity: 0; pointer-events: none; transition: opacity .9s ease; white-space: pre-wrap; text-align: center; }
+.shadow-say.on { opacity: 1; transition: opacity .35s ease; }
+@media (max-height: 520px) { .field-badge { top: 46px; max-width: 200px; font-size: 11px; } .field-badge span { display: none; } .shadow-say { font-size: 15px; top: 12%; } }

@@ -66,6 +66,7 @@ async function boot() {
     ]);
     ctx.director = createDirector(ctx);
     ctx.status = createStatusView(ctx);
+    ctx.xhud = (await import('./battle/x-hud.js')).createXHud(ctx);
     ctx.input = createBattleInput(ctx);
     ctx.screens = createScreens(ctx);
     ctx.mapView?.warm?.(); ctx.storyStage?.warm?.();
