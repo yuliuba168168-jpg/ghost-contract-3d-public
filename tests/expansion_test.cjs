@@ -56,5 +56,23 @@ async function fresh(){
  b=await fresh();await play(b,'swapstep',1);assert.equal(b.units[1],null);assert.ok(b.hand.some(h=>h?.kind==='ghost'||h==='xuan'),'bounced to hand');
  // 命灯
  b=await fresh();will=b.enemyWill;await play(b,'lampstrike');assert.ok(Math.abs(will-b.enemyWill-b.maxEnemyWill*.04)<1e-6,'lamp strike');
- console.log(`expansion_test PASS: ${played}/${ids.length} new cards played; burn, taunt, aura, multi, pierce, stun, deathrattle, bounce, lamp verified`);
+ // ---- 主线首领战：行为、场地、破障条件、二阶段、意图 ----
+ const A=ctx.__MAINLINE_TEST__,X=ctx.GC_X;A.newSlot(0,'normal','x','hard');const st=A.getState();A.grantContract(A.ML.arcs[0].contracts[0]);
+ const seen={field:new Set(),ward:new Set(),phase:new Set(),beh:new Set()};let phased=0;
+ for(const arc of A.ML.arcs){
+  A.grantTraining(arc.act-1);A.trainTeam(arc.act-1);A.fullHeal();st.squad=st.spirits.filter(s=>s.id!=='nannan').slice(0,4).map(s=>s.id);
+  ctx.startBattle(arc.id+'-battle');const mb=st.battle,lead=mb.enemies[0];assert.equal(mb.x,1);
+  if(arc.act>=3)assert.ok(X.field(mb),'field from act 3: '+arc.act);if(mb.field)seen.field.add(mb.field);
+  if(arc.act>=2){assert.ok(lead.phase2,'boss has phase 2: act '+arc.act);seen.phase.add(lead.phase2);assert.ok(lead.bossTraits.some(n=>n.startsWith('二阶段·')&&A.BOSS_SKILLS[n]));
+   if(mb.ward){assert.ok(mb.wardRule&&X.wardRule(mb));seen.ward.add(mb.wardRule)}}
+  for(const e of mb.enemies)if(e.behavior){seen.beh.add(e.behavior);assert.ok(A.BOSS_SKILLS[ctx.GC_X.BEHAVIORS[e.behavior][0]])}
+  const it=X.intents(mb);assert.equal(it.length,mb.enemies.filter(e=>!e.dead).length);for(const i of it){assert.ok(['attack','lamp','skip'].includes(i.action));assert.ok(i.damage>=0&&Number.isFinite(i.damage));JSON.stringify(i)}
+  assert.ok(it.every(i=>i.action==='lamp'||i.action==='skip'),'no allies on field → all lamp');
+  if(lead.phase2){lead.hp=lead.maxHp*.4;mark=rec.fx.length;ctx.cleanup();assert.ok(lead.phased,'phase triggered');assert.equal(fxOf(mark,'boss:phase').length,1);ctx.cleanup();assert.equal(fxOf(mark,'boss:phase').length,1,'phase only once');phased++}
+  st.battle=null;
+ }
+ assert.equal(seen.phase.size,6);assert.ok(seen.field.size>=6,'fields '+seen.field.size);assert.ok(seen.ward.size>=5,'ward rules '+seen.ward.size);assert.ok(seen.beh.size>=10,'behaviors '+seen.beh.size);
+ // 破障条件：火障在有敌人灼烧时多破一层
+ A.setState(old.clone(old.DEFAULT));b=await fresh();b.ward=1;b.wardBase=0;b.wardRule='fire';assert.equal(ctx.wardFactor(b),0);ctx.addEffect(b.enemies[0],'ghostFire','火',2,{ratio:.1});assert.equal(ctx.wardFactor(b),1,'fire ward rule');
+ console.log(`expansion_test PASS: ${played}/${ids.length} new cards played; ${phased} boss phases, ${seen.field.size} fields, ${seen.ward.size} ward rules, ${seen.beh.size} behaviors, intents; burn, taunt, aura, multi, pierce, stun, deathrattle, bounce, lamp verified`);
 })().catch(e=>{console.error(e);process.exit(1)});

@@ -410,7 +410,7 @@ function xSay(b,event,extra){}
 
 // ---------- 战斗开场布置 ----------
 function xSetupBattle(b){
- const n=NODES[b.nodeId]||{},endless=b.nodeId==='endless-arena',arc=endless?(state.wave||1):(n.arc||0),lead=b.enemies[0],seed=xHash(b.nodeId)+arc;
+ const n=NODES[b.nodeId]||{},endless=b.nodeId==='endless-arena',arc=endless?(state.wave||1):(n.arc||0),lead=b.enemies[0],seed=n.type==='boss'||endless?arc*3+1:xHash(b.nodeId);
  b.x=1;
  if(lead&&lead.bossSkills?.length&&(n.type==='boss'||endless)&&n.difficulty!==1){
   lead.phase2=X_PHASE_KEYS[arc%X_PHASE_KEYS.length];lead.bossTraits=[...(lead.bossTraits||[]),'二阶段·'+X_PHASES[lead.phase2][0]];
