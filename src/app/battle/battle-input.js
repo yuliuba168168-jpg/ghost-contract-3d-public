@@ -16,9 +16,13 @@ export function createBattleInput(ctx) {
   addEventListener('pointerdown', e => { if (e.clientY < 96) peek(4000); }, { passive: true });
   addEventListener('keydown', e => { if (e.key === 'Escape' || e.key === 'Tab') peek(4500); });
   ctx.hudPeek = peek;
+  // 常驻的小把手：触屏或不知道要把鼠标移到顶端的玩家点它呼出回合与菜单
+  const grip = document.createElement('button'); grip.className = 'hud-grip'; grip.type = 'button'; grip.setAttribute('aria-label', '显示回合与菜单'); grip.textContent = '⋯';
+  grip.onclick = () => peek(6000);
   hud.innerHTML = `<div class="hud-top"><div class="hud-turn"><small>回合</small><b id="hudTurn">1</b></div><div class="hud-title"><b id="hudTitle"></b><span id="hudSub"></span></div></div><div class="hud-menu" id="hudMenu"></div>`;
   const tags = document.createElement('div'); tags.className = 'tags'; tags.style.display = 'none';
   const tip = document.createElement('div'); tip.className = 'tip'; tip.style.display = 'none';
+  hud.append(grip);
   ui.append(hud, tags, tip);
   const $ = id => hud.querySelector('#' + id);
   let tagKey = '', tagEnt = null, tipAnchor = null, hoverEnt = null, tipXY = [-1, -1], tagXY = [-1, -1];

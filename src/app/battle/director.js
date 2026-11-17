@@ -177,6 +177,7 @@ export function createDirector(ctx) {
       } finally { view.release(); entering = false; ctx.inputLock = false; ctx.emit('refresh'); }
     },
     async 'turn:start'(p) {
+      ctx.hudPeek?.(3500);   // 每回合开始把回合数、标题和右上角按钮亮出来几秒
       allyPhase();
       view.syncNow(true);
       props.setQi(p.qi, p.maxQi);
