@@ -51,8 +51,10 @@ export function autoQuality() {
   for (const fn of listeners) fn(current, changed);
 }
 export function lowerQuality() {
-  if (locked || current.name === 'potato' || current.name === 'lite') return false;
-  setQuality({ cinema: 'high', high: 'medium', medium: 'low' }[current.name] || 'potato', false);
+  // 逐档自动降到 low 为止：30Hz 屏幕 / 省电模式下每帧恒为 33ms，不能因此一路降到极简。极简只留给软件渲染和 floorQuality（连续多帧 >250ms）
+  const next = { cinema: 'high', high: 'medium', medium: 'low' }[current.name];
+  if (locked || !next) return false;
+  setQuality(next, false);
   return true;
 }
 export function savedScale() { const v = +localStorage.getItem(KEY + '-scale-' + current.name); return v >= current.minScale && v <= 1 ? v : 1; }

@@ -126,5 +126,10 @@ async function boot() {
 boot().catch(err => {
   console.error(err);
   const t = document.getElementById('bootText');
-  if (t) t.textContent = '启动失败：' + (err?.message || err);
+  if (t) {   // 3D 起不来（WebGL 被禁用 / 驱动不支持）时给出能玩的出路，而不是只有一行报错
+    t.textContent = '启动失败：' + (err?.message || err);
+    const tip = document.createElement('div'); tip.style.cssText = 'margin-top:14px;font-size:13px;line-height:1.9;letter-spacing:1px;pointer-events:auto';
+    tip.innerHTML = '可以改玩不需要显卡的<a href="simple.html" style="color:#ffd98a">方块版</a>。<br>想玩完整版：在浏览器设置里打开「使用图形加速（硬件加速）」，重启浏览器后再试。';
+    t.after(tip);
+  }
 });
