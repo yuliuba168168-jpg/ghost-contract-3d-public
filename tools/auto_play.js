@@ -33,15 +33,19 @@ function pickButton() {
   const sheet = q('.sheet .ink-btn, .sheet button.cell, .story-bar button, .sheet button');
   const pri = sheet.filter(b => b.classList.contains('primary') && !skip.test(b.textContent));
   const any = sheet.filter(b => !skip.test(b.textContent));
-  const node = q('.sm-node.open');
+  let node = q('.sm-node.open');
+  // 岔路四选一：按幕轮换 调查/精英/鬼市/异兆，让四类节点都被走到
+  if (node.length > 1) { const act = Math.max(0, ...(GC.state?.completed || []).map(i => GC.NODES[i]?.act || 0)); node = [node[(act + forkShift) % node.length], ...node]; }
   const home = q('.slot .ink-btn').filter(b => /继续旅途|建立新旅途/.test(b.textContent));
   const list = [...pri, ...any, ...node, ...home, ...sheet.filter(b => /离开|跳过|返回/.test(b.textContent))];
   // 同一个界面上点过没反应的按钮（如篝火里的「按推荐培养」）往后排，换下一个
   const fresh = list.find(b => !tried.has(sig(b)));
   const btn = fresh || list[0] || null; if (btn) tried.add(sig(btn)); return btn;
 }
+let forkShift = 0;
 const tried = new Set(), sig = b => (b.textContent || '').slice(0, 20) + '|' + (GC.state?.current || '') + '|' + (GC.state?.available || []).join() + '|' + (GC.state?.xp || 0) + '|' + (GC.state?.coins || 0);
-export async function run({ acts = 46, maxSteps = 6000 } = {}) {
+export async function run({ acts = 46, maxSteps = 9000, fork = 0 } = {}) {
+  forkShift = fork;
   let lastKey = '', same = 0, trained = -1, t0 = performance.now(); const lost = {};
   for (let step = 0; step < maxSteps; step++) {
     const st = GC.state, act = st ? Math.max(0, ...(st.completed || []).map(i => GC.NODES[i]?.act || 0)) : 0;
