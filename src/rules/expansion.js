@@ -679,14 +679,14 @@ Object.assign(globalThis.GC_X,{RELICS:X_RELICS,relics:xRelics,hasRelic:xHasRelic
 // ---------- 新节点：鬼市（商店）、异兆（事件）、精英战 ----------
 const X_PRICE={普通:30,稀有:50,珍藏:80,传说:120};
 const X_OMENS=[
- ['井边的女人','井口坐着一个梳头的女人。她没有回头，只把木梳递了过来。',[['接过木梳','获得一件法器，全队失去20%生命。',[['relic'],['hurt',.2]]],['替她梳头','命灯恢复2分。',[['will',2]]],['绕开','什么也不发生。',[]]]],
- ['无人的戏台','戏台上锣鼓自己在响，台下的长凳坐满了纸人。',[['坐下看完','获得一张稀有卡，失去1分命灯。',[['card','稀有'],['will',-1]]],['往台上扔钱','花30冥钱，获得一张珍藏卡。',[['pay',30],['card','珍藏']]],['离开','什么也不发生。',[]]]],
- ['赊账的鬼差','一个鬼差拦住去路，说你阳间的账还没清。',[['认账','失去40冥钱，全队恢复全部生命。',[['pay',40],['heal']]],['赖账','获得40冥钱，全队失去15%生命。',[['coins',40],['hurt',.15]]]]],
- ['路边的供桌','荒路上摆着一张供桌，供品还冒着热气。',[['吃掉供品','全队恢复30%生命，失去1分命灯。',[['mend',.3],['will',-1]]],['添一炷香','下一场战斗开局多1点鬼气。',[['incense']]],['掀了桌子','获得60冥钱，下一场战斗敌人攻击提高15%。',[['coins',60],['curse']]]]],
+ ['井边的女人','井口坐着一个梳头的女人。她没有回头，只把木梳递了过来。',[['接过木梳','获得一件法器。下一场战斗开局全队先失去20%生命。',[['relic'],['wound',.2]]],['替她梳头','下一场战斗开局多1点鬼气。',[['incense']]],['绕开','什么也不发生。',[]]]],
+ ['无人的戏台','戏台上锣鼓自己在响，台下的长凳坐满了纸人。',[['坐下看完','获得一张稀有卡。下一场战斗开局我方命灯先熄10%。',[['card','稀有'],['dim',.1]]],['往台上扔钱','花30冥钱，获得一张珍藏卡。',[['pay',30],['card','珍藏']]],['离开','什么也不发生。',[]]]],
+ ['赊账的鬼差','一个鬼差拦住去路，说你阳间的账还没清。',[['认账','失去40冥钱，下一场战斗开局多1点鬼气。',[['pay',40],['incense']]],['赖账','获得40冥钱。下一场战斗开局全队先失去15%生命。',[['coins',40],['wound',.15]]]]],
+ ['路边的供桌','荒路上摆着一张供桌，供品还冒着热气。',[['吃掉供品','获得40冥钱。下一场战斗开局我方命灯先熄10%。',[['coins',40],['dim',.1]]],['添一炷香','下一场战斗开局多1点鬼气。',[['incense']]],['掀了桌子','获得60冥钱，下一场战斗敌人攻击提高15%。',[['coins',60],['curse']]]]],
  ['借宿的孩子','一个孩子抱着枕头站在门口，问能不能和你们一起睡。',[['让她进来','获得150点经验。',[['xp',150]]],['给她一张牌','失去牌组最后一张牌，获得一件法器。',[['losecard'],['relic']]],['关门','什么也不发生。',[]]]],
- ['当铺','柜台很高，看不见掌柜的脸，只伸出一只手。',[['当掉一张牌','失去牌组最后一张牌，获得50冥钱。',[['losecard'],['coins',50]]],['当掉一分命灯','失去1分命灯，获得70冥钱。',[['will',-1],['coins',70]]],['离开','什么也不发生。',[]]]],
- ['写了一半的契约','桌上摊着一张契约，只差落款。墨还是湿的。',[['替它落款','获得一张传说卡，全队失去30%生命。',[['card','传说'],['hurt',.3]]],['烧掉','获得100点经验。',[['xp',100]]]]],
- ['迷路的新娘','红盖头下面传来哭声。她问你，去婚礼的路怎么走。',[['带她一程','获得一张珍藏卡。下一场战斗敌人攻击提高15%。',[['card','珍藏'],['curse']]],['指错路','获得50冥钱。',[['coins',50]]],['掀开盖头','获得一件法器，失去2分命灯。',[['relic'],['will',-2]]]]]
+ ['当铺','柜台很高，看不见掌柜的脸，只伸出一只手。',[['当掉一张牌','失去牌组最后一张牌，获得50冥钱。',[['losecard'],['coins',50]]],['押上命灯','获得70冥钱。下一场战斗开局我方命灯先熄10%。',[['dim',.1],['coins',70]]],['离开','什么也不发生。',[]]]],
+ ['写了一半的契约','桌上摊着一张契约，只差落款。墨还是湿的。',[['替它落款','获得一张传说卡。下一场战斗开局全队先失去30%生命。',[['card','传说'],['wound',.3]]],['烧掉','获得100点经验。',[['xp',100]]]]],
+ ['迷路的新娘','红盖头下面传来哭声。她问你，去婚礼的路怎么走。',[['带她一程','获得一张珍藏卡。下一场战斗敌人攻击提高15%。',[['card','珍藏'],['curse']]],['指错路','获得50冥钱。',[['coins',50]]],['掀开盖头','获得一件法器。下一场战斗开局我方命灯先熄20%。',[['relic'],['dim',.2]]]]]
 ];
 ML.arcs.forEach((a,i)=>{
  const p=a.id,fork=p+'-fork',camp=p+'-camp',trial=p+'-trial',shop=p+'-shop',omen=p+'-omen';if(!NODES[fork]||NODES[shop])return;
@@ -707,13 +707,14 @@ function xActMult(id){return 1+(Math.max(1,NODES[id]?.act||1)-1)*.06}
 function xPriceOf(v,id){return Math.round(v*xActMult(id)*(xHasRelic('coinstring')?.8:1))}
 function xOmenAmount(v,id){return Math.round(v*xActMult(id)/5)*5}
 function xShopStock(id){const all=state.shopStock||={};if(all[id])return all[id];const seed=xHash(id)+xHash(state.name||''),ids=Object.keys(SKILLS).filter(k=>SKILLS[k].ops),cards=[];for(let i=0;cards.length<4&&i<40;i++){const k=ids[(seed+i*13)%ids.length];if(!cards.includes(k))cards.push(k)}return all[id]={cards,relics:xRelicOffer(2,seed),sold:[]}}
-function xShop(id=state.current){if(NODES[id]?.type!=='shop')return null;const s=xShopStock(id),items=[...s.cards.map(k=>({kind:'card',key:k,name:SKILLS[k].name,desc:SKILLS[k].desc,rarity:SKILLS[k].rarity,price:xPriceOf(X_PRICE[SKILLS[k].rarity]||30,id)})),...s.relics.map(k=>({kind:'relic',key:k,name:X_RELICS[k][0],desc:X_RELICS[k][1],price:xPriceOf(90*(1+.2*(state.relics?.length||0)),id)})),{kind:'remove',key:'remove',name:'烧掉一张牌',desc:'从牌组里移除你选的一张牌。',price:xPriceOf(40,id)},{kind:'heal',key:'heal',name:'一碗热汤',desc:'全队恢复全部生命。',price:xPriceOf(35,id)}];
+function xShop(id=state.current){if(NODES[id]?.type!=='shop')return null;const s=xShopStock(id),items=[...s.cards.map(k=>({kind:'card',key:k,name:SKILLS[k].name,desc:SKILLS[k].desc,rarity:SKILLS[k].rarity,price:xPriceOf(X_PRICE[SKILLS[k].rarity]||30,id)})),...s.relics.map(k=>({kind:'relic',key:k,name:X_RELICS[k][0],desc:X_RELICS[k][1],price:xPriceOf(90*(1+.2*(state.relics?.length||0)),id)})),{kind:'remove',key:'remove',name:'烧掉一张牌',desc:'从牌组里移除你选的一张牌。',price:xPriceOf(40,id)},{kind:'incense',key:'incense',name:'一炷好香',desc:'下一场战斗开局多1点鬼气（与香炉上的香不叠加）。',price:xPriceOf(35,id)}];
  return {id,coins:state.coins||0,items:items.map((it,i)=>({...it,index:i,sold:s.sold.includes(it.kind+':'+it.key)||(it.kind==='relic'&&xHasRelic(it.key))}))}}
 function xBuy(id,index,deckIndex){const shop=xShop(id),it=shop?.items[index];if(!it||it.sold||state.available.indexOf(id)<0)return false;if((state.coins||0)<it.price){globalThis.GC_BRIDGE.notify('冥钱不够','warn');return false}
  if(it.kind==='card'){if(state.deck.length>=25){globalThis.GC_BRIDGE.notify('牌组已满，先烧掉一张牌','warn');return false}state.deck.push(it.key)}
  else if(it.kind==='relic'){if(!xGainRelic(it.key))return false}
  else if(it.kind==='remove'){if(!Number.isInteger(deckIndex)||deckIndex<0||deckIndex>=state.deck.length||state.deck.length<=1)return false;state.deck.splice(deckIndex,1)}
- else fullHeal();
+ else if(it.kind==='incense'){if(state.xIncense){globalThis.GC_BRIDGE.notify('香已经点上了，下一场战斗生效','warn');return false}state.xIncense=true}
+ else return false;
  state.coins-=it.price;state.shopStock[id].sold.push(it.kind+':'+it.key);save();return true}
 function xLeaveNode(id=state.current){if(!['shop','omen'].includes(NODES[id]?.type)||!state.available.includes(id))return false;completeNode(id);renderMap();return true}
 function xOmen(id=state.current){const n=NODES[id];if(n?.type!=='omen')return null;const [title,text,opts]=X_OMENS[n.omen];return {id,title,text,options:opts.map(([label,desc,ops],i)=>({index:i,label,desc:desc.replace(/(\d+)冥钱/g,(m,v)=>xOmenAmount(+v,id)+'冥钱'),disabled:ops.some(o=>o[0]==='pay'&&(state.coins||0)<xOmenAmount(o[1],id))||ops.some(o=>o[0]==='losecard')&&state.deck.length<=1}))}}
@@ -722,12 +723,16 @@ function xChooseOmen(id,i){const o=xOmen(id),opt=o?.options[i];if(!opt||opt.disa
   if(k==='coins')state.coins=(state.coins||0)+xOmenAmount(v,id);else if(k==='pay')state.coins-=xOmenAmount(v,id);else if(k==='xp')state.xp+=v;else if(k==='will')state.will=Math.max(1,Math.min(10,state.will+v));
   else if(k==='hurt'){for(const s of state.spirits)if(!s.dead)s.hp=Math.max(1,+(s.hp-s.maxHp*v).toFixed(1))}
   else if(k==='mend'){for(const s of state.spirits)if(!s.dead)s.hp=Math.min(s.maxHp,s.hp+s.maxHp*v)}
-  else if(k==='heal')fullHeal();else if(k==='incense')state.xIncense=true;else if(k==='curse')state.xCurse=true;else if(k==='losecard')got.push('失去【'+SKILLS[state.deck.pop()]?.name+'】');
+  else if(k==='wound')state.xWound=Math.min(.5,(state.xWound||0)+v);else if(k==='dim')state.xDim=Math.min(.4,(state.xDim||0)+v);else if(k==='heal')fullHeal();else if(k==='incense')state.xIncense=true;else if(k==='curse')state.xCurse=true;else if(k==='losecard')got.push('失去【'+SKILLS[state.deck.pop()]?.name+'】');
   else if(k==='relic'){const r=xRelicOffer(1,xHash(id)+(state.relics?.length||0))[0];if(r&&xGainRelic(r))got.push('法器【'+X_RELICS[r][0]+'】')}
   else if(k==='card'){const pool=Object.keys(SKILLS).filter(c=>SKILLS[c].ops&&SKILLS[c].rarity===v),c=pool[(xHash(id)+state.deck.length)%pool.length];if(state.deck.length<25){state.deck.push(c);got.push('卡牌【'+SKILLS[c].name+'】')}else got.push('牌组已满，卡牌没能带走')}}
  state.log.unshift(`异兆【${o.title}】：${label}`);completeNode(id);save();return {label,text:desc,got}}
 const xPrevSetup5=xSetupBattle;
-xSetupBattle=function(b){xPrevSetup5(b);if(state.xCurse&&b.mainline&&!b.testMode){state.xCurse=false;for(const e of b.enemies){e.atk=+(e.atk*1.15).toFixed(1);e.baseAtk=e.atk}b.log.unshift('异兆：敌人攻击提高15%')}};
+xSetupBattle=function(b){xPrevSetup5(b);if(state.xCurse&&b.mainline&&!b.testMode){state.xCurse=false;for(const e of b.enemies){e.atk=+(e.atk*1.15).toFixed(1);e.baseAtk=e.atk}b.log.unshift('异兆：敌人攻击提高15%')}
+ // 异兆的代价留到下一场战斗开局才结算，免费的全队恢复抹不掉它
+ if(b.mainline&&!b.testMode&&(state.xWound||state.xDim)){const w=state.xWound||0,d=state.xDim||0;state.xWound=0;state.xDim=0;
+  if(w){for(const s of state.spirits)if(!s.dead)s.hp=Math.max(1,+(s.hp-s.maxHp*w).toFixed(1));b.log.unshift(`异兆：全队先失去${Math.round(w*100)}%生命`)}
+  if(d){b.will=Math.max(1,b.will-b.maxWill*d);b.log.unshift(`异兆：我方命灯先熄${Math.round(d*100)}%`)}}};
 Object.assign(globalThis.GC_X,{OMENS:X_OMENS,omenAmount:xOmenAmount,priceMult:xActMult,shop:xShop,buy:xBuy,leaveNode:xLeaveNode,omen:xOmen,chooseOmen:xChooseOmen});
 
 // ---------- 局外解锁：开局馈赠 ----------

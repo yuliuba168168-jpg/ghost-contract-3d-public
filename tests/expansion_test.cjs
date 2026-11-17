@@ -137,9 +137,12 @@ async function fresh(){
   for(const [op,v] of ops){if(op==='coins')coins+=X.omenAmount(v,node);if(op==='pay')coins-=X.omenAmount(v,node);if(op==='card')deck++;if(op==='losecard')deck--;if(op==='relic')relics++;
    if(op==='xp')assert.equal(ps.xp,v,`omen ${oi}/${k} xp`);if(op==='will')assert.equal(ps.will,Math.max(1,Math.min(10,5+v)),`omen ${oi}/${k} will`);
    if(op==='heal')assert.ok(ps.spirits.every(s=>s.hp===s.maxHp),`omen ${oi}/${k} heal`);if(op==='hurt')assert.ok(ps.spirits.every(s=>s.hp===Math.max(1,+(s.maxHp*.5-s.maxHp*v).toFixed(1))),`omen ${oi}/${k} hurt`);
-   if(op==='mend')assert.ok(ps.spirits.every(s=>s.hp===Math.min(s.maxHp,s.maxHp*.5+s.maxHp*v)),`omen ${oi}/${k} mend`);if(op==='incense')assert.equal(ps.xIncense,true);if(op==='curse')assert.equal(ps.xCurse,true)}
+   if(op==='mend')assert.ok(ps.spirits.every(s=>s.hp===Math.min(s.maxHp,s.maxHp*.5+s.maxHp*v)),`omen ${oi}/${k} mend`);if(op==='incense')assert.equal(ps.xIncense,true);if(op==='wound')assert.equal(ps.xWound,v,`omen ${oi}/${k} wound`);if(op==='dim')assert.equal(ps.xDim,v,`omen ${oi}/${k} dim`);if(op==='curse')assert.equal(ps.xCurse,true)}
   assert.equal(ps.coins,coins,`omen ${oi}/${k} coins`);assert.equal(ps.deck.length,deck,`omen ${oi}/${k} deck`);assert.equal((ps.relics||[]).length,relics,`omen ${oi}/${k} relics`);
  }
+ // 异兆的代价在下一场战斗开局才结算：免费的全队恢复抹不掉
+ A.newSlot(3,'normal','wound','easy');ps=A.getState();ctx.grantContract(A.ML.arcs[0].contracts[0]);X.choosePact('plain');ps.xWound=.2;ps.xDim=.1;A.fullHeal();
+ ctx.startBattle(A.ML.arcs[0].id+'-battle');{const wb=ps.battle,live=ps.spirits.filter(s=>!s.dead);assert.ok(live.length&&live.every(s=>Math.abs(s.hp-s.maxHp*.8)<.11),'wound applied at battle start');assert.ok(Math.abs(wb.will-wb.maxWill*.9)<1e-6,'dim applied at battle start');assert.ok(!ps.xWound&&!ps.xDim,'wound/dim consumed')}
  // 开局馈赠
  delete store['gc3d-stats-v1'];assert.ok(X.boons().every(o=>!o.unlocked),'boons locked on a fresh profile');assert.equal(X.setBoon('coins'),false);
  store['gc3d-stats-v1']=JSON.stringify({wins:10,maxAct:10,maxWave:5});assert.deepEqual([...X.boons()].filter(o=>o.unlocked).map(o=>o.key).join(),'coins,relic,xp');

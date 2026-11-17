@@ -25,7 +25,7 @@ function shop(st, id, stat) {
   const hurt = st.spirits.some(s => s.hp / s.maxHp < .6);
   for (let guard = 0; guard < 8; guard++) {
     const items = GX.shop(id).items.filter(i => !i.sold && i.price <= (st.coins || 0)); if (!items.length) break;
-    const want = items.find(i => i.kind === 'relic') || (hurt && items.find(i => i.kind === 'heal')) || (st.deck.length < 25 && items.filter(i => i.kind === 'card').sort((a, b) => b.price - a.price)[0]);
+    const want = items.find(i => i.kind === 'relic') || (st.deck.length < 25 && items.filter(i => i.kind === 'card').sort((a, b) => b.price - a.price)[0]);
     if (!want || !GX.buy(id, want.index)) break; stat.bought[want.kind] = (stat.bought[want.kind] || 0) + 1;
   }
   GX.leaveNode(id);
