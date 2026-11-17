@@ -102,8 +102,8 @@ export function createHandView(ctx) {
       const grow = it.hover * (lowered ? .25 : 1), lift = Math.max(grow, sel * .5);
       let x = (i - mid) * spacing;
       if (hi >= 0 && i !== hi && !lowered) x += Math.sign(i - hi) * m.s * .3 * Math.exp(-Math.abs(i - hi) * .5 + .5) * .6;
-      const baseY = -m.halfH + m.cardH * .34 - Math.pow(i - mid, 2) * .006 * m.s - lowered * m.cardH * .5 - (visible ? 0 : m.cardH * 1.4);
-      const y = baseY + lift * m.cardH * .41;
+      const baseY = -m.halfH + m.cardH * .43 - Math.pow(i - mid, 2) * .006 * m.s - lowered * m.cardH * .5 - (visible ? 0 : m.cardH * 1.4);
+      const y = baseY + lift * m.cardH * .33;
       const z = -D + i * .006 + grow * .22 + sel * .03;
       const scale = m.s * (1 + grow * .42 + sel * .06);
       const rz = -(i - mid) * .05 * (1 - grow), rx = -.14 * (1 - grow);
