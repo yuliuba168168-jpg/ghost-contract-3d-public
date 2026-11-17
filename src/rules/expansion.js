@@ -526,3 +526,34 @@ xSetupBattle=function(b){
  if(ids.length){b.qi+=ids.length;b.will=Math.max(1,b.will-b.maxWill*.06*ids.length);b.log.unshift(`灯契：开局多${ids.length}点鬼气，命灯先熄${6*ids.length}%`)}
 };
 Object.assign(globalThis.GC_X,{PACTS:X_PACTS,pactOf:xPactOf,pendingPact:xPendingPact,choosePact:xChoosePact});
+
+// ---------- 无尽词缀、每日挑战、成绩 ----------
+const X_AFFIXES={
+ fierce:['凶戾','敌方攻击提高20%。'],thick:['厚皮','敌方生命提高30%。'],dim:['残灯','我方命灯开局先熄15%。'],
+ thin:['气薄','开局鬼气减少1点。'],armored:['铁壁','全部敌人受到的伤害降低15%。'],storm:['雷泽','场地固定为雷泽。'],
+ haste:['先手','全部敌人第一回合多行动一次。'],hollow:['空手','起手少1张牌。']
+};
+const X_AFFIX_KEYS=Object.keys(X_AFFIXES),X_RECORD_KEY='gc3d-records-v1';
+function xAffixes(wave=state.wave||1,seed=state.dailySeed||0){const n=Math.min(X_AFFIX_KEYS.length,(state.daily?3:0)+Math.floor((wave-1)/3)),out=[];for(let i=0;out.length<n&&i<40;i++){const k=X_AFFIX_KEYS[(seed+i*3+Math.floor(i/8))%X_AFFIX_KEYS.length];if(!out.includes(k))out.push(k)}return out.map(k=>({key:k,name:X_AFFIXES[k][0],desc:X_AFFIXES[k][1]}))}
+function xRecords(){try{const v=JSON.parse(localStorage.getItem(X_RECORD_KEY)||'null');if(v&&Array.isArray(v.endless)&&v.daily)return v}catch{}return {endless:[],daily:{}}}
+function xRecord(wave){
+ const r=xRecords(),date=new Date().toISOString().slice(0,10),entry={wave,date,difficulty:difficultyOf(),name:state.name||''};
+ if(state.daily)r.daily[state.daily]=Math.max(r.daily[state.daily]||0,wave);else{r.endless.push(entry);r.endless.sort((a,c)=>c.wave-a.wave);r.endless=r.endless.slice(0,10)}
+ try{localStorage.setItem(X_RECORD_KEY,JSON.stringify(r))}catch{}return r}
+function xToday(){return new Date().toISOString().slice(0,10)}
+function xDailyInfo(date=xToday()){const seed=xHash(date),ids=GD.spirits.map(s=>s.id),squad=[],deck=[],pool=Object.keys(SKILLS).filter(id=>SKILLS[id].ops);for(let i=0;squad.length<6;i++){const id=ids[(seed+i*7)%ids.length];if(!squad.includes(id))squad.push(id)}for(let i=0;deck.length<12;i++)deck.push(pool[(seed+i*11)%pool.length]);
+ const save0=state.daily,seed0=state.dailySeed;state.daily=date;state.dailySeed=seed;const affixes=xAffixes(1,seed);state.daily=save0;state.dailySeed=seed0;
+ return {date,seed,squad,deck,affixes,best:xRecords().daily[date]||0}}
+function xStartDaily(slot,difficulty){const d=xDailyInfo();if(!newSlot(slot,'endless','每日 · '+d.date,difficulty))return false;state.daily=d.date;state.dailySeed=d.seed;state.squad=d.squad;state.deck=[...d.deck];ensureEndlessNode();save();return true}
+const xPrevSetup2=xSetupBattle;
+xSetupBattle=function(b){
+ xPrevSetup2(b);if(b.nodeId!=='endless-arena')return;
+ const list=xAffixes();b.affixes=list.map(a=>a.key);if(!list.length)return;const has=k=>b.affixes.includes(k);
+ for(const e of b.enemies){if(has('fierce')){e.atk=+(e.atk*1.2).toFixed(1);e.baseAtk=e.atk}if(has('thick')){e.maxHp=Math.round(e.maxHp*1.3);e.hp=e.maxHp}if(has('armored'))addEffect(e,'xAffixArmor','铁壁',null,{reduction:.15});if(has('haste'))e.nextExtra=(e.nextExtra||0)+1}
+ if(has('dim'))b.will=Math.max(1,b.will-b.maxWill*.15);if(has('thin'))b.qi=Math.max(1,b.qi-1);if(has('storm'))b.field='thunder';
+ if(has('hollow')){const i=b.hand.findIndex(h=>typeof h==='string'&&SKILLS[h]);if(i>=0)b.draw.push(...b.hand.splice(i,1))}
+ b.log.unshift('词缀：'+list.map(a=>a.name).join('、'));
+};
+const xPrevLose=loseBattle;
+loseBattle=function(){const endless=state.mode==='endless'&&state.battle&&!state.battle.testMode,wave=state.wave;const r=xPrevLose();if(endless)xRecord(Math.max(0,(wave||1)-1));return r};
+Object.assign(globalThis.GC_X,{AFFIXES:X_AFFIXES,affixes:xAffixes,records:xRecords,dailyInfo:xDailyInfo,startDaily:xStartDaily});
