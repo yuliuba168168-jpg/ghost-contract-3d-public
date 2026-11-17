@@ -197,3 +197,23 @@ screen 由 `GC_BRIDGE.ui(screen, params)` 发出；`close` 表示关闭顶层覆
 15. **`startTestBattle` 的 allies `pos` 字段被忽略**：测试鬼灵一律从手牌开始（`units` 全空）。
 16. **卡牌 `revive` 抽牌数含 `b.revivedCount` 加成**，`card:play` 后若属 revive/relic/valhalla 还会再发一次 `draw` 事件（含本次抽牌差值，最小 1）。
 17. **`updateHud`（mainline 覆盖）把非战斗 will 夹回 ≤10**：无尽受伤续存只影响鬼灵 hp，玩家生命每波回满。
+
+## 扩展层 `globalThis.GC_X`（rules/expansion.js）
+
+纯数据表：`ARCH` `KEYWORDS` `TOKENS` `BEHAVIORS` `FIELDS` `WARD` `PHASES` `BONDS` `PACTS` `AFFIXES` `ACH` `RITES`。
+
+| 调用 | 返回 / 作用 |
+|---|---|
+| `intents(b?)` | `[{uid, lane, action:'attack'|'lamp'|'skip', targetLane, damage, times, cast:{name}|null, castIn}]`，纯查询 |
+| `keywordsOf(unit)` | `[{key,name,desc}]` |
+| `field(b?)` / `wardRule(b?)` | `{id,name,desc}` / `{id,name,desc,met}` 或 null |
+| `bonds(b?)` | 当前在场的羁绊 `[{key,name,strike,kind,desc,cost,used,ready,uids}]` |
+| `bondStrike(key)` | async，发动合击；失败返回 false |
+| `pendingPact()` / `choosePact(key)` / `pactOf(id)` | 待立条款 `{id,name,options}`；立下；查询 |
+| `affixes(wave?)` | 无尽 / 每日当前词缀 `[{key,name,desc}]` |
+| `dailyInfo(date?)` / `startDaily(slot, difficulty)` | 每日挑战内容；在指定存档位开局 |
+| `records()` | `{endless:[{wave,date,difficulty,name}], daily:{日期:波数}}` |
+| `stats()` / `achievements()` | 累计战绩；`[{key,name,desc,done}]` |
+| `touchProp('bell'|'censer'|'urn')` | 非战斗时触碰道具，返回 `{name,text,rite,reward}` 或 null |
+
+新增 fx 事件：`field:change {id,name,desc,by}`、`boss:phase {uid,lane,name,phase,desc}`、`keyword {kind:'death',uid,side,lane,name}`、`shadow {event,turn}`（event ∈ start/turn/phase/rule）、`bond:strike {key,name,strike,kind,a,b}`（awaited）。

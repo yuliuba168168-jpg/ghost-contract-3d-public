@@ -73,3 +73,12 @@ py tools\build_assets.py                # 重建 assets/gen（只读接手包）
 - 全屏技能演出：`fx/cinematic.js`（叠加场景，`core/renderer.js` 的 OverlayPass 画在 GTAO/景深之后、泛光/调色之前；演出期间 `R.hud=false` 隐藏 HUD 标签层）+ `fx/skill-tier.js`（分级表，逐个技能由用户定，勿改）。四级：1 快闪窄带 / 2 斜切画幅 / 3 全幕 / 4 七个绝技专属场面。模式 `localStorage['gc3d-cine-mode']`=full|smart|table，设置面板、战斗右上角「演出」按钮、键盘 V 均可切换；点击/空格/回车跳过。director 在 skill:cast / card:play / playerSkill / boss:cast 里 `await ctx.cine.play(req)`（1 级不阻塞，2 级播到 60% 交棒，3/4 级播完）。验收截图 `node tools\cine.cjs`（用 `cine.freeze/seek` 定格取帧）；`GC_CINE=table node tools\skills_run.cjs` 可跑仅牌桌模式。
 - 路线图相机 `map` 为斜俯视；3D HUD 标签只在战斗界面显示（`screens.setBase` 设置 `R.hud`）。
 - 4 级绝技中 鬼主权杖/太阴之力/轮回/鬼门关降临/女王领域/半完全火焰规律 是 `fx/cine-scenes.js` 里的独立 THREE.Scene（实体几何 + PBR 程序贴图 + 灯光 + 粒子），演出时 `R.useScene(scene, camera)` 把 RenderPass/GTAO/景深临时切过去（`R.useScene(null)` 恢复）；绝望仍是对牌桌画面的叠加处理。3 级整屏另经 `R.distort`（DistortShader：热浪/波纹/碎镜/时间波纹/洇开）做屏幕空间扭曲。竖排标题按 4 字一列分栏，立绘 3/4 级优先用 `views` 抠图。验收：`node tools\cine.cjs`（含真实施放 3 组）。
+
+## 扩展层（2026-11-17，用户要求的内容扩充，规则有意改动）
+
+- `src/rules/expansion.js` 在 `playability` 之后、`facade` 之前加载（`index.html` 与全部测试的加载表都已加入）。它只通过包装（重新赋值全局函数）改变行为，不修改前面的文件。对外接口是 `globalThis.GC_X`，详见 `docs/engine-api.md` 的「扩展层」一节。
+- 内容：72 张新卡（共 86 张，数据驱动 `ops` 解释器）、7 个关键词、6 种召唤物、12 种杂兵行为、8 种场地、首领二阶段 6 种、破障条件 6 种、敌方意图查询、11 对羁绊合击、契约条款 4 种、无尽词缀 8 条、每日挑战、成绩榜、战绩与 33 个成就、桌面道具互动与 3 个仪式。
+- 表现层：`src/app/battle/x-hud.js`（敌方意图条、场地徽记、合击按钮、黑影台词、二阶段/场地/合击/亡语演出，经 `ctx.xfx` 接到 director）；`ui/screens.js` 新增 `pact` `daily` `records` `achievements`；`battle-input.js` 里香炉/魂瓮/招魂铃在路线图界面可点。
+- 新增本机存储键：`gc3d-records-v1`（成绩）、`gc3d-stats-v1`（战绩与成就）。存档里新增字段 `pacts` `pendingPacts` `xProps` `xIncense` `daily` `dailySeed`，旧存档缺这些字段时按空处理。
+- 测试：`node tests\expansion_test.cjs`（第 8 个规则测试）。平衡测试现在的期望输出是 `1840 seeded ... worst 8 rounds`。
+- 用户明确说过：平衡、稳定性、发布形态暂不处理。
