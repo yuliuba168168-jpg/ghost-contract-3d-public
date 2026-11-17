@@ -3,7 +3,7 @@
 // 实测（无显卡机器）每帧约 100ms → 65ms。只在极简档启用，其余画质完全不受影响。
 import * as THREE from 'three';
 
-const FILL = 1.5;
+const FILL = 1;
 const origin = new WeakMap();   // 简化材质 → 原标准材质（切回其他画质时还原）
 const cache = new WeakMap();   // 标准材质 → 简化材质（保持材质共享关系）
 const PROXY = ['opacity', 'transparent', 'visible', 'emissiveIntensity', 'depthWrite', 'depthTest', 'alphaTest', 'side', 'blending', 'colorWrite'];
@@ -25,7 +25,7 @@ const lights = [], filled = new WeakSet();
 let sweepAt = 0;
 export function simplifyScene(scene, frame) {
   // Lambert 没有环境图反射光，画面会明显变暗：每个场景补一盏暖色环境光
-  if (!filled.has(scene)) { filled.add(scene); const fill = new THREE.AmbientLight('#ffdcb4', FILL); fill.name = 'plain-fill'; scene.add(fill); }
+  if (!filled.has(scene)) { filled.add(scene); const fill = new THREE.AmbientLight('#ffc890', FILL); fill.name = 'plain-fill'; scene.add(fill); }
   if (frame - sweepAt >= 45 || !sweepAt) {
     sweepAt = frame || 1; lights.length = 0;
     scene.traverse(o => {

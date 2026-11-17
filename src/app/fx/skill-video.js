@@ -49,7 +49,8 @@ export function createSkillVideo(ctx) {
       const cap = document.createElement('b'); cap.textContent = req.name || '';
       const who = document.createElement('em'); who.textContent = req.kind === 'player' ? '御鬼者' : req.portrait?.name || '';
       const tip = document.createElement('small'); tip.textContent = `素材空位 · assets/video/${key}.mp4 · 点击跳过`;
-      box.append(who, cap, tip); document.body.append(box); el = box; requestAnimationFrame(() => box.classList.add('on'));
+      const stamp = document.createElement('i'); stamp.className = 'slot-seal'; stamp.textContent = [...(req.name || '技')][0];
+      box.append(who, cap, stamp, tip); document.body.append(box); el = box; requestAnimationFrame(() => box.classList.add('on'));
       let done = false;
       const finish = () => { if (done) return; done = true; clearTimeout(timer); removeEventListener('keydown', onKey, true); box.remove(); if (el === box) el = null; resolve(true); };
       const onKey = e => { if (e.code === 'Space' || e.code === 'Enter' || e.code === 'Escape') { e.preventDefault(); e.stopPropagation(); finish(); } };

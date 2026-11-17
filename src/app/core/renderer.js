@@ -128,6 +128,7 @@ export function createRenderer(canvas) {
     renderer.shadowMap.autoUpdate = false;
     renderer.shadowMap.type = q.softShadows ? THREE.PCFSoftShadowMap : THREE.PCFShadowMap;
     if (bloom) bloom.enabled = q.bloom;
+    grade.uniforms.uGrain.value = q.plain ? 0 : .05; grade.uniforms.uAberration.value = q.plain ? 0 : .0004;   // 低分辨率下颗粒成块、色差白费采样
     if (gtao) gtao.enabled = !!q.ao;
     if (bokeh) bokeh.enabled = !!q.dof;
     scale = savedScale();

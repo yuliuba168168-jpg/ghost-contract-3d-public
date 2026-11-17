@@ -43,9 +43,11 @@ export function createScreens(ctx) {
   const TU = u => { const k = 'k' + (++thumbSeq); thumbSources.set(k, u); return `<i data-thumb="u:${k}"></i>`; };
   const TS = id => `<i data-thumb="s:${esc(id)}"></i>`;
 
-  function closeSheet() { if (sheetEl) { sheetEl.remove(); sheetEl = null; sheetName = ''; } if (glowEl?.classList.contains('on')) tabooGlow(false); }   // 禁忌红光跟着面板一起收
+  function closeSheet(instant) {
+    document.querySelectorAll('.sheet-veil.out').forEach(e => e.remove());
+    if (sheetEl) { const el = sheetEl; sheetEl = null; sheetName = ''; if (instant || !el.classList.contains('sheet-veil')) el.remove(); else { el.classList.add('out'); el.style.pointerEvents = 'none'; setTimeout(() => el.remove(), 170); } } if (glowEl?.classList.contains('on')) tabooGlow(false); }   // 禁忌红光跟着面板一起收
   function sheet(name, { kicker = '', title = '', aside = '', body = '', foot = [], cls = '', acts = {} }) {
-    closeSheet();
+    closeSheet(true);
     ctx.input?.hideTags?.(); ctx.input?.hideTip?.();
     const veil = document.createElement('div'); veil.className = 'sheet-veil';
     const box = document.createElement('div'); box.className = 'sheet ' + cls;

@@ -479,3 +479,23 @@ body.plain-gfx #stage { image-rendering: pixelated; }
 .map-res b { padding: 0 12px; background: none; border-left: 0; font: 13px/1.4 var(--font-text); color: var(--bone-3); letter-spacing: .1em; text-shadow: 0 1px 3px #000, 0 0 10px rgba(0,0,0,.8); }
 .map-res b + b { border-left: 1px solid var(--line-1); }
 .map-res b i { color: var(--gold); }
+/* #16 图鉴：卡面自己就是框，不再套一层格子 */
+.cell.card:has(.thumb, [data-thumb]) { padding: 0; background: none; border: 0; box-shadow: none; }
+.cell.card:has(.thumb, [data-thumb]) .thumb, .cell.card [data-thumb] { margin: 0; box-shadow: 0 6px 18px rgba(0,0,0,.5); transition: box-shadow var(--t-fast, .14s); }
+.cell.card:has(.thumb, [data-thumb]):hover .thumb, .cell.card:hover [data-thumb] { box-shadow: 0 0 0 1px var(--gold-lo), 0 0 22px rgba(201,162,90,.18), 0 6px 18px rgba(0,0,0,.5); }
+.grid.c6 { gap: 16px; }
+/* #18 面板退出动画 */
+.sheet-veil.out { animation: veilOut 160ms cubic-bezier(.4,0,1,1) both; }
+.sheet-veil.out .sheet { animation: sheetOut 160ms cubic-bezier(.4,0,1,1) both; }
+@keyframes veilOut { to { opacity: 0; } }
+@keyframes sheetOut { to { opacity: 0; transform: translateY(12px) scale(.985); } }
+/* #19 技能视频占位：不是加载失败，是留给演出的幕布 */
+.skill-video.slot { background: radial-gradient(circle at 50% 50%, rgba(184,40,28,.18), transparent 60%), var(--ink-0); }
+.skill-video.slot::before, .skill-video.slot::after { content: ""; position: absolute; left: 50%; width: min(520px, 60vw); height: 1px; background: linear-gradient(90deg, transparent, var(--cinnabar), transparent); transform: translateX(-50%) scaleX(0); animation: slotLine 220ms cubic-bezier(.2,.8,.2,1) .05s forwards; }
+.skill-video.slot::before { top: 22%; } .skill-video.slot::after { bottom: 22%; }
+@keyframes slotLine { to { transform: translateX(-50%) scaleX(1); } }
+/* 极简画质：遮罩更实，把糊掉的 3D 压下去 */
+body.plain-gfx .sheet-veil { background: radial-gradient(circle at 50% 42%, rgba(8,6,5,.6), rgba(4,3,3,.9)); }
+body.plain-gfx.taboo .sheet-veil { background: radial-gradient(circle at 50% 42%, rgba(40,4,2,.5), rgba(24,0,0,.9)); }
+.skill-video.slot .slot-seal { position: absolute; left: 50%; top: calc(50% + 150px); width: 56px; height: 56px; margin-left: -28px; display: grid; place-items: center; font: 700 34px/1 var(--font-display); font-style: normal; color: var(--bone); background: linear-gradient(160deg, var(--cinnabar-hi), var(--cinnabar-lo)); box-shadow: inset 0 0 0 2px rgba(236,228,210,.5), inset 0 0 0 4px var(--cinnabar); transform: rotate(-4deg); }
+.skill-video.slot b { font-family: var(--font-display); }
