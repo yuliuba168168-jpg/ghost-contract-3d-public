@@ -108,7 +108,7 @@ function xControlled(e){return !!(e.effects?.ice||skipEffect(e))}
 function xHasKey(u,k){return !!(u&&!u.dead&&(u.keywords?.includes(k)||u.effects?.['kw-'+k]))}
 function xSpawn(b,kind,lane,from){
  const t=X_TOKENS[kind],ref=from||xSource(b),hp=Math.max(1,Math.round((ref.baseMaxHp||ref.maxHp)*(from?kind:t[1]))),atk=+((ref.baseAtk||ref.atk)*(from?kind:t[2])).toFixed(1);
- const u={uid:`t${Date.now()}-${++xSeq}`,id:from?from.id:'token-'+kind,token:from?'shadow':kind,name:from?from.name+'之影':t[0],type:from?from.type:'召唤物',rankName:ref.rankName,rankIndex:ref.rankIndex,level:ref.level,potential:1,maxHp:hp,hp,baseMaxHp:hp,atk,baseAtk:atk,lane,dead:false,effects:{},cooldowns:{},onceUsed:{},keywords:from?[]:[...t[3]],initialized:true,noSkills:true};
+ const u={uid:`t${Date.now()}-${++xSeq}`,id:from?'token-shadow':'token-'+kind,artId:from?from.id:null,token:from?'shadow':kind,name:from?from.name+'之影':t[0],type:from?from.type:'召唤物',rankName:ref.rankName,rankIndex:ref.rankIndex,level:ref.level,potential:1,maxHp:hp,hp,baseMaxHp:hp,atk,baseAtk:atk,lane,dead:false,effects:{},cooldowns:{},onceUsed:{},keywords:from?[]:[...t[3]],initialized:true,noSkills:true};
  if(!from&&t[4]?.death)u.deathrattle=t[4].death;if(!from&&t[4]?.noAttack)u.noAttack=true;if(!from&&t[4]?.reduction)addEffect(u,'tokenHide','门神',null,{reduction:t[4].reduction});
  b.units[lane]=u;return u}
 function xEmptyLane(b){return [0,1,2,3].find(i=>!b.units[i])}
@@ -205,3 +205,49 @@ async function xPlayCard(index,lane){
 }
 const xPrevPlaySkill=playSkill;
 playSkill=function(index,lane){const b=state.battle,id=b?.hand[index],c=typeof id==='string'?SKILLS[id]:null;return c?.ops?xPlayCard(index,lane):xPrevPlaySkill(index,lane)};
+
+// ---------- 关键词与召唤物 ----------
+function xTaunter(b,lane){const list=xAllies(b).filter(u=>xHasKey(u,'taunt'));return list.sort((x,y)=>Math.abs(x.lane-lane)-Math.abs(y.lane-lane))[0]||null}
+function xFloat(u,side,text,kind='info'){globalThis.GC_BRIDGE.fx('float',{target:{uid:u.uid,side,lane:u.lane},text,kind})}
+function xDeath(b,u){
+ const [k,a]=u.deathrattle,src=xSource(b);b.log.unshift(`${u.name}的亡语发动`);globalThis.GC_BRIDGE.fx('keyword',{kind:'death',uid:u.uid,side:'ally',lane:u.lane,name:u.name});
+ if(k==='draw'){const n=b.hand.length;drawCards(a);globalThis.GC_BRIDGE.fx('draw',{count:b.hand.length-n})}
+ else if(k==='blast')for(const e of xFoes(b)){const dealt=xHit(b,src,e,a,'亡语');xFloat(e,'enemy',dealt?`-${formatNum(dealt)}`:'免疫',dealt?'damage':'info')}
+}
+const xPrevCleanup=cleanup;
+cleanup=function(){
+ const b=state.battle;
+ if(b)for(let i=0;i<4;i++){const u=b.units[i];if(!u?.dead)continue;if(u.deathrattle&&!u.rattled){u.rattled=true;xDeath(b,u)}if(u.token){if(b.domain?.uid===u.uid)b.domain=null;b.units[i]=null}}
+ xPrevCleanup();
+};
+const xPrevReturn=returnUnitToHand;
+returnUnitToHand=function(u){if(u?.token){const b=state.battle;if(b.units[u.lane]===u)b.units[u.lane]=null;return}return xPrevReturn(u)};
+const xPrevEffAtk=effectiveAttack;
+effectiveAttack=function(u){
+ let v=xPrevEffAtk(u);const b=state.battle;
+ if(b&&u&&u.lane>=0&&b.units[u.lane]===u){let n=0;for(const i of [u.lane-1,u.lane+1])if(xHasKey(b.units[i],'aura'))n++;if(n)v*=1+.2*n}
+ return v};
+const xPrevAttack=attackAnim;
+attackAnim=async function(a,t,enemy){
+ const b=state.battle;
+ if(enemy&&b&&!(b.deceit&&b.deceit.turns>0)&&!xHasKey(t,'taunt')){const tk=xTaunter(b,a.lane);if(tk){b.log.unshift(`${tk.name}的嘲讽引走了${a.name}的攻击`);t=tk}}
+ const before=Math.max(0,t.hp)+(t.shield||0);
+ await xPrevAttack(a,t,enemy);
+ const dealt=Math.max(0,before-(Math.max(0,t.hp)+(t.shield||0)));
+ if(b&&state.battle===b&&dealt>0){if(enemy)await xEnemyHitHook(b,a,t,dealt);else{
+  if(xHasKey(a,'pierce')){const v=Math.min(dealt*.3,b.maxEnemyWill*.06);b.enemyWill-=v;b.log.unshift(`${a.name}的穿透灼掉敌方命灯${formatNum(v)}`);xFloat(t,'enemy',`穿透 命灯-${formatNum(v)}`)}
+  if(xHasKey(a,'leech')&&!a.dead){const v=Math.min(a.maxHp-a.hp,dealt*.5);if(v>0){a.hp+=v;xFloat(a,'ally',`吸血 +${formatNum(v)}`,'heal')}}
+  if(xHasKey(a,'flame')&&!t.dead)addEffect(t,'ghostFire','灼刃',2,{sourceUid:a.uid,sourceSnapshot:clone(a),ratio:.2});
+  refreshCombatCards()}}
+};
+async function xEnemyHitHook(b,e,t,dealt){}
+const xPrevHitWill=hitWill;
+hitWill=async function(e){const b=state.battle,tk=b&&!(b.deceit&&b.deceit.turns>0)?xTaunter(b,e.lane):null;if(tk){await attackAnim(e,tk,true);return}return xPrevHitWill(e)};
+const xPrevEndTurn=endTurn;
+endTurn=async function(){
+ if(busy)return;const b=state.battle;
+ if(b)for(const u of xAllies(b)){if(xHasKey(u,'multi'))u.extra=(u.extra||0)+1;if(u.noAttack)addEffect(u,'xIdle','静守',null,{skip:1})}
+ await xPrevEndTurn();
+ if(state.battle===b&&b)xTurnStart(b);
+};
+function xTurnStart(b){}

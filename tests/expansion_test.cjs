@@ -25,5 +25,36 @@ async function fresh(){
   if(GC.busy)failed.push(id+': busy stuck');
  }
  if(failed.length){console.log(failed.join('\n'));process.exit(1)}
- console.log(`expansion_test PASS: ${played}/${ids.length} new cards played`);
+ // ---- 效果断言 ----
+ const play=async(b,id,lane=-1)=>{b.hand.push(id);b.qi=50;await GC.actions.playSkill(b.hand.length-1,lane);assert.ok(!b.hand.includes(id),id+' left hand')};
+ const fxOf=(from,type)=>rec.fx.slice(from).filter(f=>f.type===type);
+ let b=await fresh(),e0=b.enemies[0],e1=b.enemies[1],xuan=b.units[1];
+ // 灼烧：引火符后回合结束有 burn 结算
+ await play(b,'ember',1);assert.ok(e1.effects.ghostFire,'ember burns');let mark=rec.fx.length;await GC.actions.endTurn();
+ assert.ok(fxOf(mark,'status:tick').some(f=>f.payload.kind==='burn'&&f.payload.uid===e1.uid&&f.payload.value>0),'burn ticks');
+ // 嘲讽：纸人把 0 路敌人的直击引到自己身上
+ b=await fresh();e0=b.enemies[0];await play(b,'paperman');const paper=b.units.find(u=>u?.token==='paper');assert.ok(paper,'paper token');
+ mark=rec.fx.length;await GC.actions.endTurn();
+ assert.ok(fxOf(mark,'attack').some(f=>f.payload.attacker.uid===e0.uid&&f.payload.target.uid===paper.uid),'taunt redirects');
+ assert.equal(b.grave.filter(g=>g.token).length,0,'tokens never enter the grave');
+ // 光环 + 静守：引魂灯相邻加攻且自己不攻击
+ b=await fresh();xuan=b.units[1];const base=ctx.effectiveAttack(xuan);await play(b,'lantern');const lamp=b.units.find(u=>u?.token==='lantern');
+ assert.equal(Math.abs(lamp.lane-1),1,'lantern adjacent');assert.ok(Math.abs(ctx.effectiveAttack(xuan)/base-1.2)<1e-9,'aura +20%');
+ mark=rec.fx.length;await GC.actions.endTurn();assert.ok(!fxOf(mark,'attack').some(f=>f.payload.attacker.uid===lamp.uid)&&!fxOf(mark,'direct').some(f=>f.payload.attacker.uid===lamp.uid),'lantern idle');
+ // 连击
+ b=await fresh();xuan=b.units[1];await play(b,'multistrike',1);mark=rec.fx.length;await GC.actions.endTurn();
+ assert.equal(fxOf(mark,'attack').filter(f=>f.payload.attacker.uid===xuan.uid).length,2,'multi attacks twice');
+ // 穿透
+ b=await fresh();await play(b,'piercecharm',1);let will=b.enemyWill;await GC.actions.endTurn();assert.ok(b.enemyWill<will,'pierce burns enemy lamp');
+ // 封条：敌人停止一次行动
+ b=await fresh();e1=b.enemies[1];await play(b,'seal',1);mark=rec.fx.length;await GC.actions.endTurn();
+ assert.ok(fxOf(mark,'unit:skip').some(f=>f.payload.uid===e1.uid),'seal stuns');assert.ok(!fxOf(mark,'attack').some(f=>f.payload.attacker.uid===e1.uid),'stunned enemy idle');
+ // 亡语：纸嫁娘被献出后对敌方全体造成伤害，并抽牌回气
+ b=await fresh();e0=b.enemies[0];await play(b,'bride');const bride=b.units.find(u=>u?.token==='bride');const hp0=e0.hp;
+ await play(b,'puppeteer',bride.lane);assert.ok(e0.hp<hp0,'deathrattle blast');assert.ok(!b.units.includes(bride),'token removed');
+ // 回手
+ b=await fresh();await play(b,'swapstep',1);assert.equal(b.units[1],null);assert.ok(b.hand.some(h=>h?.kind==='ghost'||h==='xuan'),'bounced to hand');
+ // 命灯
+ b=await fresh();will=b.enemyWill;await play(b,'lampstrike');assert.ok(Math.abs(will-b.enemyWill-b.maxEnemyWill*.04)<1e-6,'lamp strike');
+ console.log(`expansion_test PASS: ${played}/${ids.length} new cards played; burn, taunt, aura, multi, pierce, stun, deathrattle, bounce, lamp verified`);
 })().catch(e=>{console.error(e);process.exit(1)});
