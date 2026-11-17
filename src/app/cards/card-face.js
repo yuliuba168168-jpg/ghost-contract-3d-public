@@ -301,6 +301,7 @@ const ICONS = {
   }
 };
 
+const ARCH_COLOR = { burn: '#c2521d', ice: '#3f7fa8', summon: '#7d6a4a', blood: '#8c1c1c', bounce: '#4f7a5a', lamp: '#b8902e', util: '#6a6470' };
 function drawSkillStatic(id) {
   const S = globalThis.GC.SKILLS[id] || { name: id, cost: 0, desc: '', rarity: '普通' }, meta = globalThis.GC.GD.cards.find(c => c.id === id), event = !!meta?.event;
   const [c, g] = makeCanvas(CW, CH), rnd = mulberry(id.length * 97 + id.charCodeAt(0));
@@ -315,7 +316,8 @@ function drawSkillStatic(id) {
   g.textAlign = 'center'; g.textBaseline = 'middle';
   g.fillStyle = ink; fit(g, S.name, CW - 150, 62); g.fillText(S.name, CW / 2 + 22, 98);
   g.fillStyle = rare; g.beginPath(); g.roundRect(CW / 2 - 78, 142, 156, 36, 5); g.fill();
-  g.fillStyle = '#f4efe2'; g.font = `bold 23px ${FONT}`; g.fillText(`${event ? '事件' : '技能'} · ${S.rarity || '普通'}`, CW / 2, 161);
+  g.fillStyle = '#f4efe2'; g.font = `bold 23px ${FONT}`; g.fillText(`${event ? '事件' : S.arch ? globalThis.GC_X.ARCH[S.arch] : '技能'} · ${S.rarity || '普通'}`, CW / 2, 161);
+  if (S.arch) { g.fillStyle = ARCH_COLOR[S.arch] || '#777'; g.fillRect(30, CH - 42, CW - 60, 12); }
   g.save(); g.translate(CW / 2, 346);
   g.strokeStyle = event ? 'rgba(233,226,208,.22)' : 'rgba(90,60,30,.3)'; g.lineWidth = 2; g.beginPath(); g.arc(0, 0, 150, 0, 7); g.stroke(); g.setLineDash([6, 10]); g.beginPath(); g.arc(0, 0, 162, 0, 7); g.stroke(); g.setLineDash([]);
   const icon = id.startsWith('coin') ? () => ICONS.coin(g, { coin: 1, coin25: 3, coin40: 6, coin100: 11 }[id] || 1) : ICONS[id] ? () => ICONS[id](g) : null;
