@@ -30,10 +30,10 @@ const GradeShader = {
       col=mix(col*vec3(.9,.97,1.08),col*vec3(1.08,1.0,.9),smoothstep(.02,.5,l));
       col=mix(col,col*uTint*1.6+uTint*l*.25,uTintAmt);
       float v=smoothstep(.92,.18,d*uVignette);
-      col*=mix(.16,1.,v);
+      col*=mix(.26,1.,v);
       col*=1.-uEdgeDark*smoothstep(.18,.62,d);
       col+=uFlash*uFlashAmt*(.35+.65*smoothstep(.0,.7,d));
-      float g=hash(vUv*vec2(1920.,1080.)+fract(uTime)*311.)-.5;
+      float g=hash(floor(gl_FragCoord.xy)+fract(uTime)*311.)-.5;
       col+=g*uGrain*(.35+l);
       gl_FragColor=vec4(max(col,0.),1.);
       #include <tonemapping_fragment>

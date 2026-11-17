@@ -17,7 +17,7 @@ export function createLights(scene, renderer) {
   key.shadow.camera.near = 3; key.shadow.camera.far = 18;
   group.add(key, key.target);
 
-  const moon = new THREE.SpotLight('#8ea0c0', 300, 40, .5, .9, 1.4);
+  const moon = new THREE.SpotLight('#8ea0c0', 220, 40, .5, .9, 1.4);
   moon.position.set(-15, 9, -7);
   moon.target.position.set(1.5, 0, -2.6);
   group.add(moon, moon.target);
@@ -30,7 +30,7 @@ export function createLights(scene, renderer) {
   const back = new THREE.PointLight('#ffa968', 140, 30, 1.4);
   back.position.set(0, 4.5, -13.5);
   group.add(back);
-  var rimBack = new THREE.PointLight('#8aa0c4', 26, 9, 1.6); rimBack.position.set(0, 2.4, -7.2); group.add(rimBack);
+  var rimBack = new THREE.PointLight('#8aa0c4', 32, 9, 1.6); rimBack.position.set(0, 2.4, -7.2); group.add(rimBack);
   const under = new THREE.PointLight('#b8401f', 1.6, 6, 1.8);
   under.position.set(0, .35, -2.75);
   group.add(under);
@@ -100,7 +100,7 @@ export function createLights(scene, renderer) {
       c.intensity = u.base * u.boost * (1 + n * .13) * state.dim;
       c.position.set(u.x + Math.sin(t * 9 + u.seed) * .02, u.y + n * .015, u.z + Math.cos(t * 7.3 + u.seed) * .02);
     }
-    back.intensity = 140; rimBack.intensity = 26 * state.dim * state.dim; hemi.intensity = .62;
+    back.intensity = 140; rimBack.intensity = 32 * state.dim * state.dim; hemi.intensity = .62;
     key.intensity = state.keyBase * state.dim * (1 + Math.sin(t * 6.1) * .012 + Math.sin(t * 17) * .008);
   }
   return { group, key, moon, hemi, hand, candles, addCandle, update, state, bakeEnvironment };

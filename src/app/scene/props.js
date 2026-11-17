@@ -109,10 +109,10 @@ export function createProps(scene, lights) {
   // 命烛：双方各一支，代替原来的二十盏命灯和数字。蜡烧得越短、火越小，命越薄；剩不到三成时火苗乱抖。具体数值只在鼠标悬停时提示。
   function lifeCandle(side) {
     const ally = side === 'ally';
-    const c = ally ? candle(-3.42, 1.66, 1.2, .15) : candle(2.62, -2.45, 1.0, .12, true, new THREE.MeshStandardMaterial({ color: '#2b1512', roughness: .42 }), '#d8442a');
-    const dish = new THREE.Mesh(new THREE.CylinderGeometry(ally ? .3 : .25, ally ? .24 : .2, .035, 20), ally ? bronze() : darkBronze());
+    const c = ally ? candle(-3.42, 1.66, 1.2, .2) : candle(2.62, -2.45, 1.0, .16, true, new THREE.MeshStandardMaterial({ color: '#7a1810', roughness: .42 }), '#d8442a');
+    const dish = new THREE.Mesh(new THREE.CylinderGeometry(ally ? .36 : .3, ally ? .3 : .25, .04, 24), ally ? bronze() : darkBronze());
     dish.position.y = .018; dish.receiveShadow = true; c.group.add(dish);
-    c.flame.size *= ally ? 1.25 : 1.1;
+    c.flame.size *= ally ? 1.4 : 1.25;
     return { ...c, root: c.group, value: -1, max: -1, ratio: 1, level: 1, base: c.flame.size };
   }
   const life = { ally: lifeCandle('ally'), enemy: lifeCandle('enemy') };

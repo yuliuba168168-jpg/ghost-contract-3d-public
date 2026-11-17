@@ -468,3 +468,14 @@ body.plain-gfx #stage { image-rendering: pixelated; }
 /* 美术审查落地（提案之外的补充） */
 .sheet.wheels.narrow { width: min(820px, 92vw); }
 .story-bar { background: none; border: 0; box-shadow: none; backdrop-filter: none; padding: 0; }
+/* #15 法器三选一：奖励时刻要有分量 */
+.cell.relic-pick { min-height: 190px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 10px; padding: 20px 16px 16px; text-align: center; transition: transform .22s cubic-bezier(.2,.8,.2,1), box-shadow .22s, border-color .22s; }
+.cell.relic-pick .relic-seal { width: 72px; height: 72px; display: grid; place-items: center; font: 700 44px/1 var(--font-display); font-style: normal; color: var(--bone); background: linear-gradient(160deg, var(--cinnabar-hi), var(--cinnabar-lo)); box-shadow: inset 0 0 0 3px rgba(236,228,210,.5), inset 0 0 0 5px var(--cinnabar), 0 6px 18px rgba(0,0,0,.5); transform: rotate(-3deg); }
+.cell.relic-pick b { font: 700 22px/1.2 var(--font-display); letter-spacing: .12em; }
+.cell.relic-pick p { font: 13px/1.7 var(--font-text); color: var(--bone-2); margin: 0; }
+.cell.relic-pick:hover { transform: translateY(-4px); border-color: var(--gold-lo); box-shadow: 0 0 0 1px var(--gold-lo), inset 0 0 0 4px rgba(14,12,10,.9), inset 0 0 0 5px var(--line-2), 0 0 28px rgba(201,162,90,.22); }
+/* 路线图资源：一行「标签 数值」，不要底色和红竖条 */
+.map-res { gap: 0; padding: 6px 4px; }
+.map-res b { padding: 0 12px; background: none; border-left: 0; font: 13px/1.4 var(--font-text); color: var(--bone-3); letter-spacing: .1em; text-shadow: 0 1px 3px #000, 0 0 10px rgba(0,0,0,.8); }
+.map-res b + b { border-left: 1px solid var(--line-1); }
+.map-res b i { color: var(--gold); }

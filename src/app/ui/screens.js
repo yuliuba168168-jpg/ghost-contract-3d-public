@@ -288,7 +288,7 @@ export function createScreens(ctx) {
     },
     relicPick() {
       const list = globalThis.GC_X?.pendingRelic(); if (!list) return;
-      sheet('relicPick', { kicker: '精英战利品', title: '带走一件法器', cls: 'wide', body: `<div class="grid c3">${list.map(o => `<button class="cell card" data-act="pick" data-arg="${o.key}"><b class="goldc">${esc(o.name)}</b><p>${esc(o.desc)}</p></button>`).join('')}</div>`,
+      sheet('relicPick', { kicker: '精英战利品', title: '带走一件法器', cls: 'wide', body: `<div class="grid c3">${list.map(o => `<button class="cell card relic-pick" data-act="pick" data-arg="${o.key}"><i class="relic-seal">${esc([...o.name][0])}</i><b class="goldc">${esc(o.name)}</b><p>${esc(o.desc)}</p></button>`).join('')}</div>`,
         acts: { pick: k => { play('reward'); globalThis.GC_X.chooseRelic(k); closeSheet(); A.renderMap(); } } });
     },
     shop({ id }) {
