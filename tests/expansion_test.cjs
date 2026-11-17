@@ -109,5 +109,22 @@ async function fresh(){
  for(const k of ['bell','censer','urn','bell'])rite=X.touchProp(k);assert.equal(rite.rite,null,'each rite only once');
  ctx.startBattle(A.ML.arcs[0].id+'-battle');assert.ok(A.getState().battle.log.some(l=>l.includes('香火')),'incense grants qi');assert.equal(X.touchProp('bell'),null,'no props in battle');
  assert.ok(X.achievements().find(a=>a.key==='rite1').done);
- console.log(`expansion_test PASS: ${played}/${ids.length} new cards played; ${phased} boss phases, ${seen.field.size} fields, ${seen.ward.size} ward rules, ${seen.beh.size} behaviors, intents, bond strike, pacts, affixes, daily, records, stats, achievements, table rites; burn, taunt, aura, multi, pierce, stun, deathrattle, bounce, lamp verified`);
+ // 法器、冥钱、鬼市、异兆、精英
+ const XN=vm.runInContext('NODES',ctx);
+ A.newSlot(3,'normal','relic','easy');ps=A.getState();ctx.grantContract(A.ML.arcs[0].contracts[0]);X.choosePact('plain');const p0=A.ML.arcs[0].id;
+ assert.equal(X.gainRelic('incense'),true);assert.equal(X.gainRelic('incense'),false,'no duplicate relic');X.gainRelic('paperdoll');assert.equal(X.relics().length,2);
+ ctx.startBattle(p0+'-battle');b=ps.battle;assert.ok(b.log.some(l=>l.includes('法器生效')));assert.ok(b.units[3]?.token,'paperdoll spawns a token');
+ for(const e of b.enemies){e.hp=0;e.dead=true}await ctx.winBattle();assert.ok(ps.coins>0,'coins from win');
+ assert.deepEqual([...XN[p0+'-fork'].next],[p0+'-explore',p0+'-trial',p0+'-shop',p0+'-omen',p0+'-camp']);assert.ok(XN[p0+'-trial'].elite);
+ ps.pendingSettlement=null;ps.battle=null;ps.available=[p0+'-explore',p0+'-trial',p0+'-shop',p0+'-omen',p0+'-camp'];ps.coins=500;
+ const shop=X.shop(p0+'-shop');assert.equal(shop.items.filter(i=>i.kind==='card').length,4);assert.equal(shop.items.filter(i=>i.kind==='relic').length,2);
+ const d0=ps.deck.length;assert.equal(X.buy(p0+'-shop',0),true);assert.equal(ps.deck.length,d0+1);assert.equal(X.buy(p0+'-shop',0),false,'sold out');assert.ok(ps.coins<500);
+ const ri=shop.items.findIndex(i=>i.kind==='relic'),rm=shop.items.findIndex(i=>i.kind==='remove');assert.equal(X.buy(p0+'-shop',ri),true);assert.equal(X.relics().length,3);
+ assert.equal(X.buy(p0+'-shop',rm,0),true);assert.equal(ps.deck.length,d0);ps.coins=0;assert.equal(X.buy(p0+'-shop',1),false,'not enough coins');
+ const om=X.omen(p0+'-omen');assert.ok(om.options.length>=2);const res=X.chooseOmen(p0+'-omen',om.options.length-1);assert.ok(res&&res.label);
+ assert.ok(ps.completed.includes(p0+'-omen'));assert.deepEqual([...ps.available],[p0+'-camp'],'siblings locked after omen');assert.equal(X.chooseOmen(p0+'-omen',0),null);
+ const er=ctx.enemyRoster(p0+'-trial');assert.ok(er[0].name.startsWith('精英'));
+ ps.available=[p0+'-trial'];ps.current=p0+'-trial';ctx.startBattle(p0+'-trial');b=ps.battle;for(const e of b.enemies){e.hp=0;e.dead=true}await ctx.winBattle();
+ const pr=X.pendingRelic();assert.ok(pr&&pr.length===3,'elite win offers 3 relics');assert.equal(X.chooseRelic(pr[0].key),true);assert.equal(X.pendingRelic(),null);assert.equal(X.relics().length,4);
+ console.log(`expansion_test PASS: ${played}/${ids.length} new cards played; ${phased} boss phases, ${seen.field.size} fields, ${seen.ward.size} ward rules, ${seen.beh.size} behaviors, intents, bond strike, pacts, affixes, daily, records, stats, achievements, table rites, relics, shop, omens, elite; burn, taunt, aura, multi, pierce, stun, deathrattle, bounce, lamp verified`);
 })().catch(e=>{console.error(e);process.exit(1)});
