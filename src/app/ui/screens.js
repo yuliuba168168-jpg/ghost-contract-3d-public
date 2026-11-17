@@ -114,7 +114,7 @@ export function createScreens(ctx) {
         slots.append(d);
       });
       const foot = root.querySelector('.title-foot');
-      foot.append(btn('鬼灵图鉴', () => A.renderCodex()), btn('演武台', () => A.renderTestLab()), btn('剧情档案', () => { archiveFrom = 'home'; A.openStoryArchive(A.renderHome); }), btn('每日挑战', () => show('daily')), btn('成绩榜', () => show('records')), btn('操作指南', () => show('guide', { index: 0 })),
+      foot.append(btn('鬼灵图鉴', () => A.renderCodex()), btn('演武台', () => A.renderTestLab()), btn('剧情档案', () => { archiveFrom = 'home'; A.openStoryArchive(A.renderHome); }), btn('每日挑战', () => show('daily')), btn('成就战绩', () => show('achievements')), btn('成绩榜', () => show('records')), btn('操作指南', () => show('guide', { index: 0 })),
         btn('设置', () => A.presentationSettings()), btn('导出存档', exportSlots), btn('导入存档', importSlots));
       baseEl.append(root);
     },
@@ -340,6 +340,15 @@ export function createScreens(ctx) {
           <h3>占用哪个存档位</h3><div class="grid c4">${(GC.slots || []).map((s, i) => `<button class="cell" data-act="go" data-arg="${i}"><b>${'壹贰叁肆'[i]} · ${s ? esc(s.name) : '空白'}</b><span>${s ? '将被替换' : '可用'}</span></button>`).join('')}</div>`,
         foot: [{ label: '返回', fn: () => closeSheet() }],
         acts: { diff: (k, el) => { diff = k; box.querySelectorAll('#ddiffs .cell').forEach(c => c.classList.toggle('on', c === el)); }, go: i => { if (X.startDaily(+i, diff)) { closeSheet(); A.renderMap(); } } } });
+    },
+    achievements() {
+      const X = globalThis.GC_X, s = X.stats(), list = X.achievements(), done = list.filter(a => a.done).length, AR = X.ARCH;
+      const row = (k, v) => `<b>${k}<i>${v}</i></b>`;
+      sheet('achievements', { kicker: '成就与战绩', title: `已达成 ${done} / ${list.length}`, cls: 'wide',
+        body: `<div class="stats">${row('胜', s.wins)}${row('负', s.losses)}${row('击倒', s.kills)}${row('首领', s.bossWins)}${row('最快', s.fastest ? s.fastest + ' 回合' : '—')}${row('无伤亡', s.flawless)}${row('新卡', s.cards)}${row('召唤', s.summons)}${row('合击', s.bonds)}${row('无尽', s.maxWave ? s.maxWave + ' 波' : '—')}</div>
+          <p class="muted">流派　${Object.keys(AR).map(k => `${AR[k]} ${s.arch[k] || 0}`).join('　')}</p>
+          <div class="grid c4 ach">${list.map(a => `<div class="cell ${a.done ? 'on' : 'off'}"><b>${a.done ? '● ' : '○ '}${esc(a.name)}</b><p>${esc(a.desc)}</p></div>`).join('')}</div>`,
+        foot: [{ label: '返回', primary: true, fn: () => closeSheet() }] });
     },
     records() {
       const r = globalThis.GC_X.records(), DF = GC.DIFFICULTIES, days = Object.keys(r.daily).sort().reverse().slice(0, 14);

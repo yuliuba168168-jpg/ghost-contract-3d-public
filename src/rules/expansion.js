@@ -195,7 +195,7 @@ async function xPlayCard(index,lane){
  if(why){globalThis.GC_BRIDGE.notify(why,'warn');return}
  busy=true;const handBefore=b.hand.length,ctx={id,card:c,returned:[]};
  try{
-  soundCue('skill');b.qi-=c.cost;b.hand.splice(index,1);const message=xRun(b,c.ops,target,ctx);b.log.unshift(`${c.name}：${message}`);b.cardsPlayed=(b.cardsPlayed||0)+1;
+  soundCue('skill');b.qi-=c.cost;b.hand.splice(index,1);const message=xRun(b,c.ops,target,ctx);b.log.unshift(`${c.name}：${message}`);b.cardsPlayed=(b.cardsPlayed||0)+1;(b.archPlayed||={})[c.arch||'util']=(b.archPlayed[c.arch||'util']||0)+1;
   selected=null;targetMode=null;noteCast(c.name);save();await animatePendingDeaths();renderBattle();
   await globalThis.GC_BRIDGE.fx('card:play',{cardId:id,handIndex:index,target:target?{uid:target.uid,side:c.target==='enemy'?'enemy':'ally',lane:target.lane}:null,message});
   globalThis.GC_BRIDGE.fx('burst',{uid:target?target.uid:null,side:c.target==='enemy'?'enemy':'ally',lane:target?target.lane:null,glyph:'◈',tone:'#e4cf8a'});
@@ -509,7 +509,7 @@ const X_PACTS={
 };
 function xPactOf(id){return state.pacts?.[id]||null}
 function xPendingPact(){const id=state.pendingPacts?.[0];if(!id)return null;const s=GD.spirits.find(x=>x.id===id);return {id,name:s?.name||id,options:Object.entries(X_PACTS).map(([key,[name,desc,flavor]])=>({key,name,desc,flavor}))}}
-function xChoosePact(key){const id=state.pendingPacts?.[0];if(!id||!X_PACTS[key])return false;(state.pacts||={})[id]=key;state.pendingPacts.shift();state.log.unshift(`与${GD.spirits.find(x=>x.id===id)?.name||id}立下${X_PACTS[key][0]}`);save();return true}
+function xChoosePact(key){const id=state.pendingPacts?.[0];if(!id||!X_PACTS[key])return false;if(key!=='plain')xStatBump({pacts:1});(state.pacts||={})[id]=key;state.pendingPacts.shift();state.log.unshift(`与${GD.spirits.find(x=>x.id===id)?.name||id}立下${X_PACTS[key][0]}`);save();return true}
 const xPrevGrant=grantContract;
 grantContract=function(c){
  const had=new Set(state.spirits.map(s=>s.id));xPrevGrant(c);
@@ -566,3 +566,37 @@ xSetupBattle=function(b){
 const xPrevLose=loseBattle;
 loseBattle=function(){const endless=state.mode==='endless'&&state.battle&&!state.battle.testMode,wave=state.wave;const r=xPrevLose();if(endless)xRecord(Math.max(0,(wave||1)-1));return r};
 Object.assign(globalThis.GC_X,{AFFIXES:X_AFFIXES,affixes:xAffixes,records:xRecords,dailyInfo:xDailyInfo,startDaily:xStartDaily});
+
+// ---------- 战绩与成就 ----------
+const X_STAT_KEY='gc3d-stats-v1';
+function xStats(){let v=null;try{v=JSON.parse(localStorage.getItem(X_STAT_KEY)||'null')}catch{}return Object.assign({wins:0,losses:0,kills:0,cards:0,summons:0,bonds:0,phases:0,flawless:0,fastest:0,bossWins:0,maxAct:0,maxWave:0,pacts:0,lowLamp:0,turns:0,arch:{},diff:{},done:[]},v||{})}
+function xStatSave(s){try{localStorage.setItem(X_STAT_KEY,JSON.stringify(s))}catch{}}
+const X_ACH=[
+ ['first','初次得胜','赢下第一场战斗。',s=>s.wins>=1],['wins10','渐入佳境','累计赢下10场战斗。',s=>s.wins>=10],['wins50','百战之身','累计赢下50场战斗。',s=>s.wins>=50],['wins100','不夜人','累计赢下100场战斗。',s=>s.wins>=100],
+ ['kills100','清道夫','累计击倒100名敌人。',s=>s.kills>=100],['kills500','尸山','累计击倒500名敌人。',s=>s.kills>=500],
+ ['boss10','首领猎手','累计赢下10场首领战。',s=>s.bossWins>=10],['phase5','见过真身','累计把5名首领逼入二阶段后获胜。',s=>s.phases>=5],
+ ['flawless5','全身而退','5场战斗里没有任何鬼灵倒下。',s=>s.flawless>=5],['fast','速战','在3回合内赢下一场战斗。',s=>s.fastest>0&&s.fastest<=3],['lowlamp','残灯逆转','命灯不足两成时赢下一场战斗。',s=>s.lowLamp>=1],
+ ['cards100','符箓成堆','累计打出100张新卡。',s=>s.cards>=100],['summon30','纸人军团','累计召唤30个召唤物。',s=>s.summons>=30],['bond10','同心','累计发动10次合击。',s=>s.bonds>=10],
+ ['burn20','焚天','累计打出20张灼烧卡。',s=>(s.arch.burn||0)>=20],['ice20','霜寒','累计打出20张冰控卡。',s=>(s.arch.ice||0)>=20],['summon20','点兵','累计打出20张召唤卡。',s=>(s.arch.summon||0)>=20],
+ ['blood20','以血还血','累计打出20张献祭卡。',s=>(s.arch.blood||0)>=20],['bounce20','去而复返','累计打出20张回手卡。',s=>(s.arch.bounce||0)>=20],['lamp20','吹灯人','累计打出20张直击卡。',s=>(s.arch.lamp||0)>=20],
+ ['hard','破障者','在困难及以上难度赢下首领战。',s=>(s.diff.hard||0)+(s.diff.nightmare||0)+(s.diff.taboo||0)>=1],['nightmare','噩梦行者','在噩梦及以上难度赢下首领战。',s=>(s.diff.nightmare||0)+(s.diff.taboo||0)>=1],['taboo','禁忌','在禁忌难度赢下首领战。',s=>(s.diff.taboo||0)>=1],
+ ['act10','初窥门径','打完主线第10幕。',s=>s.maxAct>=10],['act28','第一部终','打完主线第28幕。',s=>s.maxAct>=28],['act46','诡异时代','打完主线第46幕。',s=>s.maxAct>=46],
+ ['wave10','无尽十波','无尽模式完成10波。',s=>s.maxWave>=10],['wave20','无尽二十波','无尽模式完成20波。',s=>s.maxWave>=20],
+ ['pact5','白纸黑字','立下5份带代价的契约。',s=>s.pacts>=5],['daily1','今日事','完成一次每日挑战。',(s,r)=>Object.keys(r.daily).length>=1],['daily7','七日约','在7个不同的日子完成每日挑战。',(s,r)=>Object.keys(r.daily).length>=7]
+];
+function xAchievements(s=xStats()){const r=xRecords();return X_ACH.map(([key,name,desc,test])=>({key,name,desc,done:!!test(s,r)}))}
+function xStatCommit(s){const now=xAchievements(s).filter(a=>a.done).map(a=>a.key),fresh=now.filter(k=>!s.done.includes(k));s.done=now;xStatSave(s);for(const k of fresh)globalThis.GC_BRIDGE.notify('成就达成：'+X_ACH.find(a=>a[0]===k)[1],'info');return fresh}
+function xStatBump(delta){const s=xStats();for(const k in delta)s[k]=(s[k]||0)+delta[k];return xStatCommit(s)}
+function xStatBattle(b,won,ctx){
+ if(!b||b.testMode)return;const s=xStats();s.kills+=b.kills||0;s.cards+=b.cardsPlayed||0;s.summons+=b.summoned||0;s.bonds+=b.bondsUsed||0;s.turns+=b.turn||0;for(const k in b.archPlayed||{})s.arch[k]=(s.arch[k]||0)+b.archPlayed[k];
+ if(won){s.wins++;if(!b.grave.some(u=>!u.token))s.flawless++;if(!s.fastest||b.turn<s.fastest)s.fastest=b.turn;if(b.will/b.maxWill<.2)s.lowLamp++;s.phases+=b.enemies.filter(e=>e.phased).length;
+  if(ctx.boss){s.bossWins++;s.diff[ctx.diff]=(s.diff[ctx.diff]||0)+1;if(ctx.act&&b.nodeId!=='endless-arena')s.maxAct=Math.max(s.maxAct,ctx.act)}
+  if(b.nodeId==='endless-arena')s.maxWave=Math.max(s.maxWave,ctx.wave||0)}
+ else s.losses++;
+ xStatCommit(s)}
+function xBattleCtx(b){const n=b&&typeof NODES!=='undefined'?NODES[b.nodeId]:null;return {boss:n?.type==='boss',act:n?.act||0,diff:typeof difficultyOf==='function'?difficultyOf():'easy',wave:state.wave||0}}
+const xPrevWin=winBattle;
+winBattle=async function(){const b=state.battle,ctx=xBattleCtx(b),pending=!!state.pendingSettlement;const r=await xPrevWin();if(b&&!pending&&!b.xCounted){b.xCounted=true;xStatBattle(b,true,ctx)}return r};
+const xPrevLose2=loseBattle;
+loseBattle=function(){const b=state.battle,ctx=xBattleCtx(b);const r=xPrevLose2();if(b&&!b.xCounted){b.xCounted=true;xStatBattle(b,false,ctx)}return r};
+Object.assign(globalThis.GC_X,{ACH:X_ACH,stats:xStats,achievements:xAchievements});

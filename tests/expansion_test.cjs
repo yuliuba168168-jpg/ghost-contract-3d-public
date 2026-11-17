@@ -95,5 +95,11 @@ async function fresh(){
  assert.equal(X.startDaily(2,'easy'),true);ps=A.getState();assert.ok(ps.daily&&ps.mode==='endless');assert.equal(X.affixes().length,3);
  ctx.startBattle('endless-arena');const eb=ps.battle;assert.equal(eb.affixes.length,3);ps.wave=4;assert.equal(X.affixes().length,4,'one more affix every 3 waves');
  ctx.loseBattle();assert.equal(X.records().daily[ps.daily],3,'daily record = waves cleared');
- console.log(`expansion_test PASS: ${played}/${ids.length} new cards played; ${phased} boss phases, ${seen.field.size} fields, ${seen.ward.size} ward rules, ${seen.beh.size} behaviors, intents, bond strike, pacts, affixes, daily, records; burn, taunt, aura, multi, pierce, stun, deathrattle, bounce, lamp verified`);
+ // 战绩与成就
+ let stt=X.stats();assert.ok(stt.losses>=1,'loss counted');assert.equal(X.achievements().length,X.ACH.length);
+ assert.ok(X.achievements().find(a=>a.key==='daily1').done,'daily achievement');
+ A.newSlot(3,'normal','stat','easy');ctx.grantContract(A.ML.arcs[0].contracts[0]);X.choosePact('bone');assert.ok(X.stats().pacts>=1,'pact counted');ctx.startBattle(A.ML.arcs[0].id+'-battle');b=A.getState().battle;
+ const w0=X.stats().wins;for(const e of b.enemies){e.hp=0;e.dead=true}b.kills=b.enemies.length;await ctx.winBattle();
+ stt=X.stats();assert.equal(stt.wins,w0+1,'win counted');assert.ok(stt.kills>=b.enemies.length);assert.ok(stt.done.includes('first'),'first-win achievement');assert.ok(rec.notify.some(n=>String(n).includes('成就达成')),'achievement notice');
+ console.log(`expansion_test PASS: ${played}/${ids.length} new cards played; ${phased} boss phases, ${seen.field.size} fields, ${seen.ward.size} ward rules, ${seen.beh.size} behaviors, intents, bond strike, pacts, affixes, daily, records, stats, achievements; burn, taunt, aura, multi, pierce, stun, deathrattle, bounce, lamp verified`);
 })().catch(e=>{console.error(e);process.exit(1)});
