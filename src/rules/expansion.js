@@ -629,3 +629,48 @@ const xPrevSetup3=xSetupBattle;
 xSetupBattle=function(b){xPrevSetup3(b);if(state.xIncense&&b.mainline&&!b.testMode){state.xIncense=false;b.qi+=1;b.log.unshift('香火：开局多1点鬼气')}};
 X_ACH.push(['rite1','礼数','在牌桌上完成一个仪式。',s=>(s.rites||0)>=1],['rite3','通灵','完成牌桌上的全部三个仪式。',s=>(s.rites||0)>=3]);
 Object.assign(globalThis.GC_X,{RITES:X_RITES,touchProp:xTouchProp,propState:()=>state.xProps||null});
+
+// ---------- 遗物（法器）与冥钱 ----------
+const X_RELICS={
+ incense:['残香','每场战斗开局多1点鬼气。'],oilpot:['灯油壶','每场战斗开局，我方命灯恢复10%。'],paperdoll:['替身纸人','每场战斗开局，在最右的空路召来一个纸人。'],
+ whetstone:['磨刀石','我方鬼灵攻击提高8%。'],amulet:['护身符','我方鬼灵显形时获得最大生命10%的护盾。'],abacus:['鬼算盘','战斗胜利获得的冥钱增加50%。'],
+ tornpage:['残页','每场战斗起手多抽1张牌。'],clapper:['铃舌','每逢第3、6、9…回合，鬼气多1点。'],bonemirror:['照骨镜','首领的攻击降低10%。'],
+ redthread:['红线','羁绊的攻击加成由10%提高到20%。'],salve:['续命膏','战斗胜利后，存活的鬼灵恢复10%生命。'],coinstring:['铜钱串','商店价格降低20%。'],
+ guidelamp:['引路灯','每场战斗开局，敌方命灯先熄8%。'],frostbead:['寒珠','每场战斗开局，第一名随从停止行动1回合。'],ashbag:['骨灰袋','每场战斗开局，全部敌人失去6%生命。']
+};
+function xHasRelic(k){return !!state.relics?.includes(k)}
+function xRelics(){return (state.relics||[]).map(k=>({key:k,name:X_RELICS[k][0],desc:X_RELICS[k][1]}))}
+function xGainRelic(k){if(!X_RELICS[k]||xHasRelic(k))return false;(state.relics||=[]).push(k);state.log.unshift(`获得法器【${X_RELICS[k][0]}】`);xStatBump({relics:1});return true}
+function xRelicOffer(n,seed){const pool=Object.keys(X_RELICS).filter(k=>!xHasRelic(k)),out=[];for(let i=0;out.length<Math.min(n,pool.length)&&i<60;i++){const k=pool[(seed+i*5)%pool.length];if(!out.includes(k))out.push(k)}return out}
+const xPrevSetup4=xSetupBattle;
+xSetupBattle=function(b){
+ xPrevSetup4(b);if(!b.mainline||b.testMode||!state.relics?.length)return;
+ if(xHasRelic('incense'))b.qi+=1;if(xHasRelic('oilpot'))b.will=Math.min(b.maxWill,b.will+b.maxWill*.1);if(xHasRelic('guidelamp'))b.enemyWill-=b.maxEnemyWill*.08;
+ if(xHasRelic('tornpage')&&b.draw.length&&b.hand.length<12)b.hand.push(b.draw.pop());
+ if(xHasRelic('paperdoll')){const lane=[3,2,1,0].find(l=>!b.units[l]);if(lane!=null)xSpawn(b,'paper',lane,null)}
+ const boss=b.enemies.filter(e=>e.bossSkills?.length),minion=b.enemies.find(e=>!e.bossSkills?.length);
+ if(xHasRelic('bonemirror'))for(const e of boss){e.atk=+(e.atk*.9).toFixed(1);e.baseAtk=e.atk}
+ if(xHasRelic('frostbead')&&minion)addEffect(minion,'xStun','寒珠',null,{skip:1});
+ if(xHasRelic('ashbag'))for(const e of b.enemies)e.hp=Math.max(1,+(e.hp*.94).toFixed(1));
+ b.log.unshift('法器生效：'+xRelics().map(r=>r.name).join('、'));
+};
+const xPrevEffAtk5=effectiveAttack;
+effectiveAttack=function(u){let v=xPrevEffAtk5(u);const b=state.battle;if(!b||!b.mainline||!u||u.lane==null||b.units[u.lane]!==u||!state.relics?.length)return v;
+ if(xHasRelic('whetstone'))v*=1.08;if(xHasRelic('redthread')&&!u.token&&X_BONDS.some(d=>(d[0]===u.id||d[1]===u.id)&&xBondPair(b,d)))v*=1.2/1.1;return v};
+const xPrevInit2=initUnit;
+initUnit=function(u){const fresh=!u.initialized,r=xPrevInit2(u);if(fresh&&u.uid&&!u.token&&state.mainline&&state.battle?.mainline&&xHasRelic('amulet'))u.shield=(u.shield||0)+u.maxHp*.1;return r};
+const xPrevTurnStart2=xTurnStart;
+xTurnStart=function(b){xPrevTurnStart2(b);if(b.mainline&&xHasRelic('clapper')&&b.turn%3===0){b.qi+=1;b.log.unshift('铃舌：鬼气多1点')}};
+function xCoinReward(b){const n=typeof NODES!=='undefined'?NODES[b.nodeId]:null;if(!n||b.nodeId==='endless-arena')return 0;let v=10+(n.act||1)*2;if(n.type==='boss')v*=2;else if(n.elite)v*=1.5;if(xHasRelic('abacus'))v*=1.5;return Math.round(v)}
+const xPrevWin2=winBattle;
+winBattle=async function(){
+ const b=state.battle,real=b?.mainline&&!b.testMode&&!state.pendingSettlement,coins=real?xCoinReward(b):0,elite=real&&NODES[b.nodeId]?.elite,seed=real?xHash(b.nodeId)+(state.relics?.length||0):0;
+ const r=await xPrevWin2();if(!real||b.xPaid)return r;b.xPaid=true;
+ if(coins){state.coins=(state.coins||0)+coins;state.log.unshift(`获得冥钱 ${coins}`)}
+ if(xHasRelic('salve'))for(const s of state.spirits)if(!s.dead)s.hp=Math.min(s.maxHp,s.hp+s.maxHp*.1);
+ if(elite){const offer=xRelicOffer(3,seed);if(offer.length)state.pendingRelic=offer}
+ save();return r};
+function xPendingRelic(){return state.pendingRelic?.length?state.pendingRelic.map(k=>({key:k,name:X_RELICS[k][0],desc:X_RELICS[k][1]})):null}
+function xChooseRelic(k){if(!state.pendingRelic?.includes(k))return false;xGainRelic(k);state.pendingRelic=null;save();return true}
+X_ACH.push(['relic5','收藏家','累计获得5件法器。',s=>(s.relics||0)>=5]);
+Object.assign(globalThis.GC_X,{RELICS:X_RELICS,relics:xRelics,hasRelic:xHasRelic,gainRelic:xGainRelic,pendingRelic:xPendingRelic,chooseRelic:xChooseRelic,coins:()=>state.coins||0});
