@@ -134,6 +134,7 @@ export function createScreens(ctx) {
     },
     map({ act }) {
       closeSheet();
+      if (globalThis.GC_X?.pendingPact()) { setTimeout(() => S.pact?.(), 400); }
       const st = GC.state, changed = setBase('map');
       if (changed) ctx.rig.goTo('map', { dur: 1100 });
       mapView.show(act, id => A.enterNode(id));
@@ -237,6 +238,12 @@ export function createScreens(ctx) {
         body: `<div class="split"><div>${TU(spiritUnit(s))}</div><div><div class="stats"><b>原本攻击<i>${num(s.atk)}</i></b><b>生命<i>${num(s.hp)}/${num(s.maxHp)}</i></b><b>潜力<i>${s.potential}</i></b><b>暴击<i>${Math.round(crit.chance * 100)}% ×${crit.multiplier.toFixed(2)}</i></b></div><h3>当前技能</h3><div class="grid c2">${skills.map(nm => { const d = GD.skillDefs[nm] || {}; return `<div class="cell"><b>${esc(nm)}</b><span>${esc(Q.skillDetailMeta(d, nm))}</span><p>${esc(d.desc || '')}</p>${Q.replacementText(nm) ? `<p class="blue">${esc(Q.replacementText(nm))}</p>` : ''}${s.onceUsed?.[nm] ? `<p class="red">已使用${s.skillRestore?.[nm] ? ` · 再经过 ${s.skillRestore[nm]} 次篝火恢复` : ''}</p>` : ''}</div>`; }).join('') || '<p class="muted">当前等级没有技能。</p>'}</div>${next ? `<h3>下一级 · ${esc(next.name)}</h3><p>升级消耗 <b class="goldc">${num(cost)}</b> 经验，升级后回满生命。${nextSkills.length ? `新技能：<b class="blue">${nextSkills.map(esc).join('、')}</b>` : '本级为数值成长。'}</p>` : `<p class="muted">${s.id === 'nannan' ? '囡囡为禁忌，数值固定，不随等级变化。' : '已达到最高等级。'}</p>`}${meta ? `<p class="muted">完整升级链见标题页的鬼灵图鉴。</p>` : ''}</div></div>`,
         foot: [{ label: '返回面板', fn: () => st.battle ? A.openBattleUpgrade() : A.closeContractTrials() }, '-', { label: next ? `提升至 ${next.name} · ${num(cost)} 经验` : '无法再提升', primary: true, disabled: !next || st.xp < cost || !canBattle, fn: () => { if (st.battle) { A.upgradeInBattle(index); show('ownedSpirit', { index }); } else A.upgradeOwnedSpirit(index); } }]
       });
+    },
+    pact() {
+      const p = globalThis.GC_X?.pendingPact(); if (!p) return;
+      sheet('pact', { kicker: '契约条款', title: `与「${p.name}」立下哪一种契约？`, cls: 'wide',
+        body: `<p class="muted">每名鬼灵只立一次，立下后不能更改。</p><div class="grid c4">${p.options.map(o => `<button class="cell card" data-act="pick" data-arg="${o.key}"><b class="goldc">${esc(o.name)}</b><span>${esc(o.desc)}</span><p class="muted">${esc(o.flavor)}</p></button>`).join('')}</div>`,
+        acts: { pick: k => { play('reward'); globalThis.GC_X.choosePact(k); closeSheet(); if (globalThis.GC_X.pendingPact()) setTimeout(() => S.pact(), 250); } } });
     },
     contractTrials() {
       const st = GC.state, cands = GD.spirits.filter(c => !st.spirits.some(s => s.id === c.id) && !['tong', 'xuan'].includes(c.id));
