@@ -134,14 +134,15 @@ export function createScreens(ctx) {
     },
     map({ act }) {
       closeSheet();
-      if (globalThis.GC_X?.pendingPact()) { setTimeout(() => S.pact?.(), 400); }
+      if (globalThis.GC_X?.pendingRelic()) { setTimeout(() => S.relicPick(), 400); }
+      else if (globalThis.GC_X?.pendingPact()) { setTimeout(() => S.pact?.(), 400); }
       const st = GC.state, changed = setBase('map');
       if (changed) ctx.rig.goTo('map', { dur: 1100 });
       mapView.show(act, id => A.enterNode(id));
       const arc = GC.ML.arcs[act - 1], arcIndex = act - 1;
       baseEl.replaceChildren();
       const hud = document.createElement('div'); hud.className = 'map-hud';
-      hud.innerHTML = `<div class="map-head"><small>${esc(st.name || '')} · ${GC.MODE_NAMES[st.mode] || ''} · ${GC.DIFFICULTIES[Q.difficultyOf()].name}</small><b>第${act}幕 · ${esc(arc?.title || '')}</b><span>点击燃起的鬼火前往下一处</span></div><div class="map-res"><b>经验<i>${num(st.xp)}</i></b><b>命灯<i>${num(st.will)}/${num(st.maxWill)}</i></b><b>鬼灵<i>${st.spirits.filter(s => !s.dead).length}/${st.spirits.length}</i></b><b>牌组<i>${st.deck.length}/25</i></b></div><div class="map-bar"></div>`;
+      hud.innerHTML = `<div class="map-head"><small>${esc(st.name || '')} · ${GC.MODE_NAMES[st.mode] || ''} · ${GC.DIFFICULTIES[Q.difficultyOf()].name}</small><b>第${act}幕 · ${esc(arc?.title || '')}</b><span>点击燃起的鬼火前往下一处</span></div><div class="map-res"><b>经验<i>${num(st.xp)}</i></b><b>命灯<i>${num(st.will)}/${num(st.maxWill)}</i></b><b>鬼灵<i>${st.spirits.filter(s => !s.dead).length}/${st.spirits.length}</i></b><b>牌组<i>${st.deck.length}/25</i></b><b>冥钱<i>${st.coins || 0}</i></b><b>法器<i>${st.relics?.length || 0}</i></b></div><div class="map-bar"></div>`;
       hud.querySelector('.map-bar').append(btn('鬼灵与卡牌', () => A.openCollection(), true), btn('修行与恢复', () => A.showTraining(arcIndex)), btn(`难度 · ${GC.DIFFICULTIES[Q.difficultyOf()].name}`, () => show('difficulty')), btn('剧情档案', () => { archiveFrom = 'map'; A.openStoryArchive(A.renderMap); }), btn('旅途记录', () => A.journal()), btn('指南', () => show('guide', { index: 2 })), btn('设置', () => A.presentationSettings()), btn('回到标题', () => A.renderHome()));
       baseEl.append(hud);
     },
@@ -227,7 +228,7 @@ export function createScreens(ctx) {
       const st = GC.state, arm = { i: -1 };
       sheet('collection', {
         kicker: '非战斗管理', title: '鬼灵与卡牌', cls: 'wide', aside: `经验 <b class="goldc">${num(st.xp)}</b>`,
-        body: `<h3>契约鬼灵 ${st.spirits.length}</h3><div class="grid c6">${st.spirits.map((s, i) => `<button class="cell card ${s.dead ? 'dead' : ''}" data-act="spirit" data-arg="${i}">${TU(spiritUnit(s))}<b>${esc(s.name)}</b><span>${esc(s.rankName)}${s.dead ? ' · 阵亡' : ''}</span></button>`).join('') || '<p class="muted">尚未缔结契约。</p>'}</div><h3>牌组 ${st.deck.length}/25</h3><p class="muted">点一张牌两次可将其移除（不返还）。同名牌可以重复。</p>${deckGrid('rm')}${st.supportContracts?.length ? `<h3>支援契约</h3><div class="grid c2">${st.supportContracts.map(c => `<div class="cell"><b>${esc(c.name)}</b><p>${esc(c.text)}</p></div>`).join('')}</div>` : ''}`,
+        body: `<h3>契约鬼灵 ${st.spirits.length}</h3><div class="grid c6">${st.spirits.map((s, i) => `<button class="cell card ${s.dead ? 'dead' : ''}" data-act="spirit" data-arg="${i}">${TU(spiritUnit(s))}<b>${esc(s.name)}</b><span>${esc(s.rankName)}${s.dead ? ' · 阵亡' : ''}</span></button>`).join('') || '<p class="muted">尚未缔结契约。</p>'}</div><h3>牌组 ${st.deck.length}/25</h3><p class="muted">点一张牌两次可将其移除（不返还）。同名牌可以重复。</p>${deckGrid('rm')}${st.relics?.length ? `<h3>法器 ${st.relics.length}</h3><div class="grid c3">${globalThis.GC_X.relics().map(r => `<div class="cell"><b class="goldc">${esc(r.name)}</b><p>${esc(r.desc)}</p></div>`).join('')}</div>` : ''}${st.supportContracts?.length ? `<h3>支援契约</h3><div class="grid c2">${st.supportContracts.map(c => `<div class="cell"><b>${esc(c.name)}</b><p>${esc(c.text)}</p></div>`).join('')}</div>` : ''}`,
         foot: [{ label: '返回', primary: true, fn: () => A.closeCollection() }],
         acts: { spirit: i => A.showOwnedSpirit(+i), rm: (i, el) => { if (arm.i === +i) A.removeDeckCard(+i); else { arm.i = +i; el.parentElement.querySelectorAll('.cell').forEach(c => c.classList.remove('on')); el.classList.add('on'); toast('再点一次确认移除这张牌', 'warn'); } } }
       });
@@ -241,6 +242,27 @@ export function createScreens(ctx) {
         body: `<div class="split"><div>${TU(spiritUnit(s))}</div><div><div class="stats"><b>原本攻击<i>${num(s.atk)}</i></b><b>生命<i>${num(s.hp)}/${num(s.maxHp)}</i></b><b>潜力<i>${s.potential}</i></b><b>暴击<i>${Math.round(crit.chance * 100)}% ×${crit.multiplier.toFixed(2)}</i></b></div><h3>当前技能</h3><div class="grid c2">${skills.map(nm => { const d = GD.skillDefs[nm] || {}; return `<div class="cell"><b>${esc(nm)}</b><span>${esc(Q.skillDetailMeta(d, nm))}</span><p>${esc(d.desc || '')}</p>${Q.replacementText(nm) ? `<p class="blue">${esc(Q.replacementText(nm))}</p>` : ''}${s.onceUsed?.[nm] ? `<p class="red">已使用${s.skillRestore?.[nm] ? ` · 再经过 ${s.skillRestore[nm]} 次篝火恢复` : ''}</p>` : ''}</div>`; }).join('') || '<p class="muted">当前等级没有技能。</p>'}</div>${next ? `<h3>下一级 · ${esc(next.name)}</h3><p>升级消耗 <b class="goldc">${num(cost)}</b> 经验，升级后回满生命。${nextSkills.length ? `新技能：<b class="blue">${nextSkills.map(esc).join('、')}</b>` : '本级为数值成长。'}</p>` : `<p class="muted">${s.id === 'nannan' ? '囡囡为禁忌，数值固定，不随等级变化。' : '已达到最高等级。'}</p>`}${meta ? `<p class="muted">完整升级链见标题页的鬼灵图鉴。</p>` : ''}</div></div>`,
         foot: [{ label: '返回面板', fn: () => st.battle ? A.openBattleUpgrade() : A.closeContractTrials() }, '-', { label: next ? `提升至 ${next.name} · ${num(cost)} 经验` : '无法再提升', primary: true, disabled: !next || st.xp < cost || !canBattle, fn: () => { if (st.battle) { A.upgradeInBattle(index); show('ownedSpirit', { index }); } else A.upgradeOwnedSpirit(index); } }]
       });
+    },
+    relicPick() {
+      const list = globalThis.GC_X?.pendingRelic(); if (!list) return;
+      sheet('relicPick', { kicker: '精英战利品', title: '带走一件法器', cls: 'wide', body: `<div class="grid c3">${list.map(o => `<button class="cell card" data-act="pick" data-arg="${o.key}"><b class="goldc">${esc(o.name)}</b><p>${esc(o.desc)}</p></button>`).join('')}</div>`,
+        acts: { pick: k => { play('reward'); globalThis.GC_X.chooseRelic(k); closeSheet(); A.renderMap(); } } });
+    },
+    shop({ id }) {
+      const X = globalThis.GC_X, s = X.shop(id); if (!s) return; let arming = -1;
+      const cell = it => `<button class="cell card ${it.sold ? 'dead' : ''}" data-act="buy" data-arg="${it.index}" ${it.sold || s.coins < it.price ? 'disabled' : ''}>${it.kind === 'card' ? TS(it.key) : ''}<b ${it.kind === 'relic' ? 'class="goldc"' : ''}>${esc(it.name)}</b><span>${it.sold ? '已售' : it.price + ' 冥钱'}${it.rarity ? ' · ' + esc(it.rarity) : ''}</span><p>${esc(it.desc)}</p></button>`;
+      sheet('shop', { kicker: '鬼市', title: '摊主把价钱写在纸上', cls: 'wide', aside: `冥钱 <b class="goldc">${s.coins}</b>`,
+        body: `<h3>卡牌</h3><div class="grid c4">${s.items.filter(i => i.kind === 'card').map(cell).join('')}</div><h3>法器</h3><div class="grid c2">${s.items.filter(i => i.kind === 'relic').map(cell).join('')}</div><h3>其它</h3><div class="grid c2">${s.items.filter(i => i.kind === 'remove' || i.kind === 'heal').map(cell).join('')}</div><div id="shopDeck"></div>`,
+        foot: [{ label: '鬼灵与卡牌', fn: () => A.openCollection(() => S.shop({ id })) }, '-', { label: '离开鬼市', primary: true, fn: () => { closeSheet(); X.leaveNode(id); } }],
+        acts: {
+          buy: i => { const it = s.items[+i]; if (it.kind === 'remove') { arming = +i; document.getElementById('shopDeck').innerHTML = `<h3>烧掉哪一张？</h3>${deckGrid('burn')}`; return; } if (X.buy(id, +i)) { play('reward'); S.shop({ id }); } },
+          burn: d => { if (arming >= 0 && X.buy(id, arming, +d)) { play('paper'); S.shop({ id }); } }
+        } });
+    },
+    omen({ id }) {
+      const X = globalThis.GC_X, o = X.omen(id); if (!o) return;
+      sheet('omen', { kicker: '异兆', title: o.title, cls: 'narrow', body: `<p>${esc(o.text)}</p><div class="grid c1">${o.options.map(p => `<button class="cell" data-act="pick" data-arg="${p.index}" ${p.disabled ? 'disabled' : ''}><b>${esc(p.label)}</b><p>${esc(p.desc)}</p></button>`).join('')}</div>`,
+        acts: { pick: i => { const r = X.chooseOmen(id, +i); if (!r) return; play('dread'); sheet('omenResult', { kicker: '异兆 · ' + o.title, title: r.label, cls: 'narrow', body: `<p>${esc(r.text)}</p>${r.got.length ? `<p class="goldc">${r.got.map(esc).join('　')}</p>` : ''}`, foot: [{ label: '继续上路', primary: true, fn: () => { closeSheet(); A.renderMap(); } }] }); } } });
     },
     pact() {
       const p = globalThis.GC_X?.pendingPact(); if (!p) return;

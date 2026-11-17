@@ -9,7 +9,7 @@ import { play } from '../core/audio.js';
 const PW = 6.2, PD = 4.7, LIGHTS = 8;
 const TYPE = {
   event: ['卷', '#a7c9d6'], contract: ['契', '#bfe0c0'], battle: ['战', '#c85a46'], boss: ['首', '#d8352a'],
-  camp: ['火', '#ff9a3c'], reward: ['查', '#8fd0b0'], ending: ['终', '#d8d4c8'], fork: ['岔', '#9fb5d9']
+  camp: ['火', '#ff9a3c'], reward: ['查', '#8fd0b0'], ending: ['终', '#d8d4c8'], fork: ['岔', '#9fb5d9'], shop: ['市', '#e0c070'], omen: ['兆', '#b48cd8']
 };
 
 const TRAIL_VERT = 'attribute float aU;attribute float aV;attribute float aMode;varying float vU;varying float vV;varying float vMode;void main(){vU=aU;vV=aV;vMode=aMode;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}';
@@ -166,7 +166,7 @@ export function createMapView(ctx, labelRoot) {
     const changedAct = actShown !== act, wasShown = shown;
     clearNodes(wasShown && changedAct);
     const pos = {}, R = rows.length, dz = Math.min(.95, 3.8 / Math.max(1, R - 1)), z0 = R > 1 ? Math.min(1.9, dz * (R - 1) / 2) : 0;
-    rows.forEach((row, r) => row.forEach((id, c) => { pos[id] = { x: row.length === 1 ? (r % 2 ? .55 : -.55) * (R > 6 ? 1 : .7) : (c - (row.length - 1) / 2) * (row.length > 2 ? 2.3 : 3.0), z: z0 - r * dz }; }));
+    rows.forEach((row, r) => row.forEach((id, c) => { pos[id] = { x: row.length === 1 ? (r % 2 ? .55 : -.55) * (R > 6 ? 1 : .7) : (c - (row.length - 1) / 2) * (row.length > 3 ? 1.7 : row.length > 2 ? 2.3 : 3.0), z: z0 - r * dz }; }));
     posOf.clear(); for (const id in pos) posOf.set(id, pos[id]);
     buildTrails(rows.flat(), pos, st);
     drawStamp(act);
