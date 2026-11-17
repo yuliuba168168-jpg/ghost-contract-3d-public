@@ -448,7 +448,7 @@ function xIntents(b=state.battle){
   const atk=effectiveAttack(e)*(1+(e.extraAdd||0))*outgoingMultiplier(e);
   if(t){out.targetUid=t.uid;out.targetLane=t.lane;let d=atk*rankMultiplier(e,t)*receivedMultiplier(t);for(const x of Object.values(t.effects||{}))if(x.reduction)d*=1-x.reduction;out.damage=d}
   else if(e.effects?.spaceLaw?.cannotAttackPlayer)out.action='skip';
-  else{out.action='lamp';out.damage=b.mainline?Math.min(b.maxWill*(b.directBite||.2),atk)*(b.field==='lanterns'?1.25:1):atk}
+  else{out.action='lamp';out.damage=b.mainline?Math.max(b.maxWill*(b.directFloor||0),Math.min(b.maxWill*(b.directBite||.2),atk))*(b.field==='lanterns'?1.25:1):atk}
   if(e.effects?.ice)out.freeze=e.effects.ice.freezeChance||.25;
   return out});
 }

@@ -90,9 +90,9 @@ const EXTRA_SKILLS=['阴风横扫','厄咒','业火缠身','封灵印','夺气',
 const DIFFICULTIES={
  easy:{name:'简单',life:1,bite:.2,hp:1,atk:1,every:2,extra:0,count:0,rank:0,xp:1,elite:0,traits:[],minionTraits:[],desc:'敌人保持基础强度。按推荐培养，把鬼灵放到有敌人的路上，不放技能也能通关。'},
  normal:{name:'普通',life:1.3,bite:.22,strike:.163,hp:2.82,atk:2.4,every:2,extra:1,count:1,rank:0,xp:1.15,elite:0,ward:1,wardBase:.6,traits:[],minionTraits:[],desc:'敌人更耐打、更疼，首领多一个技能，第 9 幕起多一名敌人。全场有一层薄鬼障：当回合不主动施放技能或打出技能卡，普通攻击与空路直击只剩六成。需要适时释放鬼灵技能与卡牌。'},
- hard:{name:'困难',life:1.6,bite:.25,strike:.163,hp:3.4,atk:2.9,every:2,extra:1,count:1,rank:0,xp:1.3,elite:1,ward:1,wardBase:.4,traits:[],minionTraits:[],desc:'敌人更强，随从带有精英技能。鬼障更厚：当回合不施放技能，普通攻击与空路直击只剩四成。需要了解等级压制、站位与鬼气节奏，并会用技能。'},
- nightmare:{name:'噩梦',life:2,bite:.3,strike:.126,hp:5.69,atk:4.74,every:1,extra:2,count:1,rank:0,xp:1.5,elite:2,ward:1,wardBase:0,traits:['狂怒','坚壁'],minionTraits:[],desc:'首领每回合施法，并带有狂怒与坚壁。鬼障完全合拢：当回合不主动施放技能或打出技能卡，普通攻击与空路直击全部无效。需要熟练衔接多名鬼灵的技能。'},
- taboo:{name:'禁忌',life:2.6,bite:.36,strike:.1,hp:10,atk:7.6,every:1,extra:3,count:1,rank:1,xp:2,elite:3,ward:2,wardBase:0,traits:['狂怒','坚壁','不死之躯'],minionTraits:['坚壁'],desc:'敌人在等级压制上高一级，首领拥有不死之躯。两层鬼障：当回合施放一次技能只恢复一半普攻效果，两次才完全破除。要求对规则有深入理解，常规打法无法通关。'}
+ hard:{name:'困难',life:1.6,bite:.25,strike:.163,hp:3.4,atk:2.9,easeActs:10,flat:.5,every:2,extra:1,count:1,rank:0,xp:1.3,elite:1,ward:1,wardBase:.4,traits:[],minionTraits:[],desc:'敌人更强，随从带有精英技能。鬼障更厚：当回合不施放技能，普通攻击与空路直击只剩四成。需要了解等级压制、站位与鬼气节奏，并会用技能。'},
+ nightmare:{name:'噩梦',life:2,bite:.3,strike:.126,hp:5,atk:4.2,easeActs:12,flat:.8,every:1,extra:2,count:1,rank:0,xp:1.5,elite:2,ward:1,wardBase:0,traits:['狂怒','坚壁'],minionTraits:[],desc:'首领每回合施法，并带有狂怒与坚壁。鬼障完全合拢：当回合不主动施放技能或打出技能卡，普通攻击与空路直击全部无效。需要熟练衔接多名鬼灵的技能。'},
+ taboo:{name:'禁忌',life:2.6,bite:.36,strike:.1,hp:4.2,atk:3.3,easeActs:12,flat:1,every:1,extra:3,count:1,rank:1,xp:2,elite:3,ward:2,wardBase:0,traits:['狂怒','坚壁','不死之躯'],minionTraits:['坚壁'],desc:'敌人在等级压制上高一级，首领拥有不死之躯。两层鬼障：当回合施放一次技能只恢复一半普攻效果，两次才完全破除。要求对规则有深入理解，常规打法无法通关。'}
 };
 // Scale applied on 2026-11-16 at the user's request: enemy strength x1.5 for 普通/困难, x2.5 for 噩梦, x4 for 禁忌 relative to the
 // previous table (hp/atk 2.3/2.15, 3/2.7, 3.6/3, 5/3.8; strike cap .2 everywhere). "Strength" = unit hp x unit atk, split evenly
@@ -101,9 +101,16 @@ const DIFFICULTIES={
 // multipliers interpolate, boss traits / elite skills / every-round casting start at act 7, the extra enemy and 禁忌's rank bonus at act 9.
 // Without the ramp the first acts were the wall (one or two ghosts against three or four enemies): the naive skill-using bot of
 // tests/difficulty_test.cjs lost acts 2-4 on 普通, 2-8 on 困难 and everything up to act 14 on 噩梦, while later acts were too soft.
+// 按等级段拉平（难度参数 flat，0=不拉平，只有困难以上使用）：原始数值里敌人相对鬼灵的强度各等级段相差数倍——鬼灵生命表是
+// …800,900,1400,1800,5000,10000,50000,120000…，中段升一级几乎不变强、后段升一级翻几倍，后期首领又是血厚攻低的沙包。高难度的统一
+// 倍率乘上去后 13–25 幕成墙、26 幕起却不痛。两张表把每个等级段的「首领攻击/鬼灵生命」「首领生命/鬼灵攻击」拉到同一水平：
+// 以练满到等级上限（幕等级+1）的鬼灵为基准，由 46 幕主战在简单难度下的实际敌人算出（夹在 0.5–4 后再归一），下标是幕的等级 0..22。
+const FLAT_A=[1.45,1.45,0.8,0.8,0.8,0.96,1.18,0.95,0.85,1.0,1.37,1.48,1.99,1.01,1.02,0.95,1.97,2.03,3.08,3.08,3.08,2.79,0.38];
+const FLAT_H=[1.25,1.25,1.25,1.25,1.11,0.96,1.39,1.01,0.87,1.16,1.07,0.86,1.17,0.73,0.97,0.85,1.26,0.77,0.77,0.58,1.51,2.19,1.36];
 function tuned(n){
- const D=n?.difficulty===1?DIFFICULTIES.easy:diffCfg(),r=n?.mainline&&n.act?Math.min(1,Math.max(0,(n.act-1)/8)):1,full=r>=1,mid=r>=.75,mix=(a,b)=>full?b:a+(b-a)*r;
- return {...D,ramp:r,hp:Math.pow(D.hp,r),atk:Math.pow(D.atk,r),life:mix(1,D.life),bite:mix(.2,D.bite),strike:mix(.2,D.strike||.2),count:full?D.count:0,rank:full?D.rank:0,extra:Math.round(D.extra*r),every:mid?D.every:2,elite:mid?D.elite:0,traits:mid?D.traits:[],minionTraits:full?D.minionTraits:[],ward:D.ward?(full?D.ward:1):0,wardBase:D.wardBase?mix(1,D.wardBase):(D.wardBase??1)};
+ const D=n?.difficulty===1?DIFFICULTIES.easy:diffCfg(),r=n?.mainline&&n.act?Math.min(1,Math.max(0,(n.act-1)/(D.easeActs||8))):1,full=r>=1,mid=r>=.75,mix=(a,b)=>full?b:a+(b-a)*r;
+ const k=Math.max(0,Math.min(22,n?.rank||0)),w=n?.mainline&&n.act?(D.flat||0)*r:0;
+ return {...D,ramp:r,hp:Math.pow(D.hp,r)*Math.pow(FLAT_H[k],w),atk:Math.pow(D.atk,r)*Math.pow(FLAT_A[k],w),life:mix(1,D.life),bite:mix(.2,D.bite),biteFloor:(D.biteFloor||0)*r,strike:mix(.2,D.strike||.2),count:full?D.count:0,rank:full?D.rank:0,extra:Math.round(D.extra*r),every:mid?D.every:2,elite:mid?D.elite:0,traits:mid?D.traits:[],minionTraits:full?D.minionTraits:[],ward:D.ward?(full?D.ward:1):0,wardBase:D.wardBase?mix(1,D.wardBase):(D.wardBase??1)};
 }
 function setDifficulty(d){if(!DIFFICULTIES[d]||!state.mainline||state.battle)return false;state.difficulty=d;if(state.mode==='endless')ensureEndlessNode();state.log.unshift('难度调整为'+DIFFICULTIES[d].name);save();return true}
 function difficultyOf(s=state){return DIFFICULTIES[s?.difficulty]?s.difficulty:'easy'}
@@ -259,7 +266,7 @@ startBattle=function(id){
  for(const own of state.spirits)for(const name of Object.keys(own.onceUsed||{}))if(GD.skillDefs[name]?.oncePerBattle)delete own.onceUsed[name];
  const living=state.spirits.filter(s=>!s.dead&&(!state.squad?.length||state.squad.includes(s.id))).slice(0,6),first=living.slice(0,Math.min(3,living.length)).map(s=>s.id),draw=shuffle([...living.slice(first.length).map(s=>s.id),...state.deck.slice(0,25)]),hand=[...first,...draw.splice(0,Math.max(0,6-first.length))];
  const DC=tuned(n),lifeBase=Math.max(10,...living.map(s=>s.maxHp||0)),enemyLife=lifeBase*DC.life;fullHealPlayerOnly();for(const e of enemies)if(e.bossTraits?.includes('坚壁'))addEffect(e,'bossHide','坚壁',null,{reduction:.2});
- state.battle={nodeId:id,mainline:true,difficulty:difficultyOf(),turn:1,qi:3,maxQi:3,deployedCount:0,will:lifeBase*state.will/10,maxWill:lifeBase,enemyWill:enemyLife,maxEnemyWill:enemyLife,directBite:DC.bite,directCap:DC.strike||.2,ward:DC.ward||0,wardBase:DC.ward?DC.wardBase:1,wardCasts:0,wardTurn:1,enemies,units:Array(4).fill(null),hand,draw,grave:[],removedEnemies:[],playerSkillsUsed:{},temp:[],log:[...(DC.ward?[`鬼障${DC.ward}层：每回合先主动施放${DC.ward}次技能或技能卡，普通攻击与空路直击才会完全生效；否则${DC.wardBase>0?'只剩'+Math.round(DC.wardBase*100)+'%':'全部无效'}。`]:[]),'战斗开始：第X次显形消耗X鬼气。双方命灯以出战鬼灵中最高的生命为准。'],revivedCount:0,directScale:Math.max(1,GD.statsForRank(GD.ranks[n.rank].name,3).atk/1.4)};
+ state.battle={nodeId:id,mainline:true,difficulty:difficultyOf(),turn:1,qi:3,maxQi:3,deployedCount:0,will:lifeBase*state.will/10,maxWill:lifeBase,enemyWill:enemyLife,maxEnemyWill:enemyLife,directBite:DC.bite,directFloor:DC.biteFloor||0,directCap:DC.strike||.2,ward:DC.ward||0,wardBase:DC.ward?DC.wardBase:1,wardCasts:0,wardTurn:1,enemies,units:Array(4).fill(null),hand,draw,grave:[],removedEnemies:[],playerSkillsUsed:{},temp:[],log:[...(DC.ward?[`鬼障${DC.ward}层：每回合先主动施放${DC.ward}次技能或技能卡，普通攻击与空路直击才会完全生效；否则${DC.wardBase>0?'只剩'+Math.round(DC.wardBase*100)+'%':'全部无效'}。`]:[]),'战斗开始：第X次显形消耗X鬼气。双方命灯以出战鬼灵中最高的生命为准。'],revivedCount:0,directScale:Math.max(1,GD.statsForRank(GD.ranks[n.rank].name,3).atk/1.4)};
  selected=targetMode=null;save();globalThis.GC_BRIDGE.ui('battle');globalThis.GC_BRIDGE.fx('battle:enter',{testMode:false,nodeId:id});
 };
 function fullHealPlayerOnly(){state.maxWill=10;state.will=Math.min(10,Math.max(1,state.will));}
@@ -339,6 +346,8 @@ async function mainDirectAttack(u,enemy){
  const b=state.battle,ward=enemy?1:wardFactor(b);
  if(ward<=0){b.log.unshift(`鬼障挡下了${u.name}的空路直击`);await globalThis.GC_BRIDGE.fx('unit:skip',{uid:u.uid,side:'ally',lane:u.lane,label:'鬼障',reason:'ward'});return}
  let damage=ward*Math.min(enemy?b.maxWill*(b.directBite||.2):b.maxEnemyWill*(b.directCap||.2),rollAttackDamage(u,effectiveAttack(u)*(1+(u.extraAdd||0))*outgoingMultiplier(u),'空路直击'));
+ // 敌方直击的下限（难度参数 biteFloor，占我方命灯的比例）：后期鬼灵生命远高于敌方攻击，没有下限时空路几乎不掉命灯。
+ if(enemy&&b.directFloor)damage=Math.max(damage,b.maxWill*b.directFloor);
  if(enemy){const domain=b.domain&&b.units.find(x=>x?.uid===b.domain.uid&&!x.dead),love=b.units.find(x=>x?.id==='isuna'&&!x.dead&&GD.unlockedSkills(x.id,x.rankName).includes('爱的规律'));
   if(domain||love){const t=domain||love;dealRawDamage(u,t,damage*(domain?b.domain.multiplier:2)*rankMultiplier(u,t)*receivedMultiplier(t),domain?b.domain.name:'爱的规律');b.log.unshift(t.name+'代受直击');await globalThis.GC_BRIDGE.fx('direct',{attacker:{uid:u.uid,side:'enemy',lane:u.lane},damage,critical:u.lastAttackRoll?.critical,outcome:domain?'domain':'love',redirect:{uid:t.uid,side:'ally',lane:t.lane},will:b.will,enemyWill:b.enemyWill});await animatePendingDeaths();return}
   const dodge=b.units.find(x=>x?.id==='xuan'&&!x.dead&&x.dodgeCharges>0);if(b.will-damage<=0&&dodge){dodge.dodgeCharges--;b.log.unshift('闪遁免疫致命直击');await globalThis.GC_BRIDGE.fx('direct',{attacker:{uid:u.uid,side:'enemy',lane:u.lane},damage:0,critical:u.lastAttackRoll?.critical,outcome:'dodge',redirect:{uid:dodge.uid,side:'ally',lane:dodge.lane},will:b.will,enemyWill:b.enemyWill});return}b.will=Math.max(0,b.will-damage);
