@@ -526,3 +526,37 @@ body.plain-gfx.taboo .sheet-veil { background: radial-gradient(circle at 50% 42%
 .unit-chip.enemy { border-color: rgba(184,40,28,.6); }
 body.hud-off .unit-chips, body.tut-on .unit-chips { }
 @media (max-height: 520px) { .unit-chip { font-size: 12px; padding: 0 4px 1px; } .unit-chip u { font-size: 10px; } }
+/* 新字号阶梯在矮屏下的同步（放在最后，压过前面的通用规则） */
+@media (max-height: 820px) {
+  .sheet-head { padding: 18px 28px 12px; } .sheet-head h2 { font-size: 24px; } .sheet-foot { padding: 12px 28px 14px; }
+  .sheet.wheels .wheel-item p { font-size: 12px; line-height: 1.5; } .sheet.wheels .wheel-item b { font-size: 19px; }
+  .wheel-label { margin: 3px 0 2px; } .wheel-dots { margin-top: 3px; }
+}
+@media (max-height: 520px) {
+  :root { --fs-28: 20px; --fs-22: 17px; --fs-18: 15px; }
+  .sheet-head { padding: 12px 20px 8px; } .sheet-head h2 { font-size: 20px; } .sheet-head .kicker { margin-bottom: 5px; letter-spacing: .3em; }
+  .sheet-body { padding: 8px 20px; font-size: 13px; line-height: 1.6; } .sheet-foot { padding: 8px 20px 10px; }
+  .ink-btn { height: 30px; line-height: 28px; padding: 0 12px 0 14px; font-size: 13px; }
+  .title-screen { padding: 3vh 3vw; } .title-logo .seal { width: 40px; height: 40px; font-size: 26px; margin-left: 2px; } .title-logo h1 { font-size: 30px; }
+  .title-foot .ink-btn { height: 22px; line-height: 22px; font-size: 12px; padding: 0 8px 0 10px; } .title-foot .ink-btn + .ink-btn::before { top: 6px; bottom: 6px; }
+  .slot-wheel .wheel-item .slot { padding: 8px 10px; } .slot b { font-size: 15px; } .slot span { font-size: 11px; line-height: 1.5; } .slot .no { font-size: 26px; }
+  .slot .acts .ink-btn { height: 24px; line-height: 22px; font-size: 12px; padding: 0 9px 0 11px; }
+  .wheel-item p, .sheet.wheels .wheel-item p { font-size: 11px; line-height: 1.4; } .sheet.wheels .wheel-item b { font-size: 16px; }
+  .field { padding: 3px 0; font-size: 13px; } input[type=text] { height: 28px; line-height: 28px; font-size: 13px; }
+  .seg button { height: 28px; line-height: 28px; font-size: 12px; padding: 0 10px; }
+  .wheel-label { margin: 2px 0; } .wheel-arrow { width: 28px; height: 28px; line-height: 24px; font-size: 18px; }
+  .cell.relic-pick { min-height: 0; padding: 10px; gap: 6px; } .cell.relic-pick .relic-seal { width: 40px; height: 40px; font-size: 24px; } .cell.relic-pick b { font-size: 16px; } .cell.relic-pick p { font-size: 11px; line-height: 1.5; }
+  .map-res b { padding: 0 6px; font-size: 11px; } .sheet-body h3 { font-size: 14px; }
+}
+@media (max-height: 820px) {
+  .sheet.wheels .wheel { --wheel-h: 130px; margin: 0; } .sheet.wheels .wheel.compact { --wheel-h: 80px; }
+  .sheet.wheels .sheet-head { padding: 14px 28px 10px; } .sheet.wheels .sheet-foot { padding: 10px 28px 12px; }
+  .sheet.wheels .field { padding: 2px 0; } .sheet.wheels .sheet-body { padding-top: 10px; padding-bottom: 8px; } .sheet.wheels .sheet-body > p { margin: 2px 0; }
+  .sheet.wheels .diff-bars { margin-top: 6px; }
+}
+@media (max-height: 520px) {
+  .title-logo { flex-direction: row; align-items: center; gap: 12px; }
+  .title-logo h1 { writing-mode: horizontal-tb; font-size: 26px; display: flex; align-items: baseline; gap: 12px; }
+  .title-logo h1 small { writing-mode: horizontal-tb; margin: 0; padding: 0; border: 0; font-size: .46em; letter-spacing: .5em; }
+  .slot-wheel { --wheel-h: 128px; }
+}
