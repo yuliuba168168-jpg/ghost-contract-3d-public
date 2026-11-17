@@ -6,7 +6,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
 import { BokehPass } from 'three/addons/postprocessing/BokehPass.js';
 import { Pass } from 'three/addons/postprocessing/Pass.js';
-import { simplifyScene } from './plain-materials.js';
+import { simplifyScene, restoreScene } from './plain-materials.js';
 import { quality, onQuality, lowerQuality, floorQuality, view, savedScale, saveScale } from './quality.js';
 
 const GradeShader = {
@@ -111,7 +111,7 @@ export function createRenderer(canvas) {
 
   let composer = null, bloom = null, gtao = null, bokeh = null, scene = null, camera = null, scale = 1, frame = 0, pinned = 0;
   const grade = new ShaderPass(GradeShader), overlay = new OverlayPass();
-  const distort = new ShaderPass(DistortShader); distort.enabled = false; let renderPass = null;
+  const distort = new ShaderPass(DistortShader); distort.enabled = false; let renderPass = null, mainScene = null;
 
   function applySize() {
     const q = quality(), base = Math.min(devicePixelRatio || 1, Math.sqrt(q.pixels / Math.max(1, innerWidth * innerHeight)));
@@ -172,6 +172,7 @@ export function createRenderer(canvas) {
     attach(s, c) {
       scene = s; camera = c;
       composer = new EffectComposer(renderer, new THREE.WebGLRenderTarget(4, 4, { type: THREE.HalfFloatType }));
+      mainScene = scene;
       renderPass = new RenderPass(scene, camera); composer.addPass(renderPass);
       gtao = makeGtao(scene, camera);
       composer.addPass(gtao);
@@ -217,6 +218,6 @@ export function createRenderer(canvas) {
     }
   };
   addEventListener('resize', () => api.resize());
-  onQuality(() => applyQuality(true));
+  onQuality(q => { if (!q.plain) { restoreScene(mainScene); if (renderPass?.scene && renderPass.scene !== mainScene) restoreScene(renderPass.scene); } document.body.classList.toggle('plain-gfx', !!q.plain && q.name !== 'lite'); applyQuality(true); });
   return api;
 }

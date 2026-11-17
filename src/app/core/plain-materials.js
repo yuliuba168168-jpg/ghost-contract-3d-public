@@ -4,6 +4,7 @@
 import * as THREE from 'three';
 
 const FILL = 1.5;
+const origin = new WeakMap();   // 简化材质 → 原标准材质（切回其他画质时还原）
 const cache = new WeakMap();   // 标准材质 → 简化材质（保持材质共享关系）
 const PROXY = ['opacity', 'transparent', 'visible', 'emissiveIntensity', 'depthWrite', 'depthTest', 'alphaTest', 'side', 'blending', 'colorWrite'];
 
@@ -17,7 +18,7 @@ function lambertOf(a) {
   let map = a.map;
   Object.defineProperty(b, 'map', { get: () => a.map, set: v => { a.map = v; }, enumerable: true, configurable: true });
   b.userData.__plainSync = () => { if (a.map !== map) { map = a.map; b.needsUpdate = true; } };
-  cache.set(a, b); return b;
+  cache.set(a, b); origin.set(b, a); return b;
 }
 
 const lights = [], filled = new WeakSet();
@@ -37,4 +38,17 @@ export function simplifyScene(scene, frame) {
   }
   // 亮度为 0 的灯（路线图灯池、特效补光）不参与着色
   for (const l of lights) { const on = l.intensity > .001; if (l.userData.__plainOff ? on : !on) { l.userData.__plainOff = !on; l.visible = on; } }
+}
+
+// 从极简切回其他画质：换回原材质、撤掉补光、把被关掉的灯重新打开
+export function restoreScene(scene) {
+  if (!scene || !filled.has(scene)) return;
+  filled.delete(scene); sweepAt = 0; lights.length = 0;
+  const fill = scene.getObjectByName('plain-fill'); if (fill) scene.remove(fill);
+  scene.traverse(o => {
+    if (o.isLight) { if (o.userData.__plainOff) { o.userData.__plainOff = false; o.visible = true; } return; }
+    const m = o.material; if (!m) return;
+    if (Array.isArray(m)) { for (let i = 0; i < m.length; i++) { const a = origin.get(m[i]); if (a) m[i] = a; } }
+    else { const a = origin.get(m); if (a) o.material = a; }
+  });
 }
