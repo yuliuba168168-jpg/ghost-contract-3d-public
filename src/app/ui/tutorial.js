@@ -1,18 +1,19 @@
 // 交互式新手引导：第 1 幕首战里分步提示。战斗 HUD 都在 3D 里，所以高亮圈用相机投影定位。
 import * as THREE from 'three';
-import { slotPos } from '../battle/board-layout.js';
+import { slotPos, standPos } from '../battle/board-layout.js';
 import { play } from '../core/audio.js';
 
 const KEY = 'gc3d-tutorial-v1';
 const P = (x, y, z) => new THREE.Vector3(x, y, z);
 const row = (side, y) => [0, 1, 2, 3].map(l => slotPos(side, l).clone().setY(y));
+const foes = [...row('enemy', .05), ...[0, 1, 2, 3].map(l => standPos('enemy', l).clone().setY(1.3))];
 // A 课：第 1 幕首战，此时还没有鬼灵，只教命灯、鬼气、意图、技能牌、结束回合。
 // B 课：第一场手里有鬼灵牌的战斗，教部署与鬼灵技能。
 const LESSONS = {
   a: [
     { title: '命灯', text: '这是你的第一场战斗。左下这排灯是你的命灯，对面那排是黑影的。让对面的灯全灭就赢，你的灯全灭就输。', at: [P(-4.4, .05, 1.2), P(-2.4, .05, 1.2), P(-4.4, .05, 2.1), P(-2.4, .05, 2.1)], r: 40 },
     { title: '鬼气', text: '香炉上的数字是鬼气。出牌要花鬼气，每回合开始会回复，回合越往后上限越高。', at: [P(-3.6, .5, .02)], r: 90 },
-    { title: '看敌人的打算', text: '敌人头顶的小牌是它下回合要做的事：「攻」打它正前方的鬼灵，「灯」直击你的命灯，「术」要放技能，「停」不能行动。你现在还没有鬼灵，所以它会直接打灯。', at: row('enemy', .9) },
+    { title: '看敌人的打算', text: '敌人头顶的小牌是它下回合要做的事：「攻」打它正前方的鬼灵，「灯」直击你的命灯，「术」要放技能，「停」不能行动。你现在还没有鬼灵，所以它会直接打灯。', at: foes, r: 30 },
     { title: '打出一张牌', text: '下方是你的手牌，左上角的数字是费用。点一张牌（比如「鬼刀」），再按提示点目标，就能打出。', hand: true, done: s => s.hand < s.hand0 },
     { title: '结束回合', text: '牌出完或鬼气用完后，点右下角的招魂铃（或按空格）结束回合。接着轮到敌人行动。', at: [P(3.62, .5, 1.62)], r: 90, done: s => s.turn > s.turn0 },
     { title: '御鬼者的法器', text: '新回合会回复鬼气并抽一张牌。右上角三件法器是你本人的技能，各有使用次数，点一下就能用。', at: [P(3.6, .4, -1.65)], r: 130 },
@@ -21,7 +22,7 @@ const LESSONS = {
   b: [
     { title: '选一张鬼灵牌', text: '你有鬼灵了。点下方手牌里的鬼灵牌（写着攻击和生命的那张）。', hand: true, done: s => s.selected != null || s.units > 0 },
     { title: '放到一条路上', text: '再点你这一侧的任意一条空路，她就会显形。', at: row('ally', .1), done: s => s.units > 0 },
-    { title: '正前方与空路', text: '结束回合时，鬼灵自动攻击正前方的敌人；前方是空路，就直击对面的命灯。敌人也一样，所以你空着的路会漏伤害到命灯上。', at: row('enemy', .5) },
+    { title: '正前方与空路', text: '结束回合时，鬼灵自动攻击正前方的敌人；前方是空路，就直击对面的命灯。敌人也一样，所以你空着的路会漏伤害到命灯上。', at: [...row('ally', .05), ...row('enemy', .05)], r: 60 },
     { title: '鬼灵技能与魂瓮', text: '点已上场的鬼灵可以放她自己的技能，要花鬼气。鬼灵倒下会进左上角的魂瓮，「复苏」牌能把她叫回来。', at: [P(-3.85, .4, -1.42)], r: 110, last: true }
   ]
 };
