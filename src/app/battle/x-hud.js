@@ -103,6 +103,12 @@ export function createXHud(ctx) {
     if (key === bondKey) return; bondKey = key; bondBar.hidden = !list.length;
     bondBar.innerHTML = list.map(x => `<button data-key="${x.key}" class="${x.used ? 'used' : x.ready ? 'ready' : ''}" title="${x.desc}"><b>合击 · ${x.strike}</b><i>${x.used ? '已用' : x.cost + ' 鬼气'}</i><span>${x.name}：同场攻击 +10%</span></button>`).join('');
   }
+  // ---- 桌面道具 ----
+  function propSay(r, pos) {
+    if (pos) ctx.overlay?.floatText(pos.clone().setY(1.2), r.name, { kind: 'info' });
+    ctx.overlay?.caption?.(r.text, { tone: 'gold', dur: 3200 });
+    if (r.rite) { ctx.overlay?.banner(`仪式 · ${r.rite}`, { tone: 'gold', sub: r.reward, dur: 2200 }); ctx.overlay?.flash?.('#ffd98a', .2, 700); play('reward'); ctx.opponent?.play?.('wary', { tier: 'normal' }); }
+  }
   ctx.xfx = {
     'field:change'(p) { ctx.overlay?.banner(`场地 · ${p.name}`, { tone: 'info', sub: p.desc, dur: 1500 }); play('dread'); badgeKey = ''; refreshBadge(); },
     'boss:phase'(p) {
@@ -130,5 +136,5 @@ export function createXHud(ctx) {
   ctx.on('battleSynced', () => { refreshIntents(); refreshBadge(); refreshBonds(); });
   ctx.on('battleCleared', () => { badgeKey = 'x'; refreshBadge(); bubble.classList.remove('on'); });
   ctx.on('refresh', () => { badgeKey = 'x'; refreshBadge(); bondKey = 'x'; refreshBonds(); });
-  return { refreshIntents, refreshBadge, say };
+  return { refreshIntents, refreshBadge, say, propSay };
 }

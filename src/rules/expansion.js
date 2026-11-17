@@ -600,3 +600,32 @@ winBattle=async function(){const b=state.battle,ctx=xBattleCtx(b),pending=!!stat
 const xPrevLose2=loseBattle;
 loseBattle=function(){const b=state.battle,ctx=xBattleCtx(b);const r=xPrevLose2();if(b&&!b.xCounted){b.xCounted=true;xStatBattle(b,false,ctx)}return r};
 Object.assign(globalThis.GC_X,{ACH:X_ACH,stats:xStats,achievements:xAchievements});
+
+// ---------- 桌面道具互动（香炉 / 招魂铃 / 魂瓮）----------
+const X_PROP_NAMES={bell:'招魂铃',censer:'香炉',urn:'魂瓮'};
+// [键, 名, 序列, 线索, 奖励说明]
+const X_RITES=[
+ ['summon','招魂','bell,censer,urn,bell','铃响一声，香才肯燃；香燃着，瓮里的人才肯应；应过之后，再送一声铃。','一张珍藏卡'],
+ ['vow','还愿','censer,censer,urn,urn','欠下的香要上两炷，欠下的人要叩两回。','200 点经验'],
+ ['farewell','送魂','urn,bell,bell,censer','先叩门，再摇两声铃送她上路，最后替她点一炷香。','一张传说卡']
+];
+const X_WHISPERS=['铃舌上缠着一缕头发。','瓮壁是温的。','香灰里有半个指印。','有人在你背后数数。','桌子底下的那双脚，不是你的。'];
+function xPropState(){return state.xProps||={seq:[],rites:[],incenseNode:null,urnAct:0,touches:0}}
+function xRiteReward(key){
+ const pool=r=>Object.keys(SKILLS).filter(id=>SKILLS[id].ops&&SKILLS[id].rarity===r),pick=r=>{const p=pool(r);return p[(xHash(state.name||'x')+state.spirits.length*7+xPropState().touches)%p.length]};
+ if(key==='vow'){state.xp+=200;return '获得 200 点经验'}
+ const id=pick(key==='summon'?'珍藏':'传说'),full=state.deck.length>=25;if(full)state.deck[state.deck.length-1]=id;else state.deck.push(id);return `获得卡牌【${SKILLS[id].name}】${full?'（牌组已满，替换了最后一张）':''}`}
+function xTouchProp(kind){
+ if(!X_PROP_NAMES[kind]||!state.mainline||state.battle||state.fallen)return null;
+ const p=xPropState(),n=typeof NODES!=='undefined'?NODES[state.current]:null,out={kind,name:X_PROP_NAMES[kind],text:'',reward:null,rite:null};p.touches++;
+ if(kind==='censer'){if(p.incenseNode===state.current)out.text='这一程的香已经上过了。';else{p.incenseNode=state.current;state.xIncense=true;out.text='上了一炷香。下一场战斗开局多 1 点鬼气。'}}
+ else if(kind==='urn'){const act=n?.act||1;if(p.urnAct===act)out.text='叩了叩瓮。里面的人翻了个身。';else{p.urnAct=act;const before=state.will;state.will=Math.min(10,state.will+1);out.text=state.will>before?'瓮里有人应了一声。命灯亮了一分。':'瓮里有人应了一声。'}}
+ else out.text=X_WHISPERS[p.touches%X_WHISPERS.length]+(p.rites.length<X_RITES.length?'　'+X_RITES.find(r=>!p.rites.includes(r[0]))[3]:'');
+ p.seq.push(kind);if(p.seq.length>4)p.seq.shift();
+ const rite=X_RITES.find(r=>r[2]===p.seq.join(',')&&!p.rites.includes(r[0]));
+ if(rite){p.rites.push(rite[0]);p.seq=[];out.rite=rite[1];out.reward=xRiteReward(rite[0]);state.log.unshift(`完成仪式【${rite[1]}】：${out.reward}`);xStatBump({rites:1})}
+ save();return out}
+const xPrevSetup3=xSetupBattle;
+xSetupBattle=function(b){xPrevSetup3(b);if(state.xIncense&&b.mainline&&!b.testMode){state.xIncense=false;b.qi+=1;b.log.unshift('香火：开局多1点鬼气')}};
+X_ACH.push(['rite1','礼数','在牌桌上完成一个仪式。',s=>(s.rites||0)>=1],['rite3','通灵','完成牌桌上的全部三个仪式。',s=>(s.rites||0)>=3]);
+Object.assign(globalThis.GC_X,{RITES:X_RITES,touchProp:xTouchProp,propState:()=>state.xProps||null});

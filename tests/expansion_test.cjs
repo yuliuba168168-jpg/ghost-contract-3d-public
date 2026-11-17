@@ -101,5 +101,13 @@ async function fresh(){
  A.newSlot(3,'normal','stat','easy');ctx.grantContract(A.ML.arcs[0].contracts[0]);X.choosePact('bone');assert.ok(X.stats().pacts>=1,'pact counted');ctx.startBattle(A.ML.arcs[0].id+'-battle');b=A.getState().battle;
  const w0=X.stats().wins;for(const e of b.enemies){e.hp=0;e.dead=true}b.kills=b.enemies.length;await ctx.winBattle();
  stt=X.stats();assert.equal(stt.wins,w0+1,'win counted');assert.ok(stt.kills>=b.enemies.length);assert.ok(stt.done.includes('first'),'first-win achievement');assert.ok(rec.notify.some(n=>String(n).includes('成就达成')),'achievement notice');
- console.log(`expansion_test PASS: ${played}/${ids.length} new cards played; ${phased} boss phases, ${seen.field.size} fields, ${seen.ward.size} ward rules, ${seen.beh.size} behaviors, intents, bond strike, pacts, affixes, daily, records, stats, achievements; burn, taunt, aura, multi, pierce, stun, deathrattle, bounce, lamp verified`);
+ // 桌面道具与仪式
+ A.newSlot(3,'normal','prop','easy');ps=A.getState();ctx.grantContract(A.ML.arcs[0].contracts[0]);X.choosePact('plain');
+ const t1=X.touchProp('censer');assert.ok(t1.text.includes('鬼气'));assert.ok(X.touchProp('censer').text.includes('已经上过'));
+ const xp0=ps.xp;X.touchProp('urn');const vow=X.touchProp('urn');assert.equal(vow.rite,'还愿');assert.equal(ps.xp,xp0+200);
+ const deck0=ps.deck.length;let rite=null;for(const k of ['bell','censer','urn','bell'])rite=X.touchProp(k);assert.equal(rite.rite,'招魂');assert.equal(ps.deck.length,deck0+1);assert.equal(GC.SKILLS[ps.deck.at(-1)].rarity,'珍藏');
+ for(const k of ['bell','censer','urn','bell'])rite=X.touchProp(k);assert.equal(rite.rite,null,'each rite only once');
+ ctx.startBattle(A.ML.arcs[0].id+'-battle');assert.ok(A.getState().battle.log.some(l=>l.includes('香火')),'incense grants qi');assert.equal(X.touchProp('bell'),null,'no props in battle');
+ assert.ok(X.achievements().find(a=>a.key==='rite1').done);
+ console.log(`expansion_test PASS: ${played}/${ids.length} new cards played; ${phased} boss phases, ${seen.field.size} fields, ${seen.ward.size} ward rules, ${seen.beh.size} behaviors, intents, bond strike, pacts, affixes, daily, records, stats, achievements, table rites; burn, taunt, aura, multi, pierce, stun, deathrattle, bounce, lamp verified`);
 })().catch(e=>{console.error(e);process.exit(1)});

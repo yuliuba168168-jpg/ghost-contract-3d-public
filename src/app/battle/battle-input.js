@@ -61,10 +61,12 @@ export function createBattleInput(ctx) {
     } else if (m.startsWith('exactEnemy:') || m.startsWith('confuseSecond:') || m === 'enemy') act(() => A.enemyTarget(ent.uid));
     else detail(ent);
   }
+  const touch = (kind, pos) => { const r = globalThis.GC_X?.touchProp(kind); if (!r) return; play(kind === 'bell' ? 'paper' : 'click'); ctx.xhud?.propSay(r, pos); ctx.emit('refresh'); };
+  const idle = () => !GC.battle && !ctx.screens?.modalOpen && !!GC.state?.mainline && ctx.screens?.base === 'map';
   register(props.bell.group, {
-    enabled: () => !!GC.battle,
+    enabled: () => !!GC.battle || idle(),
     onHover: () => props.bell.setHover(true), onOut: () => props.bell.setHover(false),
-    onClick: () => endTurn()
+    onClick: () => GC.battle ? endTurn() : (props.bell.ring?.(), touch('bell', props.bell.group.position))
   });
   props.artifacts.forEach((a, i) => register(a.group, {
     enabled: () => !!GC.battle,
@@ -73,8 +75,8 @@ export function createBattleInput(ctx) {
     onClick: () => { if (GC.battle?.playerSkillsUsed?.[i]) { ctx.overlay.toast(`${GC.GD.playerSkills[i].name}本场已使用`, 'warn'); return; } act(() => { const s = sel(); if (s?.kind === 'playerSkill' && s.index === i) A.cancelSelection(); else A.selectPlayerSkill(i); }); }
   }));
   register(props.deck.group, { enabled: () => !!GC.battle, onHover: () => showTipAt(props.deck.group.position.clone().setY(.9), `<b>牌堆</b><p>余 ${GC.battle?.draw.length ?? 0} 张。每回合开始抽 1 张，手牌上限 12。</p>`), onOut: hideTip });
-  register(props.urn.group, { enabled: () => !!GC.battle, onHover: () => showTipAt(props.urn.group.position.clone().setY(1.3), `<b>魂瓮</b><p>${(GC.battle?.grave || []).map(u => esc(typeof u === 'string' ? Q.spirit(u)?.name : u.name)).join('、') || '尚无阵亡的鬼灵'}</p>`), onOut: hideTip });
-  register(props.censer, { enabled: () => !!GC.battle, onHover: () => { const b = GC.battle; showTipAt(props.censer.position.clone().setY(1.5), `<b>鬼气 ${b.qi}/${b.maxQi}</b><p>本场第 ${b.deployedCount + 1} 次显形需 ${Q.spiritCost()} 鬼气；左右移动每格 1 鬼气，相邻换位不耗鬼气。</p>`); }, onOut: hideTip });
+  register(props.urn.group, { enabled: () => !!GC.battle || idle(), onClick: () => { if (!GC.battle) touch('urn', props.urn.group.position); }, onHover: () => !GC.battle ? showTipAt(props.urn.group.position.clone().setY(1.3), '<b>魂瓮</b><p>叩一叩。</p>') : showTipAt(props.urn.group.position.clone().setY(1.3), `<b>魂瓮</b><p>${(GC.battle?.grave || []).map(u => esc(typeof u === 'string' ? Q.spirit(u)?.name : u.name)).join('、') || '尚无阵亡的鬼灵'}</p>`), onOut: hideTip });
+  register(props.censer, { enabled: () => !!GC.battle || idle(), onClick: () => { if (!GC.battle) touch('censer', props.censer.position); }, onHover: () => { const b = GC.battle; if (!b) return showTipAt(props.censer.position.clone().setY(1.5), '<b>香炉</b><p>上一炷香。</p>'); showTipAt(props.censer.position.clone().setY(1.5), `<b>鬼气 ${b.qi}/${b.maxQi}</b><p>本场第 ${b.deployedCount + 1} 次显形需 ${Q.spiritCost()} 鬼气；左右移动每格 1 鬼气，相邻换位不耗鬼气。</p>`); }, onOut: hideTip });
 
   function endTurn() {
     unlockAudio();
