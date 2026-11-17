@@ -75,7 +75,7 @@ X_CARDS.push(
  ['doubleedge','双刃',1,'普通','ally','util','一名己方鬼灵3回合内攻击增加30%，但受到的伤害增加20%。',[['atkT',.3,3],['selfVuln',.2,3]]],
  ['qipill','聚气丹',0,'稀有','none','util','获得2点鬼气。',[['qi',2]]],
  ['aura','结义',2,'稀有','ally','util','一名己方鬼灵本场获得【光环】。',[['keyword','aura',null]]],
- ['execute','斩',3,'稀有','enemy','util','目标生命低于20%时直接击倒（首领除外）；否则造成80%伤害。',[['execute',.2,.8]]],
+ ['execute','斩',3,'稀有','enemy','util','目标生命低于20%时直接击倒（首领和带技能的精英除外）；否则造成80%伤害。',[['execute',.2,.8]]],
  ['hex','钉头咒',2,'稀有','enemy','util','目标受到的伤害增加30%，持续3回合。',[['vuln',.3,3]]],
  ['dispel','破法',2,'稀有','enemy','util','击碎目标的护盾与增益，并造成30%伤害。',[['dispel'],['dmg',.3]]],
  ['wardbreak','破障符',1,'稀有','none','util','本回合鬼障直接全部破除。',[['ward',9]]],
@@ -707,12 +707,15 @@ function xActMult(id){return 1+(Math.max(1,NODES[id]?.act||1)-1)*.06}
 function xPriceOf(v,id){return Math.round(v*xActMult(id)*(xHasRelic('coinstring')?.8:1))}
 function xOmenAmount(v,id){return Math.round(v*xActMult(id)/5)*5}
 function xShopStock(id){const all=state.shopStock||={};if(all[id])return all[id];const seed=xHash(id)+xHash(state.name||''),ids=Object.keys(SKILLS).filter(k=>SKILLS[k].ops),cards=[];for(let i=0;cards.length<4&&i<40;i++){const k=ids[(seed+i*13)%ids.length];if(!cards.includes(k))cards.push(k)}return all[id]={cards,relics:xRelicOffer(2,seed),sold:[]}}
-function xShop(id=state.current){if(NODES[id]?.type!=='shop')return null;const s=xShopStock(id),items=[...s.cards.map(k=>({kind:'card',key:k,name:SKILLS[k].name,desc:SKILLS[k].desc,rarity:SKILLS[k].rarity,price:xPriceOf(X_PRICE[SKILLS[k].rarity]||30,id)})),...s.relics.map(k=>({kind:'relic',key:k,name:X_RELICS[k][0],desc:X_RELICS[k][1],price:xPriceOf(90*(1+.2*(state.relics?.length||0)),id)})),{kind:'remove',key:'remove',name:'烧掉一张牌',desc:'从牌组里移除你选的一张牌。',price:xPriceOf(40,id)},{kind:'incense',key:'incense',name:'一炷好香',desc:'下一场战斗开局多1点鬼气（与香炉上的香不叠加）。',price:xPriceOf(35,id)}];
+// 删牌在「鬼灵与卡牌」里本来就免费，鬼市不再卖它；换成买经验，给后期用不掉的冥钱一个去处
+function xShopXp(id){const a=ML.arcs[NODES[id]?.arc||0];return GD.ranks[Math.max(0,Math.min(GD.ranks.length-1,a?.rank||0))]?.upgradeXp||100}
+function xShop(id=state.current){if(NODES[id]?.type!=='shop')return null;const s=xShopStock(id),items=[...s.cards.map(k=>({kind:'card',key:k,name:SKILLS[k].name,desc:SKILLS[k].desc,rarity:SKILLS[k].rarity,price:xPriceOf(X_PRICE[SKILLS[k].rarity]||30,id)})),...s.relics.map(k=>({kind:'relic',key:k,name:X_RELICS[k][0],desc:X_RELICS[k][1],price:xPriceOf(90*(1+.2*(state.relics?.length||0)),id)})),{kind:'xp',key:'xp',name:'抄一卷经',desc:`获得${formatNum(xShopXp(id))}点经验（约够本幕等级的鬼灵升一级）。`,price:xPriceOf(60,id)},{kind:'incense',key:'incense',name:'一炷好香',desc:'下一场战斗开局多1点鬼气（与香炉上的香不叠加）。',price:xPriceOf(35,id)}];
  return {id,coins:state.coins||0,items:items.map((it,i)=>({...it,index:i,sold:s.sold.includes(it.kind+':'+it.key)||(it.kind==='relic'&&xHasRelic(it.key))}))}}
 function xBuy(id,index,deckIndex){const shop=xShop(id),it=shop?.items[index];if(!it||it.sold||state.available.indexOf(id)<0)return false;if((state.coins||0)<it.price){globalThis.GC_BRIDGE.notify('冥钱不够','warn');return false}
  if(it.kind==='card'){if(state.deck.length>=25){globalThis.GC_BRIDGE.notify('牌组已满，先烧掉一张牌','warn');return false}state.deck.push(it.key)}
  else if(it.kind==='relic'){if(!xGainRelic(it.key))return false}
  else if(it.kind==='remove'){if(!Number.isInteger(deckIndex)||deckIndex<0||deckIndex>=state.deck.length||state.deck.length<=1)return false;state.deck.splice(deckIndex,1)}
+ else if(it.kind==='xp')state.xp+=xShopXp(id);
  else if(it.kind==='incense'){if(state.xIncense){globalThis.GC_BRIDGE.notify('香已经点上了，下一场战斗生效','warn');return false}state.xIncense=true}
  else return false;
  state.coins-=it.price;state.shopStock[id].sold.push(it.kind+':'+it.key);save();return true}

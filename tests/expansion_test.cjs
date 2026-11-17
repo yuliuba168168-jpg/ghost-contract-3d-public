@@ -119,8 +119,8 @@ async function fresh(){
  ps.pendingSettlement=null;ps.battle=null;ps.available=[p0+'-explore',p0+'-trial',p0+'-shop',p0+'-omen',p0+'-camp'];ps.coins=500;
  const shop=X.shop(p0+'-shop');assert.equal(shop.items.filter(i=>i.kind==='card').length,4);assert.equal(shop.items.filter(i=>i.kind==='relic').length,2);
  const d0=ps.deck.length;assert.equal(X.buy(p0+'-shop',0),true);assert.equal(ps.deck.length,d0+1);assert.equal(X.buy(p0+'-shop',0),false,'sold out');assert.ok(ps.coins<500);
- const ri=shop.items.findIndex(i=>i.kind==='relic'),rm=shop.items.findIndex(i=>i.kind==='remove');assert.equal(X.buy(p0+'-shop',ri),true);assert.equal(X.relics().length,3);
- assert.equal(X.buy(p0+'-shop',rm,0),true);assert.equal(ps.deck.length,d0);ps.coins=0;assert.equal(X.buy(p0+'-shop',1),false,'not enough coins');
+ const ri=shop.items.findIndex(i=>i.kind==='relic'),rm=shop.items.findIndex(i=>i.kind==='xp');assert.ok(rm>=0&&!shop.items.some(i=>i.kind==='remove'),'shop sells xp, not card removal');assert.equal(X.buy(p0+'-shop',ri),true);assert.equal(X.relics().length,3);
+ {const x0=ps.xp;assert.equal(X.buy(p0+'-shop',rm),true);assert.ok(ps.xp>x0,'bought xp');assert.equal(ps.deck.length,d0+1)}ps.coins=0;assert.equal(X.buy(p0+'-shop',1),false,'not enough coins');
  const om=X.omen(p0+'-omen');assert.ok(om.options.length>=2);const res=X.chooseOmen(p0+'-omen',om.options.length-1);assert.ok(res&&res.label);
  assert.ok(ps.completed.includes(p0+'-omen'));assert.deepEqual([...ps.available],[p0+'-camp'],'siblings locked after omen');assert.equal(X.chooseOmen(p0+'-omen',0),null);
  const er=ctx.enemyRoster(p0+'-trial');assert.ok(er[0].name.startsWith('精英'));

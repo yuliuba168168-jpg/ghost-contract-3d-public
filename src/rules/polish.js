@@ -22,7 +22,7 @@ function openCollection(back=null){
  globalThis.GC_BRIDGE.ui('collection');
 }
 function closeCollection(){const done=collectionReturn;collectionReturn=null;closeModal();done?.()}
-function removeDeckCard(i){if(i<0||i>=state.deck.length)return;state.deck.splice(i,1);save();openCollection(collectionReturn)}
+function removeDeckCard(i){if(i<0||i>=state.deck.length)return;if(state.deck.length<=8){globalThis.GC_BRIDGE.notify('牌组至少保留 8 张','warn');return}state.deck.splice(i,1);save();openCollection(collectionReturn)}
 
 let emergencyDone=null;
 function emergencyRest(done=renderMap){
