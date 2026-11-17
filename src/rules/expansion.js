@@ -715,7 +715,8 @@ function xOmen(id=state.current){const n=NODES[id];if(n?.type!=='omen')return nu
 function xChooseOmen(id,i){const o=xOmen(id),opt=o?.options[i];if(!opt||opt.disabled||!state.available.includes(id))return null;const n=NODES[id],[label,desc,ops]=X_OMENS[n.omen][2][i],got=[];
  for(const [k,v] of ops){
   if(k==='coins')state.coins=(state.coins||0)+v;else if(k==='pay')state.coins-=v;else if(k==='xp')state.xp+=v;else if(k==='will')state.will=Math.max(1,Math.min(10,state.will+v));
-  else if(k==='hurt')for(const s of state.spirits)if(!s.dead)s.hp=Math.max(1,+(s.hp-s.maxHp*v).toFixed(1));else if(k==='mend')for(const s of state.spirits)if(!s.dead)s.hp=Math.min(s.maxHp,s.hp+s.maxHp*v);
+  else if(k==='hurt'){for(const s of state.spirits)if(!s.dead)s.hp=Math.max(1,+(s.hp-s.maxHp*v).toFixed(1))}
+  else if(k==='mend'){for(const s of state.spirits)if(!s.dead)s.hp=Math.min(s.maxHp,s.hp+s.maxHp*v)}
   else if(k==='heal')fullHeal();else if(k==='incense')state.xIncense=true;else if(k==='curse')state.xCurse=true;else if(k==='losecard')got.push('失去【'+SKILLS[state.deck.pop()]?.name+'】');
   else if(k==='relic'){const r=xRelicOffer(1,xHash(id)+(state.relics?.length||0))[0];if(r&&xGainRelic(r))got.push('法器【'+X_RELICS[r][0]+'】')}
   else if(k==='card'){const pool=Object.keys(SKILLS).filter(c=>SKILLS[c].ops&&SKILLS[c].rarity===v),c=pool[(xHash(id)+state.deck.length)%pool.length];if(state.deck.length<25){state.deck.push(c);got.push('卡牌【'+SKILLS[c].name+'】')}else got.push('牌组已满，卡牌没能带走')}}
