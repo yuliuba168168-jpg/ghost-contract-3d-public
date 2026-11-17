@@ -99,6 +99,8 @@ const DIFFICULTIES={
 // (each x sqrt(k)); the enemy life pool is toughened by the same sqrt(k) through `strike`, the share one direct hit can remove.
 // The table holds the full-strength values. They ease in over acts 2-8, while the roster grows from one ghost to five (see tuned()):
 // multipliers interpolate, boss traits / elite skills / every-round casting start at act 7, the extra enemy and 禁忌's rank bonus at act 9.
+// (2026-11 更新：缓入长度是每档的 easeActs——普通 8 幕、困难以上 10 幕；mid = 缓入的 75%（普通第 7 幕、困难以上第 9 幕），full = 缓入结束
+// （普通第 9 幕、困难以上第 11 幕）。鬼障基础减伤 wardBase 也按同一条 r 缓入，噩梦/禁忌不再从第 2 幕起就让普攻完全无效。)
 // Without the ramp the first acts were the wall (one or two ghosts against three or four enemies): the naive skill-using bot of
 // tests/difficulty_test.cjs lost acts 2-4 on 普通, 2-8 on 困难 and everything up to act 14 on 噩梦, while later acts were too soft.
 // 按等级段拉平（难度参数 flat，0=不拉平，只有困难以上使用）：原始数值里敌人相对鬼灵的强度各等级段相差数倍——鬼灵生命表是
@@ -110,8 +112,13 @@ const FLAT_H=[1.25,1.25,1.25,1.25,1.11,0.96,1.39,1.01,0.87,1.16,1.07,0.86,1.17,0
 function tuned(n){
  const D=n?.difficulty===1?DIFFICULTIES.easy:diffCfg(),r=n?.mainline&&n.act?Math.min(1,Math.max(0,(n.act-1)/(D.easeActs||8))):1,full=r>=1,mid=r>=.75,mix=(a,b)=>full?b:a+(b-a)*r;
  const k=Math.max(0,Math.min(22,n?.rank||0)),w=n?.mainline&&n.act?(D.flat||0)*r:0;
- return {...D,ramp:r,hp:Math.pow(D.hp,r)*Math.pow(FLAT_H[k],w),atk:Math.pow(D.atk,r)*Math.pow(FLAT_A[k],w),life:mix(1,D.life),bite:mix(.2,D.bite),biteFloor:(D.biteFloor||0)*r,strike:mix(.2,D.strike||.2),count:full?D.count:0,rank:full?D.rank:0,extra:Math.round(D.extra*(n?.mainline&&n.act?Math.min(1,Math.max(0,(n.act-1)/8)):1)),every:mid?D.every:2,elite:mid?D.elite:0,traits:mid?D.traits:[],minionTraits:full?D.minionTraits:[],ward:D.ward?(full?D.ward:1):0,wardBase:D.wardBase?mix(1,D.wardBase):(D.wardBase??1)};
+ // 拉平只许削峰、不许倒挂：有 flat 的难度（困难以上）任何一幕的生命/攻击倍率都不低于普通难度同幕的倍率再加一点（困难+7.5%、噩梦+12%、禁忌+15%）
+ const N=DIFFICULTIES.normal,up=w>0?1+.15*(D.flat||0):0,lowHp=up?Math.pow(N.hp,r)*up:0,lowAtk=up?Math.pow(N.atk,r)*up:0;
+ return {...D,ramp:r,hp:Math.max(Math.pow(D.hp,r)*Math.pow(FLAT_H[k],w),lowHp),atk:Math.max(Math.pow(D.atk,r)*Math.pow(FLAT_A[k],w),lowAtk),life:mix(1,D.life),bite:mix(.2,D.bite),biteFloor:(D.biteFloor||0)*r,strike:mix(.2,D.strike||.2),count:full?D.count:0,rank:full?D.rank:0,extra:Math.round(D.extra*(n?.mainline&&n.act?Math.min(1,Math.max(0,(n.act-1)/8)):1)),every:mid?D.every:2,elite:mid?D.elite:0,traits:mid?D.traits:[],minionTraits:full?D.minionTraits:[],ward:D.ward?(full?D.ward:1):0,wardBase:D.wardBase==null?1:mix(1,D.wardBase)};
 }
+// 首领技能的次数上限（召唤 1 次、治疗 2 次、噬气 3 次、净化 2 次）。轮到已用满的技能时顺延到下一个还能用的，不再白白空过一个施法回合。
+function bossSkillSpent(e,name){const d=BOSS_SKILLS[name],uses=e.bossUses?.[name]||0;return !!d&&(d.kind==='summon'&&uses>=1||d.kind==='heal'&&uses>=2||d.kind==='siphon'&&uses>=3||d.kind==='purge'&&uses>=2)}
+function bossCastSlot(e){const L=e.bossSkills.length,at=e.bossCastIndex||0;for(let i=0;i<L;i++)if(!bossSkillSpent(e,e.bossSkills[(at+i)%L]))return at+i;return at}
 function setDifficulty(d){if(!DIFFICULTIES[d]||!state.mainline||state.battle)return false;state.difficulty=d;if(state.mode==='endless')ensureEndlessNode();state.log.unshift('难度调整为'+DIFFICULTIES[d].name);save();return true}
 function difficultyOf(s=state){return DIFFICULTIES[s?.difficulty]?s.difficulty:'easy'}
 function diffCfg(){return DIFFICULTIES[difficultyOf()]}
@@ -279,7 +286,7 @@ async function enemySkills(b){
  for(const e of [...b.enemies.filter(e=>!e.dead)]){
   if(e.bossTraits?.includes('狂怒')&&e.hp/e.maxHp<.5&&!e.effects.bossFrenzy){addEffect(e,'bossFrenzy','狂怒',null,{attackBonus:.4});b.log.unshift(`${e.name}陷入狂怒，攻击提高40%`);globalThis.GHOST_VFX?.react('狂怒',e,'狂怒')}
   if(!e.bossSkills?.length||b.turn<e.bossNext)continue;
-  const name=e.bossSkills[(e.bossCastIndex||0)%e.bossSkills.length],d=BOSS_SKILLS[name];e.bossNext=b.turn+(e.bossEvery||2);e.bossCastIndex=(e.bossCastIndex||0)+1;
+  e.bossCastIndex=bossCastSlot(e);const name=e.bossSkills[e.bossCastIndex%e.bossSkills.length],d=BOSS_SKILLS[name];e.bossNext=b.turn+(e.bossEvery||2);e.bossCastIndex=e.bossCastIndex+1;
   if(b.enemySkillNull>0){b.log.unshift(`${e.name}的${name}被虚化阻止`);continue}
   if(skipEffect(e)||e.effects.ice&&Math.random()<.25){b.log.unshift(`${e.name}无法释放${name}`);continue}
   const allies=b.units.filter(u=>u&&!u.dead),candidates=[...allies].sort((a,c)=>c.hp-a.hp),target=candidates[0],uses=e.bossUses[name]||0;

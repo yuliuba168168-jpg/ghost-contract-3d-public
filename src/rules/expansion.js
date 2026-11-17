@@ -167,7 +167,7 @@ function xRun(b,ops,target,ctx){
   else if(k==='shadow'){const lane=xEmptyLane(b);if(lane!=null)xSpawn(b,a,lane,target)}
   else if(k==='bounce'){if(target.token){b.units[target.lane]=null}else{ctx.returned.push(target);b.units[target.lane]=null;returnUnitToHand(target)}}
   else if(k==='bounceAll'){for(const u of xAllies(b)){b.units[u.lane]=null;if(!u.token){ctx.returned.push(u);returnUnitToHand(u)}}}
-  else if(k==='cheapDeploy')b.deployedCount=Math.max(0,b.deployedCount-a);
+  else if(k==='cheapDeploy')b.xDeployDiscount=(b.xDeployDiscount||0)+a;
   else if(k==='will')b.enemyWill-=b.maxEnemyWill*a;
   else if(k==='healWill')b.will=Math.min(b.maxWill,b.will+b.maxWill*a);
   else if(k==='payWill')b.will=Math.max(1,b.will-b.maxWill*a);
@@ -438,7 +438,7 @@ function xIntents(b=state.battle){
  return xFoes(b).map(e=>{
   const out={uid:e.uid,lane:e.lane,cast:null,castIn:null,action:'attack',targetUid:null,targetLane:null,damage:0,times:1+(e.nextExtra||0),behavior:e.behavior||null};
   if(e.bossSkills?.length){
-   const name=e.bossSkills[(e.bossCastIndex||0)%e.bossSkills.length],d=BOSS_SKILLS[name],uses=e.bossUses?.[name]||0,spent=d&&(d.kind==='summon'&&uses>=1||d.kind==='heal'&&uses>=2||d.kind==='siphon'&&uses>=3||d.kind==='purge'&&uses>=2);
+   const name=e.bossSkills[bossCastSlot(e)%e.bossSkills.length],d=BOSS_SKILLS[name],spent=bossSkillSpent(e,name);
    if(b.turn>=(e.bossNext||0)){if(d&&!spent&&!(b.enemySkillNull>0))out.cast={name,kind:d.kind,desc:d.desc}}else out.castIn=e.bossNext-b.turn;
   }
   if(skipEffect(e)){out.action='skip';return out}
@@ -727,6 +727,9 @@ function xChooseOmen(id,i){const o=xOmen(id),opt=o?.options[i];if(!opt||opt.disa
   else if(k==='relic'){const r=xRelicOffer(1,xHash(id)+(state.relics?.length||0))[0];if(r&&xGainRelic(r))got.push('法器【'+X_RELICS[r][0]+'】')}
   else if(k==='card'){const pool=Object.keys(SKILLS).filter(c=>SKILLS[c].ops&&SKILLS[c].rarity===v),c=pool[(xHash(id)+state.deck.length)%pool.length];if(state.deck.length<25){state.deck.push(c);got.push('卡牌【'+SKILLS[c].name+'】')}else got.push('牌组已满，卡牌没能带走')}}
  state.log.unshift(`异兆【${o.title}】：${label}`);completeNode(id);save();return {label,text:desc,got}}
+// 归巢：只让「下一次」显形便宜，用掉就清零（以前直接改累计显形次数，等于整场永久减费）
+const xPrevCost=spiritCost;spiritCost=function(){return Math.max(0,xPrevCost()-(state.battle?.xDeployDiscount||0))};
+const xPrevDeployGhost=deployGhost;deployGhost=async function(index,lane){const b=state.battle,n=b?.deployedCount||0;await xPrevDeployGhost(index,lane);if(b&&state.battle===b&&b.xDeployDiscount&&(b.deployedCount||0)>n){b.xDeployDiscount=0;save();globalThis.GC_BRIDGE.sync('battle')}};
 const xPrevSetup5=xSetupBattle;
 xSetupBattle=function(b){xPrevSetup5(b);if(state.xCurse&&b.mainline&&!b.testMode){state.xCurse=false;for(const e of b.enemies){e.atk=+(e.atk*1.15).toFixed(1);e.baseAtk=e.atk}b.log.unshift('异兆：敌人攻击提高15%')}
  // 异兆的代价留到下一场战斗开局才结算，免费的全队恢复抹不掉它
