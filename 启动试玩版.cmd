@@ -6,5 +6,5 @@ if errorlevel 1 (
   pause
   exit /b 1
 )
-start "" http://127.0.0.1:8790/?lite=1
-node serve.cjs
+node serve.cjs "/?lite=1"
+pause

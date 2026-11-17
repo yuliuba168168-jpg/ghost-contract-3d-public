@@ -6,5 +6,5 @@ if errorlevel 1 (
   pause
   exit /b 1
 )
-start "" http://127.0.0.1:8790/diag.html
-node serve.cjs
+node serve.cjs "/diag.html"
+pause
