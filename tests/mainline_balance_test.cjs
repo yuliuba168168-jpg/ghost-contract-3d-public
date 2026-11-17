@@ -2,7 +2,7 @@
 const fs=require('fs'),vm=require('vm'),path=require('path'),assert=require('node:assert/strict');
 const RULES=path.join(__dirname,'..','src','rules');
 let seed=1;const ctx={console,localStorage:{getItem:()=>null,setItem:()=>{}},setTimeout,clearTimeout,__HEADLESS__:true};
-vm.createContext(ctx);for(const n of ['bridge','codex','vfx','app','polish','mainline-data','mainline-data-2','mainline','facade'])vm.runInContext(fs.readFileSync(path.join(RULES,n+'.js'),'utf8'),ctx,{filename:n+'.js'});
+vm.createContext(ctx);for(const n of ['bridge','codex','vfx','app','polish','mainline-data','mainline-data-2','mainline','expansion','facade'])vm.runInContext(fs.readFileSync(path.join(RULES,n+'.js'),'utf8'),ctx,{filename:n+'.js'});
 ctx.random=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};vm.runInContext('Math.random=random',ctx);
 const A=ctx.__MAINLINE_TEST__,old=ctx.__CAMPAIGN_TEST__,GD=ctx.GAME_DATA;
 const fail=[];let trials=0,worstTurns=0;

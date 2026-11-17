@@ -1,7 +1,7 @@
 const fs=require('fs'),vm=require('vm'),path=require('path'),assert=require('node:assert/strict');
 const RULES=path.join(__dirname,'..','src','rules');
 const storage={};const ctx={console,localStorage:{getItem:k=>storage[k]||null,setItem:(k,v)=>storage[k]=v},setTimeout,clearTimeout,__HEADLESS__:true};
-vm.createContext(ctx);for(const name of ['bridge','codex','vfx','app','polish','mainline-data','mainline-data-2','mainline','facade'])vm.runInContext(fs.readFileSync(path.join(RULES,name+'.js'),'utf8'),ctx,{filename:name+'.js'});
+vm.createContext(ctx);for(const name of ['bridge','codex','vfx','app','polish','mainline-data','mainline-data-2','mainline','expansion','facade'])vm.runInContext(fs.readFileSync(path.join(RULES,name+'.js'),'utf8'),ctx,{filename:name+'.js'});
 const api=ctx.__MAINLINE_TEST__,old=ctx.__CAMPAIGN_TEST__,G=ctx.GAME_DATA;
 vm.runInContext('preferences.speed=10000;',ctx);
 async function main(){

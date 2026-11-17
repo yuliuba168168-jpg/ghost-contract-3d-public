@@ -7,7 +7,7 @@
 //        $env:DIFF_ONLY='normal,hard'; $env:DIFF_SET='{"normal":{"bite":0.27}}'   exploration: prints rates, skips ladder assertions
 const fs=require('fs'),vm=require('vm'),assert=require('node:assert/strict');
 let seed=1;const ctx={console,localStorage:{getItem:()=>null,setItem:()=>{}},setTimeout,clearTimeout,__HEADLESS__:true};
-vm.createContext(ctx);for(const n of ['bridge','codex','vfx','app','polish','mainline-data','mainline-data-2','mainline','playability','facade'])vm.runInContext(fs.readFileSync(`src/rules/${n}.js`,'utf8'),ctx);
+vm.createContext(ctx);for(const n of ['bridge','codex','vfx','app','polish','mainline-data','mainline-data-2','mainline','playability','expansion','facade'])vm.runInContext(fs.readFileSync(`src/rules/${n}.js`,'utf8'),ctx);
 ctx.random=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};vm.runInContext('Math.random=random',ctx);
 const A=ctx.__MAINLINE_TEST__,GC=ctx.GC,Q=GC.query,X=GC.actions,order=['easy','normal','hard','nightmare','taboo'];
 const only=process.env.DIFF_ONLY?process.env.DIFF_ONLY.split(','):null,explore=!!(only||process.env.DIFF_SET||process.env.DIFF_BOT||process.env.DIFF_CREDIT);

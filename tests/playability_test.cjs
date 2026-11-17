@@ -1,7 +1,7 @@
 const fs=require('fs'),vm=require('vm'),path=require('path'),assert=require('node:assert/strict');
 const RULES=path.join(__dirname,'..','src','rules');
 const store={};const ctx={console,setTimeout,clearTimeout,__HEADLESS__:true,localStorage:{getItem:k=>store[k]||null,setItem:(k,v)=>store[k]=v}};vm.createContext(ctx);
-for(const name of ['bridge','codex','vfx','app','polish','mainline-data','mainline-data-2','mainline','playability','facade'])vm.runInContext(fs.readFileSync(path.join(RULES,name+'.js'),'utf8'),ctx,{filename:name+'.js'});
+for(const name of ['bridge','codex','vfx','app','polish','mainline-data','mainline-data-2','mainline','playability','expansion','facade'])vm.runInContext(fs.readFileSync(path.join(RULES,name+'.js'),'utf8'),ctx,{filename:name+'.js'});
 const api=ctx.__MAINLINE_TEST__,old=ctx.__CAMPAIGN_TEST__,G=ctx.GAME_DATA;
 const cast=vm.runInContext('usePlayerSkill',ctx),restriction=vm.runInContext('playerSkillRestriction',ctx);
 async function run(){

@@ -4,7 +4,7 @@ const fs=require('fs'),vm=require('vm'),path=require('path'),assert=require('nod
 const RULES=path.join(__dirname,'..','src','rules');
 const ctx={console,setTimeout,clearTimeout,queueMicrotask,__HEADLESS__:true,localStorage:{getItem:()=>null,setItem:()=>{}}};
 vm.createContext(ctx);
-for(const n of ['bridge','codex','vfx','app','polish','mainline-data','mainline-data-2','mainline','facade'])vm.runInContext(fs.readFileSync(path.join(RULES,n+'.js'),'utf8'),ctx,{filename:n+'.js'});
+for(const n of ['bridge','codex','vfx','app','polish','mainline-data','mainline-data-2','mainline','expansion','facade'])vm.runInContext(fs.readFileSync(path.join(RULES,n+'.js'),'utf8'),ctx,{filename:n+'.js'});
 const rec={fx:[],sync:[],ui:[],notify:[]};
 ctx.GC_BRIDGE={fx(t,p){rec.fx.push({type:t,payload:p});return Promise.resolve()},sync(r){rec.sync.push(r)},ui(s,p){rec.ui.push({screen:s,params:p})},notify(t,k){rec.notify.push({text:t,kind:k})}};
 const GC=ctx.GC,old=ctx.__CAMPAIGN_TEST__,GD=ctx.GAME_DATA;
