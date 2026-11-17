@@ -351,7 +351,7 @@ xSpawn=function(b,kind,lane,from){const u=xPrevSpawn(b,kind,lane,from);if(b.fiel
 xFieldOnDeath=function(b,e){if(b.field==='grave'&&(b.xGraveTurn!==b.turn||b.xGraveQi<2)){if(b.xGraveTurn!==b.turn){b.xGraveTurn=b.turn;b.xGraveQi=0}b.xGraveQi++;b.qi++;b.log.unshift('乱葬岗：获得1点鬼气')}};
 const xPrevHitWill3=hitWill,xPrevHitEnemyWill=hitEnemyWill;
 hitWill=async function(e){const b=state.battle,w=b?.will;await xPrevHitWill3(e);if(b&&state.battle===b&&b.field==='lanterns'&&b.will<w)b.will=Math.max(0,b.will-(w-b.will)*.25)};
-hitEnemyWill=async function(u){const b=state.battle,w=b?.enemyWill;await xPrevHitEnemyWill(u);if(b&&state.battle===b&&b.field==='lanterns'&&b.enemyWill<w)b.enemyWill-=(w-b.enemyWill)*.25};
+hitEnemyWill=async function(u){const b=state.battle,w=b?.enemyWill;await xPrevHitEnemyWill(u);if(b&&state.battle===b&&b.field==='lanterns'&&b.enemyWill<w)b.enemyWill=Math.max(0,b.enemyWill-(w-b.enemyWill)*.25)};
 const xPrevPlaySkill2=playSkill;
 playSkill=function(index,lane){
  const b=state.battle,id=b?.hand[index],c=typeof id==='string'?SKILLS[id]:null;

@@ -12,9 +12,9 @@ export function createBattleInput(ctx) {
   // 功能性文字（回合、标题、右上角按钮）在战斗中默认隐藏：鼠标移到屏幕上缘、按 Esc / Tab、或刚进入战斗时显示几秒
   let peekTimer = 0;
   const peek = (ms = 2600) => { document.body.classList.add('hud-peek'); clearTimeout(peekTimer); peekTimer = setTimeout(() => document.body.classList.remove('hud-peek'), ms); };
-  addEventListener('pointermove', e => { if (e.clientY < 96) peek(1500); }, { passive: true });
-  addEventListener('pointerdown', e => { if (e.clientY < 96) peek(4000); }, { passive: true });
-  addEventListener('keydown', e => { if (e.key === 'Escape' || e.key === 'Tab') peek(4500); });
+  addEventListener('pointermove', e => { if (GC.battle && e.clientY < 96) peek(1500); }, { passive: true });
+  addEventListener('pointerdown', e => { if (GC.battle && e.clientY < 96) peek(4000); }, { passive: true });
+  addEventListener('keydown', e => { if (GC.battle && (e.key === 'Escape' || e.key === 'Tab')) peek(4500); });
   ctx.hudPeek = peek;
   // 常驻的小把手：触屏或不知道要把鼠标移到顶端的玩家点它呼出回合与菜单
   const grip = document.createElement('button'); grip.className = 'hud-grip'; grip.type = 'button'; grip.setAttribute('aria-label', '显示回合与菜单'); grip.textContent = '⋯';

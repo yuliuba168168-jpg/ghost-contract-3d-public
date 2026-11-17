@@ -43,7 +43,7 @@ export function createScreens(ctx) {
   const TU = u => { const k = 'k' + (++thumbSeq); thumbSources.set(k, u); return `<i data-thumb="u:${k}"></i>`; };
   const TS = id => `<i data-thumb="s:${esc(id)}"></i>`;
 
-  function closeSheet() { if (sheetEl) { sheetEl.remove(); sheetEl = null; sheetName = ''; } }
+  function closeSheet() { if (sheetEl) { sheetEl.remove(); sheetEl = null; sheetName = ''; } if (glowEl?.classList.contains('on')) tabooGlow(false); }   // 禁忌红光跟着面板一起收
   function sheet(name, { kicker = '', title = '', aside = '', body = '', foot = [], cls = '', acts = {} }) {
     closeSheet();
     ctx.input?.hideTags?.(); ctx.input?.hideTip?.();
@@ -149,7 +149,7 @@ export function createScreens(ctx) {
         foot: [{ label: '返回', fn: () => { tabooGlow(false); A.returnToTitle(); } }, { label: '确认开始', primary: true, fn: () => { tabooGlow(false); globalThis.GC_X?.setBoon(mode === 'endless' ? '' : boon); A.confirmNewSlot(index, mode, box.querySelector('#slotName').value.trim() || `旅途${index + 1}`, diff); } }]
       });
       const host = box.querySelector('#wheels');
-      const wm = createWheel(Object.keys(MODE_DESC).map(m => ({ key: m, name: GC.MODE_NAMES[m], desc: MODE_DESC[m], color: { normal: '#bec7d4', extreme: '#ff8a70', endless: '#9fd0c8' }[m] })), { label: '模式', cls: 'compact', itemWidth: 250, onChange: it => { mode = it.key; play('click'); wb.el.classList.toggle('off', mode === 'endless'); }, render: it => `<b>${esc(it.name)}</b><p>${esc(it.desc)}</p>` });
+      const wm = createWheel(Object.keys(MODE_DESC).map(m => ({ key: m, name: GC.MODE_NAMES[m], desc: MODE_DESC[m], color: { normal: '#bec7d4', hardcore: '#ff8a70', endless: '#9fd0c8' }[m] })), { label: '模式', cls: 'compact', itemWidth: 250, onChange: it => { mode = it.key; play('click'); wb.el.classList.toggle('off', mode === 'endless'); }, render: it => `<b>${esc(it.name)}</b><p>${esc(it.desc)}</p>` });
       const wd = createWheel(diffItems(), { label: '难度', itemWidth: 250, onChange: it => { diff = it.key; play(it.key === 'taboo' ? 'boss' : 'click'); tabooGlow(it.key === 'taboo'); }, render: diffCard });
       const wb = createWheel(boons.map(o => ({ ...o, disabled: !o.unlocked, color: '#ffd98a' })), { label: '开局馈赠（普通与极限模式）', itemWidth: 250, onChange: it => { boon = it.unlocked ? it.key : ''; play('click'); }, render: it => `<b>${esc(it.name)}</b><p>${esc(it.desc)}</p><small>${it.unlocked ? (it.key ? '已解锁' : '') : '未解锁：' + esc(it.need)}</small>` });
       host.append(wm.el, wd.el, wb.el);
@@ -164,7 +164,7 @@ export function createScreens(ctx) {
     map({ act }) {
       closeSheet();
       // 延迟弹出的法器/条款面板不得顶掉玩家在这 0.4 秒里打开的其他面板（曾把结算面板顶掉，留下过期的路线图）
-      const later = fn => setTimeout(() => { if (!sheetEl && base === 'map' && !GC.battle) fn(); }, 400);
+      const later = fn => setTimeout(() => { if (!sheetEl && base === 'map' && !GC.battle && !stage.active) fn(); }, 400);
       if (globalThis.GC_X?.pendingRelic()) later(() => S.relicPick());
       else if (globalThis.GC_X?.pendingPact()) later(() => S.pact?.());
       const st = GC.state, changed = setBase('map');

@@ -13,7 +13,7 @@ function frame(now) {
   requestAnimationFrame(frame);
   const rawMs = last ? now - last : 16.7;
   last = now;
-  const dtMs = Math.min(50, rawMs), dt = dtMs / 1000;
+  const dtMs = Math.min(100, rawMs), dt = dtMs / 1000;   // 上限 100ms：低帧率（软件渲染）下动画不至于变成 3–4 倍慢动作
   elapsed += dt;
   stats.frameMs += (rawMs - stats.frameMs) * .05;
   if (stats.samples.length >= 600) stats.samples.splice(0, 300);

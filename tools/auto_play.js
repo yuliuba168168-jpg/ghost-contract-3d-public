@@ -3,7 +3,7 @@
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const log = window.__autoLog = { errors: [], stuck: [], acts: {}, clicks: 0, battles: 0, wins: 0, done: false, last: '' };
 addEventListener('error', e => log.errors.push('error: ' + (e.message || e) + ' @' + (e.filename || '').split('/').pop() + ':' + e.lineno));
-addEventListener('unhandledrejection', e => log.errors.push('rejection: ' + (e.reason?.stack || e.reason)).toString().slice(0, 300));
+addEventListener('unhandledrejection', e => log.errors.push(('rejection: ' + (e.reason?.stack || e.reason)).slice(0, 300)));
 const oerr = console.error; console.error = (...a) => { log.errors.push('console.error: ' + a.map(String).join(' ').slice(0, 300)); oerr(...a); };
 const vis = el => el && el.offsetParent !== null && !el.disabled && getComputedStyle(el).visibility !== 'hidden';
 const idle = async () => { for (let i = 0; i < 400 && GC.busy; i++) await sleep(25); };
