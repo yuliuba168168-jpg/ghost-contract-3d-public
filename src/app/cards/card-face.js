@@ -251,12 +251,12 @@ export function drawUnitFace(canvas, d) {
   const atk = compact(d.baseAtk);
   fit(g, atk, 150, 104, NUM); g.fillText(atk, 106, 612);
   const ratio = Math.max(0, Math.min(1, d.hp / Math.max(1, d.maxHp))), low = ratio < .25, mid = ratio < .5;
-  const hp = compact(d.hp), max = '/' + compact(d.maxHp);
-  g.font = `bold 38px ${NUM}`; const mw = Math.min(84, g.measureText(max).width);
-  const s = fit(g, hp, 166 - mw, 84, NUM);
+  const hp = compact(d.hp), max = d.hp >= d.maxHp ? '' : '/' + compact(d.maxHp);   // 满血时上限就是当前值，不重复写
+  g.font = `bold 32px ${NUM}`; const mw = Math.min(64, g.measureText(max).width);
+  const s = fit(g, hp, 148 - mw, 84, NUM);
   const hw = g.measureText(hp).width;
   g.fillStyle = low ? '#ff5a40' : mid ? '#ffc27a' : BONE; g.fillText(hp, 326, 612 - (84 - s) * .2);
-  g.fillStyle = 'rgba(233,226,208,.75)'; fit(g, max, 84, 38, NUM); g.fillText(max, 326 + hw + 4, 612);
+  if (max) { g.fillStyle = 'rgba(233,226,208,.75)'; fit(g, max, 64, 32, NUM); g.fillText(max, 326 + hw + 4, 612); }
   g.fillStyle = '#1c1916'; g.beginPath(); g.roundRect(40, 668, CW - 80, 14, 3); g.fill();
   if (ratio > 0) {
     const bar = g.createLinearGradient(40, 0, CW - 40, 0);
