@@ -91,8 +91,8 @@ const DIFFICULTIES={
  easy:{name:'简单',life:1,bite:.2,hp:1,atk:1,every:2,extra:0,count:0,rank:0,xp:1,elite:0,traits:[],minionTraits:[],desc:'敌人保持基础强度。按推荐培养，把鬼灵放到有敌人的路上，不放技能也能通关。'},
  normal:{name:'普通',life:1.3,bite:.22,strike:.163,hp:2.82,atk:2.4,every:2,extra:1,count:1,rank:0,xp:1.15,elite:0,ward:1,wardBase:.6,traits:[],minionTraits:[],desc:'敌人更耐打、更疼，首领多一个技能，第 9 幕起多一名敌人。全场有一层薄鬼障：当回合不主动施放技能或打出技能卡，普通攻击与空路直击只剩六成。需要适时释放鬼灵技能与卡牌。'},
  hard:{name:'困难',life:1.6,bite:.25,strike:.163,hp:3.4,atk:2.9,easeActs:10,flat:.5,every:2,extra:1,count:1,rank:0,xp:1.3,elite:1,ward:1,wardBase:.4,traits:[],minionTraits:[],desc:'敌人更强，随从带有精英技能。鬼障更厚：当回合不施放技能，普通攻击与空路直击只剩四成。需要了解等级压制、站位与鬼气节奏，并会用技能。'},
- nightmare:{name:'噩梦',life:2,bite:.3,strike:.126,hp:5,atk:4.2,easeActs:12,flat:.8,every:1,extra:2,count:1,rank:0,xp:1.5,elite:2,ward:1,wardBase:0,traits:['狂怒','坚壁'],minionTraits:[],desc:'首领每回合施法，并带有狂怒与坚壁。鬼障完全合拢：当回合不主动施放技能或打出技能卡，普通攻击与空路直击全部无效。需要熟练衔接多名鬼灵的技能。'},
- taboo:{name:'禁忌',life:2.6,bite:.36,strike:.1,hp:4.2,atk:3.3,easeActs:12,flat:1,every:1,extra:3,count:1,rank:1,xp:2,elite:3,ward:2,wardBase:0,traits:['狂怒','坚壁','不死之躯'],minionTraits:['坚壁'],desc:'敌人在等级压制上高一级，首领拥有不死之躯。两层鬼障：当回合施放一次技能只恢复一半普攻效果，两次才完全破除。要求对规则有深入理解，常规打法无法通关。'}
+ nightmare:{name:'噩梦',life:2,bite:.3,strike:.126,hp:4,atk:3.2,easeActs:10,flat:.8,every:1,extra:2,count:1,rank:0,xp:1.5,elite:2,ward:1,wardBase:0,traits:['狂怒','坚壁'],minionTraits:[],desc:'首领每回合施法，并带有狂怒与坚壁。鬼障完全合拢：当回合不主动施放技能或打出技能卡，普通攻击与空路直击全部无效。需要熟练衔接多名鬼灵的技能。'},
+ taboo:{name:'禁忌',life:2.6,bite:.36,strike:.1,hp:4.4,atk:3.4,easeActs:10,flat:1,every:1,extra:3,count:1,rank:1,xp:2,elite:3,ward:2,wardBase:0,traits:['狂怒','坚壁','不死之躯'],minionTraits:['坚壁'],desc:'敌人在等级压制上高一级，首领拥有不死之躯。两层鬼障：当回合施放一次技能只恢复一半普攻效果，两次才完全破除。要求对规则有深入理解，常规打法无法通关。'}
 };
 // Scale applied on 2026-11-16 at the user's request: enemy strength x1.5 for 普通/困难, x2.5 for 噩梦, x4 for 禁忌 relative to the
 // previous table (hp/atk 2.3/2.15, 3/2.7, 3.6/3, 5/3.8; strike cap .2 everywhere). "Strength" = unit hp x unit atk, split evenly
@@ -110,7 +110,7 @@ const FLAT_H=[1.25,1.25,1.25,1.25,1.11,0.96,1.39,1.01,0.87,1.16,1.07,0.86,1.17,0
 function tuned(n){
  const D=n?.difficulty===1?DIFFICULTIES.easy:diffCfg(),r=n?.mainline&&n.act?Math.min(1,Math.max(0,(n.act-1)/(D.easeActs||8))):1,full=r>=1,mid=r>=.75,mix=(a,b)=>full?b:a+(b-a)*r;
  const k=Math.max(0,Math.min(22,n?.rank||0)),w=n?.mainline&&n.act?(D.flat||0)*r:0;
- return {...D,ramp:r,hp:Math.pow(D.hp,r)*Math.pow(FLAT_H[k],w),atk:Math.pow(D.atk,r)*Math.pow(FLAT_A[k],w),life:mix(1,D.life),bite:mix(.2,D.bite),biteFloor:(D.biteFloor||0)*r,strike:mix(.2,D.strike||.2),count:full?D.count:0,rank:full?D.rank:0,extra:Math.round(D.extra*r),every:mid?D.every:2,elite:mid?D.elite:0,traits:mid?D.traits:[],minionTraits:full?D.minionTraits:[],ward:D.ward?(full?D.ward:1):0,wardBase:D.wardBase?mix(1,D.wardBase):(D.wardBase??1)};
+ return {...D,ramp:r,hp:Math.pow(D.hp,r)*Math.pow(FLAT_H[k],w),atk:Math.pow(D.atk,r)*Math.pow(FLAT_A[k],w),life:mix(1,D.life),bite:mix(.2,D.bite),biteFloor:(D.biteFloor||0)*r,strike:mix(.2,D.strike||.2),count:full?D.count:0,rank:full?D.rank:0,extra:Math.round(D.extra*(n?.mainline&&n.act?Math.min(1,Math.max(0,(n.act-1)/8)):1)),every:mid?D.every:2,elite:mid?D.elite:0,traits:mid?D.traits:[],minionTraits:full?D.minionTraits:[],ward:D.ward?(full?D.ward:1):0,wardBase:D.wardBase?mix(1,D.wardBase):(D.wardBase??1)};
 }
 function setDifficulty(d){if(!DIFFICULTIES[d]||!state.mainline||state.battle)return false;state.difficulty=d;if(state.mode==='endless')ensureEndlessNode();state.log.unshift('难度调整为'+DIFFICULTIES[d].name);save();return true}
 function difficultyOf(s=state){return DIFFICULTIES[s?.difficulty]?s.difficulty:'easy'}

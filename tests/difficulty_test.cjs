@@ -127,6 +127,8 @@ async function wardChecks(){
  // The naive skill bot's 困难 rate is 81-91% per seeded run (86% over two), so the bound has to sit above a single run's spread.
  assert.ok(plain.hard<=.8&&skill.hard<=.93&&skill.hard<=skill.normal-.04,'困难 too soft');
  assert.ok(plain.nightmare<=1/46+1e-9&&plain.taboo<=1/46+1e-9,'噩梦/禁忌: only the tutorial fight may be won without skills');
- assert.ok(skill.nightmare<=.5&&skill.taboo<=.1,'upper tiers too soft for the naive skill bot');
+ // 2026-11-17 rebalance (user-approved goal: 禁忌 very hard but clearable): the naive skill bot now wins 39% on 噩梦 and 17% on 禁忌
+ // (was <=10% on 禁忌, where a levelled-up player could not pass acts 13-25 at all). See docs/balance.md.
+ assert.ok(skill.nightmare<=.5&&skill.taboo<=.25&&skill.taboo<skill.nightmare,'upper tiers too soft for the naive skill bot');
  console.log('PASS: difficulty ladder; life pools follow the strongest squad ghost.');
 })().catch(e=>{console.error(e);process.exit(1)});
