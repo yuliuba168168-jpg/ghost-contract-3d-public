@@ -113,7 +113,7 @@ export function createBattleInput(ctx) {
   addEventListener('keydown', ev => {
     if (!GC.battle || ctx.screens?.modalOpen || ev.target?.matches?.('input,textarea,select')) return;
     if (ev.key === 'Escape') act(() => A.cancelSelection());
-    else if (ev.key === ' ' || ev.key === 'Enter') { ev.preventDefault(); endTurn(); }
+    else if ((ev.key === ' ' || ev.key === 'Enter') && !ev.target?.closest?.('button, a, [role=button]')) { ev.preventDefault(); endTurn(); }   // 焦点在按钮上时让按钮自己响应
     else if (/^[1-9]$/.test(ev.key)) { const i = +ev.key - 1; if (GC.battle.hand[i] != null) act(() => A.selectHand(i)); }
   });
 
