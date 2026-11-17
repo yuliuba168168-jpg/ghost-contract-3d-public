@@ -20,7 +20,8 @@ export function createWheel(items, { index = 0, onChange = null, render = it => 
       let d = ((i - cur) % n + n) % n; if (d > n / 2) d -= n;
       const a = Math.abs(d), jump = prev[i] != null && Math.abs(prev[i] - d) > 1.5; prev[i] = d;
       if (jump) { c.style.transition = 'none'; requestAnimationFrame(() => requestAnimationFrame(() => { c.style.transition = ''; })); }
-      c.style.transform = `translateX(${d * itemWidth * .96}px) translateZ(${-a * 170}px) rotateY(${-d * 30}deg)`;
+      const sx = Math.sign(d), tx = a ? itemWidth * (1 + (a - 1) * .62) : 0;
+      c.style.transform = `translateX(${sx * tx}px) translateZ(${-a * 200}px) rotateY(${-sx * Math.min(56, a * 36)}deg)`;
       c.style.zIndex = String(10 - a); c.style.visibility = a > 2 ? 'hidden' : '';
       c.classList.toggle('on', i === cur); c.classList.toggle('near', a === 1); c.classList.toggle('far', a > 1);
     });

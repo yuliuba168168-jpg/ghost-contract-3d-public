@@ -1,7 +1,7 @@
 import { createMapView } from './map-view.js';
 import { createWheel } from './wheel.js';
 // 五档难度的主题色（轮盘、标题页存档位、禁忌红光）
-const DIFF_TONE = { easy: '#9fd0c8', normal: '#ffd98a', hard: '#ff9a4a', nightmare: '#b07cff', taboo: '#ff2a1a' };
+const DIFF_TONE = { easy: '#b9b0a0', normal: '#c9a25a', hard: '#d9772e', nightmare: '#b8281c', taboo: '#ff2a1a' };
 import { createStoryStage } from './story-stage.js';
 import { hasViews, artImage, viewImage } from '../core/assets.js';
 import { slotList } from '../core/asset-slots.js';
@@ -123,7 +123,7 @@ export function createScreens(ctx) {
       const root = document.createElement('div'); root.className = 'title-screen';
       root.innerHTML = `<div class="title-logo"><div class="seal">契</div><h1>全球诡异时代<small>鬼灵契约</small></h1></div><div><div class="slots"></div><div class="title-foot" style="margin-top:16px"></div></div>`;
       // 存档位轮盘：转到正面的那一位才能操作
-      const list = (GC.slots || []).map((s, i) => ({ s, i, color: s ? (s.fallen ? '#8a8480' : DIFF_TONE[s.difficulty] || '#c2261d') : '#bec7d4' }));
+      const list = (GC.slots || []).map((s, i) => ({ s, i, color: s ? (s.fallen ? '#8a8480' : DIFF_TONE[s.difficulty] || '#b8281c') : '#857d70' }));
       const last = +localStorage.getItem('gc3d-last-slot'), start = list[last]?.s ? last : Math.max(0, list.findIndex(o => o.s && !o.s.fallen));
       const wheel = createWheel(list, {
         index: start, itemWidth: 300, cls: 'slot-wheel', onChange: () => play('click'),
@@ -149,14 +149,14 @@ export function createScreens(ctx) {
         foot: [{ label: '返回', fn: () => { tabooGlow(false); A.returnToTitle(); } }, { label: '确认开始', primary: true, fn: () => { tabooGlow(false); globalThis.GC_X?.setBoon(mode === 'endless' ? '' : boon); A.confirmNewSlot(index, mode, box.querySelector('#slotName').value.trim() || `旅途${index + 1}`, diff); } }]
       });
       const host = box.querySelector('#wheels');
-      const wm = createWheel(Object.keys(MODE_DESC).map(m => ({ key: m, name: GC.MODE_NAMES[m], desc: MODE_DESC[m], color: { normal: '#bec7d4', hardcore: '#ff8a70', endless: '#9fd0c8' }[m] })), { label: '模式', cls: 'compact', itemWidth: 250, onChange: it => { mode = it.key; play('click'); wb.el.classList.toggle('off', mode === 'endless'); }, render: it => `<b>${esc(it.name)}</b><p>${esc(it.desc)}</p>` });
+      const wm = createWheel(Object.keys(MODE_DESC).map(m => ({ key: m, name: GC.MODE_NAMES[m], desc: MODE_DESC[m], color: { normal: '#b9b0a0', hardcore: '#d8402e', endless: '#c9a25a' }[m] })), { label: '模式', cls: 'compact', itemWidth: 250, onChange: it => { mode = it.key; play('click'); wb.el.classList.toggle('off', mode === 'endless'); }, render: it => `<b>${esc(it.name)}</b><p>${esc(it.desc)}</p>` });
       const wd = createWheel(diffItems(), { label: '难度', itemWidth: 250, onChange: it => { diff = it.key; play(it.key === 'taboo' ? 'boss' : 'click'); tabooGlow(it.key === 'taboo'); }, render: diffCard });
       const wb = createWheel(boons.map(o => ({ ...o, disabled: !o.unlocked, color: '#ffd98a' })), { label: '开局馈赠（普通与极限模式）', itemWidth: 250, onChange: it => { boon = it.unlocked ? it.key : ''; play('click'); }, render: it => `<b>${esc(it.name)}</b><p>${esc(it.desc)}</p><small>${it.unlocked ? (it.key ? '已解锁' : '') : '未解锁：' + esc(it.need)}</small>` });
       host.append(wm.el, wd.el, wb.el);
     },
     difficulty() {
       const cur = Q.difficultyOf(); let pick = cur;
-      const box = sheet('difficulty', { kicker: '难度', title: '调整旅途难度', cls: 'wheels', body: '<div id="wheels"></div><p class="muted" style="text-align:center">转到想要的难度后确认。只影响之后的战斗。</p>',
+      const box = sheet('difficulty', { kicker: '难度', title: '调整旅途难度', cls: 'wheels narrow', body: '<div id="wheels"></div><p class="muted" style="text-align:center">转到想要的难度后确认。只影响之后的战斗。</p>',
         foot: [{ label: '返回', fn: () => { tabooGlow(false); A.renderMap(); } }, { label: '确认', primary: true, fn: () => { tabooGlow(false); if (pick !== cur) { A.setDifficulty(pick); toast('难度已调整为 ' + GC.DIFFICULTIES[pick].name); } A.renderMap(); } }] });
       const w = createWheel(diffItems(), { index: Object.keys(GC.DIFFICULTIES).indexOf(cur), itemWidth: 250, onChange: it => { pick = it.key; play(it.key === 'taboo' ? 'boss' : 'click'); tabooGlow(it.key === 'taboo'); }, render: diffCard });
       box.querySelector('#wheels').append(w.el); tabooGlow(cur === 'taboo');

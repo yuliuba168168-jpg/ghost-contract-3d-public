@@ -3,13 +3,13 @@ import { artImage, viewImage, hasArt, hasViews } from '../core/assets.js';
 import { mulberry } from '../core/tween.js';
 
 export const CW = 512, CH = 742;
-const NUM = '"Georgia","Times New Roman","Songti SC",serif';
+const NUM = '"Palatino Linotype","Palatino","Book Antiqua","Times New Roman",serif';
 const INK = '#17131c', BONE = PALETTE.bone, CIN = '#b3241a';
 export const TYPE_STYLE = {
   '善灵': { char: '善', color: '#c9d2de' }, '恶灵': { char: '恶', color: '#d8402e' }, '规律鬼': { char: '律', color: '#a98cf2' },
   '邪神': { char: '邪', color: '#c2409a' }, '正神': { char: '神', color: '#ffd98a' }, '禁忌': { char: '禁', color: '#f1ece0' }
 };
-export const RARITY = { '普通': '#77736a', '稀有': '#4668c8', '珍藏': '#9048c8', '传说': '#d08a1c' };
+export const RARITY = { '普通': '#857d70', '稀有': '#5f8a7a', '珍藏': '#b8281c', '传说': '#e8c88a' };
 const staticCache = new Map();
 export const EYES = ['#b3120c', '#c8641a', '#1f8a5b', '#1c6fa8', '#6a2fa0', '#b08a1e', '#a31455', '#8fa3ad'];
 export function mistEyes(g, cx, cy, s, name, boss) {
@@ -113,7 +113,7 @@ function drawArt(g, unit, rnd) {
     const v = viewImage(unit.id, 'front'), dh = h * 2.15, dw = v.width / v.height * dh;
     g.drawImage(v, CW / 2 - dw / 2, y + 14, dw, dh);
   } else if (unit.spirit) {
-    inkWash(g, rnd, x, y, w, h, ['#0e0c16', '#2a2550', '#4b2a66', '#1a1626', style.color]);
+    inkWash(g, rnd, x, y, w, h, ['#0d0a09', '#2a1a14', '#3d1712', '#15100e', style.color]);
     g.strokeStyle = 'rgba(233,226,208,.14)'; g.lineWidth = 2;
     for (let i = 0; i < 5; i++) { g.beginPath(); g.arc(CW / 2, 250, 60 + i * 34, 0, 7); g.stroke(); }
     seal(g, CW / 2, 250, 190, unit.name[0], CIN);
@@ -123,7 +123,7 @@ function drawArt(g, unit, rnd) {
     for (let i = 0; i < 30; i++) { const px = cx + (rnd() - .5) * 260, py = cy + (rnd() - .5) * 260, r = 60 + rnd() * 90, gr = g.createRadialGradient(px, py, 0, px, py, r); gr.addColorStop(0, 'rgba(0,0,0,.8)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(px - r, py - r, r * 2, r * 2); }
     mistEyes(g, cx, cy, 1.25, unit.name, unit.boss && !unit.elite);
   }
-  const fade = g.createLinearGradient(0, 300, 0, 476); fade.addColorStop(0, 'rgba(12,10,18,0)'); fade.addColorStop(1, 'rgba(12,10,18,.92)');
+  const fade = g.createLinearGradient(0, 300, 0, 476); fade.addColorStop(0, 'rgba(10,8,7,0)'); fade.addColorStop(1, 'rgba(10,8,7,.92)');
   g.fillStyle = fade; g.fillRect(x, 300, w, 176);
   g.restore();
 }
@@ -131,9 +131,9 @@ function drawArt(g, unit, rnd) {
 function drawUnitStatic(unit) {
   const [c, g] = makeCanvas(CW, CH), rnd = mulberry((unit.name || 'x').split('').reduce((a, ch) => a * 31 + ch.charCodeAt(0) | 0, 7));
   const style = TYPE_STYLE[unit.type] || TYPE_STYLE['恶灵'];
-  const bg = g.createLinearGradient(0, 0, 0, CH); bg.addColorStop(0, '#15131f'); bg.addColorStop(1, '#0c0a12');
+  const bg = g.createLinearGradient(0, 0, 0, CH); bg.addColorStop(0, '#16110f'); bg.addColorStop(1, '#0a0807');
   g.fillStyle = bg; g.fillRect(0, 0, CW, CH);
-  speckle(g, rnd, 1500, '#3a3650', '#000');
+  speckle(g, rnd, 1500, '#3a302a', '#000');
   drawArt(g, unit, rnd);
   g.lineJoin = 'round';
   nichePath(g); g.strokeStyle = 'rgba(233,226,208,.85)'; g.lineWidth = 3; g.stroke();
@@ -145,25 +145,25 @@ function drawUnitStatic(unit) {
   if ([...name].length <= 5) {
     const chars = [...name], sh = chars.length * 46 + 26;
     g.save(); g.shadowColor = 'rgba(0,0,0,.7)'; g.shadowBlur = 10; g.shadowOffsetY = 3;
-    g.fillStyle = '#e9e2d0'; g.fillRect(46, 60, 58, sh); g.restore();
-    g.fillStyle = CIN; g.fillRect(46, 60, 58, 5);
+    g.fillStyle = '#e9e2d0'; g.fillRect(46, 92, 58, sh); g.restore();
+    g.fillStyle = CIN; g.fillRect(46, 92, 58, 5);
     g.fillStyle = INK; g.font = `bold 40px ${FONT}`;
-    chars.forEach((ch, i) => g.fillText(ch, 75, 96 + i * 46));
+    chars.forEach((ch, i) => g.fillText(ch, 75, 128 + i * 46));
   } else {
     g.fillStyle = 'rgba(8,7,12,.78)'; g.fillRect(30, 404, CW - 60, 52);
     g.fillStyle = BONE; fit(g, name, CW - 96, 34); g.fillText(name, CW / 2, 431);
   }
   g.font = `bold 26px ${FONT}`;
   const rank = unit.rankName || `Lv.${unit.level || 1}`, rw = g.measureText(rank).width + 30;
-  g.fillStyle = 'rgba(12,10,18,.86)'; g.beginPath(); g.roundRect(CW - 44 - rw, 48, rw, 42, 6); g.fill();
+  g.fillStyle = 'rgba(10,8,7,.86)'; g.beginPath(); g.roundRect(CW - 44 - rw, 48, rw, 42, 6); g.fill();
   g.strokeStyle = 'rgba(233,226,208,.5)'; g.lineWidth = 1.5; g.stroke();
   g.fillStyle = BONE; g.fillText(rank, CW - 44 - rw / 2, 70);
-  g.fillStyle = 'rgba(12,10,18,.86)'; g.beginPath(); g.arc(CW - 72, 126, 27, 0, 7); g.fill();
+  g.fillStyle = 'rgba(10,8,7,.86)'; g.beginPath(); g.arc(CW - 72, 126, 27, 0, 7); g.fill();
   g.strokeStyle = style.color; g.lineWidth = 3; g.stroke();
   g.fillStyle = style.color; g.font = `bold 30px ${FONT}`; g.fillText(style.char, CW - 72, 128);
   if (unit.boss) {
     g.fillStyle = '#ffd98a'; g.font = `bold 24px ${FONT}`;
-    g.fillStyle = 'rgba(12,10,18,.86)'; g.beginPath(); g.roundRect(CW - 112, 164, 80, 34, 5); g.fill();
+    g.fillStyle = 'rgba(10,8,7,.86)'; g.beginPath(); g.roundRect(CW - 112, 164, 80, 34, 5); g.fill();
     g.fillStyle = '#ffd98a'; g.fillText('首领', CW - 72, 182);
     const skills = unit.bossSkills || [];
     g.font = `bold 23px ${FONT}`;
@@ -307,8 +307,8 @@ function drawSkillStatic(id) {
   const [c, g] = makeCanvas(CW, CH), rnd = mulberry(id.length * 97 + id.charCodeAt(0));
   const ink = event ? BONE : INK, rare = RARITY[S.rarity] || RARITY['普通'];
   if (event) { const bg = g.createLinearGradient(0, 0, 0, CH); bg.addColorStop(0, '#3d0f0d'); bg.addColorStop(1, '#170708'); g.fillStyle = bg; g.fillRect(0, 0, CW, CH); speckle(g, rnd, 1600, '#7d2018', '#000'); }
-  else { const bg = g.createLinearGradient(0, 0, CW, CH); bg.addColorStop(0, '#d8cca8'); bg.addColorStop(1, '#b3a47c'); g.fillStyle = bg; g.fillRect(0, 0, CW, CH); speckle(g, rnd, 2600, '#f1e8cc', '#5a4424'); }
-  const edge = g.createRadialGradient(CW / 2, CH / 2, 200, CW / 2, CH / 2, 470); edge.addColorStop(0, 'rgba(0,0,0,0)'); edge.addColorStop(1, event ? 'rgba(0,0,0,.6)' : 'rgba(60,34,10,.5)');
+  else { const bg = g.createLinearGradient(0, 0, CW, CH); bg.addColorStop(0, '#bfae84'); bg.addColorStop(1, '#8f7d56'); g.fillStyle = bg; g.fillRect(0, 0, CW, CH); speckle(g, rnd, 2600, '#f1e8cc', '#5a4424'); }
+  const edge = g.createRadialGradient(CW / 2, CH / 2, 200, CW / 2, CH / 2, 470); edge.addColorStop(0, 'rgba(0,0,0,0)'); edge.addColorStop(1, event ? 'rgba(0,0,0,.6)' : 'rgba(40,22,6,.7)');
   g.fillStyle = edge; g.fillRect(0, 0, CW, CH);
   g.strokeStyle = event ? 'rgba(233,226,208,.7)' : CIN; g.lineWidth = 4; g.strokeRect(20, 20, CW - 40, CH - 40);
   g.lineWidth = 1.5; g.strokeRect(30, 30, CW - 60, CH - 60);
@@ -339,11 +339,11 @@ let backCanvas = null;
 export function cardBackCanvas() {
   if (backCanvas) return backCanvas;
   const [c, g] = makeCanvas(CW, CH), rnd = mulberry(5);
-  const bg = g.createRadialGradient(CW / 2, CH / 2, 40, CW / 2, CH / 2, 480); bg.addColorStop(0, '#23224f'); bg.addColorStop(1, '#0b0a1c');
-  g.fillStyle = bg; g.fillRect(0, 0, CW, CH); speckle(g, rnd, 1800, '#4a4a9a', '#000');
+  const bg = g.createRadialGradient(CW / 2, CH / 2, 40, CW / 2, CH / 2, 480); bg.addColorStop(0, '#3a0f0c'); bg.addColorStop(1, '#120706');
+  g.fillStyle = bg; g.fillRect(0, 0, CW, CH); speckle(g, rnd, 1800, '#6e160f', '#000');
   g.strokeStyle = 'rgba(233,226,208,.5)'; g.lineWidth = 3; g.strokeRect(22, 22, CW - 44, CH - 44); g.lineWidth = 1.5; g.strokeRect(32, 32, CW - 64, CH - 64);
   g.translate(CW / 2, CH / 2);
-  g.strokeStyle = 'rgba(159,176,255,.5)';
+  g.strokeStyle = 'rgba(201,162,90,.5)';
   for (let i = 0; i < 7; i++) { g.lineWidth = i % 2 ? 1.5 : 3; g.beginPath(); g.ellipse(0, 0, 60 + i * 28, 36 + i * 40, 0, 0, 7); g.stroke(); }
   g.lineWidth = 4; g.beginPath(); g.moveTo(-200, 0); g.quadraticCurveTo(0, -150, 200, 0); g.quadraticCurveTo(0, 150, -200, 0); g.stroke();
   seal(g, 0, 0, 128, '契', CIN);
@@ -360,7 +360,7 @@ export function costBadgeCanvas(cost, ok = true) {
   g.fillStyle = 'rgba(0,0,0,.55)'; g.beginPath(); g.arc(0, 4, 56, 0, 7); g.fill();
   const gr = g.createRadialGradient(-12, -16, 4, 0, 0, 54); gr.addColorStop(0, ok ? '#3a322b' : '#2e2b28'); gr.addColorStop(.6, ok ? '#1d1815' : '#1c1a18'); gr.addColorStop(1, ok ? '#0c0a09' : '#0e0d0c');
   g.fillStyle = gr; g.beginPath(); g.arc(0, 0, 52, 0, 7); g.fill();
-  g.strokeStyle = ok ? '#a8987a' : '#55504a'; g.lineWidth = 4; g.stroke();
+  g.strokeStyle = ok ? '#c9a25a' : '#55504a'; g.lineWidth = 4; g.stroke();
   g.fillStyle = ok ? '#e8e0cc' : '#7a756a'; g.font = `bold 70px ${NUM}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(String(cost), 0, 5);
   badgeCache.set(key, c);
   return c;

@@ -17,7 +17,7 @@ function geometries() {
   for (let i = 0; i < uv.count; i++) uv.setXY(i, (p.getX(i) + w / 2) / w, (p.getY(i) + h / 2) / h);
   const body = new THREE.ExtrudeGeometry(s, { depth: CARD_T, bevelEnabled: false, curveSegments: 5 });
   body.translate(0, 0, -CARD_T / 2);
-  geo = { face, body, glow: new THREE.PlaneGeometry(CARD_W * 256 / 168, CARD_H * 352 / 264), badge: new THREE.PlaneGeometry(.36, .36) };
+  geo = { face, body, glow: new THREE.PlaneGeometry(CARD_W * 256 / 168, CARD_H * 352 / 264), badge: new THREE.PlaneGeometry(.3, .3) };
   return geo;
 }
 export function backTexture() { return backTex ||= canvasTexture(cardBackCanvas(), { aniso: 8 }); }
@@ -60,7 +60,7 @@ export class Card3D {
     this.glow = new THREE.Mesh(G.glow, new THREE.MeshBasicMaterial({ map: cardGlowTexture(), transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, color: '#d8c9a6' }));
     this.glow.position.z = -CARD_T / 2 + .004; this.glow.userData.noPick = true; this.glow.renderOrder = 2;
     this.badge = new THREE.Mesh(G.badge, new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false }));
-    this.badge.position.set(-CARD_W / 2 + .1, CARD_H / 2 - .1, CARD_T / 2 + .012); this.badge.visible = false; this.badge.userData.noPick = true; this.badge.renderOrder = 4;
+    this.badge.position.set(-CARD_W / 2 + .03, CARD_H / 2 - .03, CARD_T / 2 + .012); this.badge.visible = false; this.badge.userData.noPick = true; this.badge.renderOrder = 4;
     this.aura = new THREE.Mesh(G.glow, new THREE.MeshBasicMaterial({ map: cardGlowTexture(), transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
     this.aura.position.z = -CARD_T / 2 + .003; this.aura.scale.setScalar(1.09); this.aura.userData.noPick = true; this.aura.renderOrder = 1; this.aura.visible = false;
     this.shade = new THREE.Mesh(G.glow, new THREE.MeshBasicMaterial({ map: cardGlowTexture(), color: '#000000', transparent: true, opacity: 0, depthWrite: false }));
