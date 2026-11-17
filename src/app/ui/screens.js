@@ -114,7 +114,7 @@ export function createScreens(ctx) {
         slots.append(d);
       });
       const foot = root.querySelector('.title-foot');
-      foot.append(btn('鬼灵图鉴', () => A.renderCodex()), btn('演武台', () => A.renderTestLab()), btn('剧情档案', () => { archiveFrom = 'home'; A.openStoryArchive(A.renderHome); }), btn('操作指南', () => show('guide', { index: 0 })),
+      foot.append(btn('鬼灵图鉴', () => A.renderCodex()), btn('演武台', () => A.renderTestLab()), btn('剧情档案', () => { archiveFrom = 'home'; A.openStoryArchive(A.renderHome); }), btn('每日挑战', () => show('daily')), btn('成绩榜', () => show('records')), btn('操作指南', () => show('guide', { index: 0 })),
         btn('设置', () => A.presentationSettings()), btn('导出存档', exportSlots), btn('导入存档', importSlots));
       baseEl.append(root);
     },
@@ -325,7 +325,27 @@ export function createScreens(ctx) {
       const hud = document.createElement('div'); hud.className = 'map-hud';
       hud.innerHTML = `<div class="map-head"><small>${esc(st.name || '')} · 无尽</small><b>第 ${st.wave} 波</b><span>${enemies.map(e => `${esc(e.name)} ${esc(e.rankName)}`).join('　')}</span></div><div class="map-res"><b>经验<i>${num(st.xp)}</i></b><b>存活<i>${st.spirits.filter(s => !s.dead).length}/${st.spirits.length}</i></b><b>牌组<i>${st.deck.length}/25</i></b></div><div class="map-bar"></div>`;
       hud.querySelector('.map-bar').append(btn('查看敌情并出战', () => A.showStoryBeforeBattle('endless-arena'), true), btn('鬼灵与卡牌', () => A.openCollection(() => A.renderMap())), btn(`难度 · ${GC.DIFFICULTIES[Q.difficultyOf()].name}`, () => show('difficulty')), btn('旅途记录', () => A.journal()), btn('指南', () => show('guide', { index: 21 })), btn('设置', () => A.presentationSettings()), btn('回到标题', () => A.renderHome()));
+      const afx = globalThis.GC_X?.affixes() || [];
+      if (afx.length) { const d = document.createElement('span'); d.className = 'affix-line'; d.innerHTML = '词缀　' + afx.map(x => `<b title="${esc(x.desc)}">${esc(x.name)}</b>`).join(''); hud.querySelector('.map-head').append(d); }
+      hud.querySelector('.map-bar').append(btn('成绩榜', () => show('records')));
       baseEl.append(hud);
+    },
+    daily() {
+      const X = globalThis.GC_X, d = X.dailyInfo(), DF = GC.DIFFICULTIES, nameOf = id => GD.spirits.find(s => s.id === id)?.name || id; let diff = 'normal';
+      const box = sheet('daily', { kicker: '每日挑战', title: d.date, cls: 'wide', aside: d.best ? `今日最佳 <b class="goldc">${d.best} 波</b>` : '今日尚未挑战',
+        body: `<p class="muted">所有人今天拿到的是同一支队伍、同一副牌和同样的三条词缀。无尽规则，倒下即结束，成绩记为完成的波数。</p>
+          <h3>词缀</h3><div class="grid c3">${d.affixes.map(x => `<div class="cell"><b class="red">${esc(x.name)}</b><p>${esc(x.desc)}</p></div>`).join('')}</div>
+          <h3>出战鬼灵</h3><p>${d.squad.map(nameOf).map(esc).join('　')}</p><h3>牌组</h3><p>${d.deck.map(id => esc(GC.SKILLS[id].name)).join('　')}</p>
+          <h3>难度</h3><div class="grid c5" id="ddiffs">${Object.keys(DF).map(k => `<button class="cell ${k === diff ? 'on' : ''}" data-act="diff" data-arg="${k}"><b>${DF[k].name}</b></button>`).join('')}</div>
+          <h3>占用哪个存档位</h3><div class="grid c4">${(GC.slots || []).map((s, i) => `<button class="cell" data-act="go" data-arg="${i}"><b>${'壹贰叁肆'[i]} · ${s ? esc(s.name) : '空白'}</b><span>${s ? '将被替换' : '可用'}</span></button>`).join('')}</div>`,
+        foot: [{ label: '返回', fn: () => closeSheet() }],
+        acts: { diff: (k, el) => { diff = k; box.querySelectorAll('#ddiffs .cell').forEach(c => c.classList.toggle('on', c === el)); }, go: i => { if (X.startDaily(+i, diff)) { closeSheet(); A.renderMap(); } } } });
+    },
+    records() {
+      const r = globalThis.GC_X.records(), DF = GC.DIFFICULTIES, days = Object.keys(r.daily).sort().reverse().slice(0, 14);
+      sheet('records', { kicker: '成绩榜', title: '无尽与每日挑战', cls: 'wide',
+        body: `<div class="split"><div><h3>无尽 · 前十</h3>${r.endless.length ? r.endless.map((e, i) => `<div class="cell"><b>${i + 1}. 第 ${e.wave} 波</b><span>${esc(DF[e.difficulty]?.name || '')} · ${esc(e.date)} · ${esc(e.name || '')}</span></div>`).join('') : '<p class="muted">还没有记录。无尽旅途倒下时会记下完成的波数。</p>'}</div><div><h3>每日挑战</h3>${days.length ? days.map(k => `<div class="cell"><b>${esc(k)}</b><span>${r.daily[k]} 波</span></div>`).join('') : '<p class="muted">还没有记录。</p>'}</div></div>`,
+        foot: [{ label: '返回', primary: true, fn: () => closeSheet() }] });
     },
     battleUpgrade() {
       const st = GC.state;

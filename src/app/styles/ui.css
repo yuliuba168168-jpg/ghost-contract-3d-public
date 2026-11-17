@@ -205,3 +205,5 @@ table.t { width: 100%; border-collapse: collapse; font-size: 14px; } table.t th,
 .bond-bar button.ready { border-left-color: #ffd98a; color: #ffe9b8; box-shadow: 0 0 14px rgba(255, 217, 138, .22); }
 .bond-bar button.ready:hover { background: rgba(60, 44, 14, .85); }
 .bond-bar button.used { opacity: .45; cursor: default; }
+.affix-line { display: block; margin-top: 4px; color: rgba(233, 226, 208, .6); font-size: 13px; }
+.affix-line b { margin-right: 8px; padding: 1px 7px; border: 1px solid rgba(194, 38, 29, .6); border-radius: 2px; color: #ff9d8c; font-weight: 600; }
