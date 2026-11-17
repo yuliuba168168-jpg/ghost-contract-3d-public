@@ -221,3 +221,12 @@ table.t { width: 100%; border-collapse: collapse; font-size: 14px; } table.t th,
 @keyframes tutPulse { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }
 body.tut-on .guide-tip { display: none !important; }
 @media (max-height: 520px) { .tut { top: 16%; padding: 8px 10px; } .tut b { font-size: 15px; margin: 2px 0; } .tut p { font-size: 12px; line-height: 1.5; } .tut-row { margin-top: 6px; } }
+.skill-video { position: fixed; inset: 0; z-index: 70; background: #000; opacity: 0; transition: opacity .15s ease; cursor: pointer; }
+.skill-video.on { opacity: 1; }
+.skill-video video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.skill-video.band { background: rgba(0, 0, 0, .55); }
+.skill-video.band video { top: 19%; height: 62%; clip-path: polygon(0 9%, 100% 0, 100% 91%, 0 100%); }
+.skill-video.band.enemy video { clip-path: polygon(0 0, 100% 9%, 100% 100%, 0 91%); }
+.skill-video b { position: absolute; left: 5%; bottom: 9%; font: 600 34px/1.2 "STKaiti", "KaiTi", serif; letter-spacing: .3em; color: #f4ead6; text-shadow: 0 2px 14px #000, 0 0 30px rgba(200, 53, 42, .8); }
+.skill-video small { position: absolute; right: 18px; bottom: 14px; color: rgba(255, 255, 255, .55); font-size: 12px; letter-spacing: .2em; }
+@media (max-height: 520px) { .skill-video b { font-size: 22px; } }

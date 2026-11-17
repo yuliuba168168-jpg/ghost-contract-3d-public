@@ -71,6 +71,8 @@ async function boot() {
     ctx.screens = createScreens(ctx);
     ctx.tutorial = (await import('./ui/tutorial.js')).createTutorial(ctx);
     ctx.music = (await import('./core/music.js')).createMusic(ctx);
+    ctx.video = (await import('./fx/skill-video.js')).createSkillVideo(ctx);
+    { const basePlay = ctx.cine.play.bind(ctx.cine); ctx.cine.play = async req => (await ctx.video.tryPlay(req)) ? undefined : basePlay(req); }
     ctx.mapView?.warm?.(); ctx.storyStage?.warm?.();
   }
   installBridge(ctx);
