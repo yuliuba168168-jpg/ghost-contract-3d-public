@@ -70,6 +70,7 @@ async function boot() {
     ctx.input = createBattleInput(ctx);
     ctx.screens = createScreens(ctx);
     ctx.tutorial = (await import('./ui/tutorial.js')).createTutorial(ctx);
+    ctx.music = (await import('./core/music.js')).createMusic(ctx);
     ctx.mapView?.warm?.(); ctx.storyStage?.warm?.();
   }
   installBridge(ctx);
