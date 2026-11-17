@@ -106,7 +106,7 @@ export function createXHud(ctx) {
   // ---- 桌面道具 ----
   function propSay(r, pos) {
     if (pos) ctx.overlay?.floatText(pos.clone().setY(1.2), r.name, { kind: 'info' });
-    ctx.overlay?.caption?.(r.text, { tone: 'gold', dur: 3200 });
+    bubble.textContent = r.text; bubble.classList.remove('on'); void bubble.offsetWidth; bubble.classList.add('on'); clearTimeout(sayTimer); sayTimer = setTimeout(() => bubble.classList.remove('on'), 4200);
     if (r.rite) { ctx.overlay?.banner(`仪式 · ${r.rite}`, { tone: 'gold', sub: r.reward, dur: 2200 }); ctx.overlay?.flash?.('#ffd98a', .2, 700); play('reward'); ctx.opponent?.play?.('wary', { tier: 'normal' }); }
   }
   ctx.xfx = {
