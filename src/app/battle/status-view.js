@@ -28,13 +28,12 @@ export function createStatusView(ctx) {
     const shown = list.slice(0, 4), cw = 124, total = shown.length * cw + (shown.length - 1) * 5, x0 = (W - total) / 2;
     shown.forEach((s, i) => {
       const x = x0 + i * (cw + 5), col = themeColor(s.theme), more = i === 3 && list.length > 4;
-      g.fillStyle = s.passive ? 'rgba(18, 16, 14,.72)' : 'rgba(18, 16, 14,.92)'; g.beginPath(); g.roundRect(x, 10, cw, H - 22, 10); g.fill();
-      g.strokeStyle = col; g.lineWidth = s.passive ? 2 : 4; g.stroke();
+      if (!s.passive) { g.fillStyle = 'rgba(18, 16, 14,.92)'; g.beginPath(); g.roundRect(x, 10, cw, H - 22, 3); g.fill(); g.strokeStyle = col; g.lineWidth = 2; g.stroke(); }
       g.fillStyle = s.passive ? 'rgba(233, 226, 208,.7)' : '#f1ece0'; g.font = `bold 40px ${FONT}`; g.textBaseline = 'middle';
       const text = more ? `+${list.length - 3}` : short(s), turns = !more && s.turns != null ? String(s.turns) : '';
       g.textAlign = turns ? 'left' : 'center';
       g.fillText(text, turns ? x + 9 : x + cw / 2, H / 2 + 2, turns ? cw - 44 : cw - 12);
-      if (turns) { g.fillStyle = col; g.beginPath(); g.arc(x + cw - 22, H / 2, 17, 0, 7); g.fill(); g.fillStyle = '#12100e'; g.font = 'bold 28px Georgia, serif'; g.textAlign = 'center'; g.fillText(turns, x + cw - 22, H / 2 + 2); }
+      if (turns) { g.fillStyle = col; g.beginPath(); g.arc(x + cw - 22, H / 2, 17, 0, 7); g.fill(); g.fillStyle = '#12100e'; g.font = 'bold 28px "Palatino Linotype", Palatino, "Times New Roman", serif'; g.textAlign = 'center'; g.fillText(turns, x + cw - 22, H / 2 + 2); }
     });
     strip.tex.needsUpdate = true;
   }

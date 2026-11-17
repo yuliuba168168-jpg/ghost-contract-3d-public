@@ -36,8 +36,8 @@ export function makeLabel(text, { w = 256, h = 80, size = 40, color = '#cdbf9f',
     if (!t) { tex.needsUpdate = true; return; }
     let fs = size; do { g.font = `bold ${fs}px ${FONT}`; fs -= 3; } while (g.measureText(t).width > w - 40 && fs > 14);
     const tw = g.measureText(t).width, bw = tw + 30, bh = fs * 1.55;
-    g.fillStyle = 'rgba(14,11,9,.62)'; g.beginPath(); g.roundRect((w - bw) / 2, (h - bh) / 2, bw, bh, 5); g.fill();
-    g.strokeStyle = 'rgba(160,130,90,.38)'; g.lineWidth = 2; g.stroke();
+    g.fillStyle = 'rgba(14,11,9,.62)'; g.beginPath(); g.roundRect((w - bw) / 2, (h - bh) / 2, bw, bh, 2); g.fill();
+    g.strokeStyle = 'rgba(201,162,90,.45)'; g.lineWidth = 2; g.stroke();
     g.textAlign = 'center'; g.textBaseline = 'middle';
     g.fillStyle = col; g.globalAlpha = .92; g.fillText(t, w / 2, h / 2 + 2); g.globalAlpha = 1;
     tex.needsUpdate = true;

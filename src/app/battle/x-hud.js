@@ -16,11 +16,11 @@ export function createXHud(ctx) {
   // ---- 意图条 ----
   function describe(it) {
     const parts = [];
-    if (it.cast) parts.push({ text: '术·' + it.cast.name.slice(0, 4), color: '#ff5a48', w: 2 });
-    if (it.action === 'skip') parts.push({ text: '停', color: '#8fb4d8', w: 1 });
-    else if (it.action === 'lamp') parts.push({ text: '灯 ' + compact(Math.round(it.damage * 10) / 10) + (it.times > 1 ? '×' + it.times : ''), color: '#ffc46b', w: 1.5 });
-    else parts.push({ text: '攻 ' + compact(Math.round(it.damage * 10) / 10) + (it.times > 1 ? '×' + it.times : ''), color: '#e9e2d0', w: 1.5 });
-    if (!it.cast && it.castIn != null && it.castIn <= 1) parts.push({ text: '蓄', color: '#c08cff', w: 1 });
+    if (it.cast) parts.push({ text: '术·' + it.cast.name.slice(0, 4), color: '#b8281c', w: 2 });
+    if (it.action === 'skip') parts.push({ text: '停', color: '#17131c', w: 1 });
+    else if (it.action === 'lamp') parts.push({ text: '灯 ' + compact(Math.round(it.damage * 10) / 10) + (it.times > 1 ? '×' + it.times : ''), color: '#17131c', w: 1.5 });
+    else parts.push({ text: '攻 ' + compact(Math.round(it.damage * 10) / 10) + (it.times > 1 ? '×' + it.times : ''), color: '#17131c', w: 1.5 });
+    if (!it.cast && it.castIn != null && it.castIn <= 1) parts.push({ text: '蓄', color: '#17131c', w: 1, dot: true });
     return parts;
   }
   function draw(strip, parts) {
@@ -28,9 +28,13 @@ export function createXHud(ctx) {
     const unit = 118, total = parts.reduce((a, p) => a + p.w * unit + 6, -6); let x = (W - total) / 2;
     for (const p of parts) {
       const w = p.w * unit;
-      g.fillStyle = 'rgba(14,12,18,.9)'; g.beginPath(); g.roundRect(x, 12, w, H - 26, 10); g.fill();
-      g.strokeStyle = p.color; g.lineWidth = 3; g.stroke();
-      g.fillStyle = p.color; g.font = `bold 38px ${FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(p.text, x + w / 2, H / 2 + 1, w - 14);
+      // 纸签：与技能签同一语言，只用纸色与朱砂两种颜色
+      g.save(); g.shadowColor = 'rgba(0,0,0,.6)'; g.shadowBlur = 8; g.shadowOffsetY = 3;
+      const pg = g.createLinearGradient(0, 12, 0, H - 14); pg.addColorStop(0, '#cbbf9f'); pg.addColorStop(1, '#a8996f');
+      g.fillStyle = pg; g.beginPath(); g.roundRect(x, 12, w, H - 26, 2); g.fill(); g.restore();
+      g.fillStyle = '#b8281c'; g.fillRect(x, 12, w, 6);
+      if (p.dot) { g.beginPath(); g.arc(x + w - 14, 32, 7, 0, 7); g.fill(); }
+      g.fillStyle = p.color; g.font = `bold 38px ${FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(p.text, x + w / 2, H / 2 + 4, w - 14);
       x += w + 6;
     }
     strip.tex.needsUpdate = true;

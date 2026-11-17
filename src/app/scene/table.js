@@ -32,16 +32,16 @@ export function createTable(scene) {
   const slots = { enemy: [], ally: [] };
   const slotGeo = new THREE.PlaneGeometry(1.62, 1.62);
   for (const side of ['enemy', 'ally']) for (let lane = 0; lane < 4; lane++) {
-    const mat = new THREE.MeshStandardMaterial({ map: inkRuneTexture(lane + (side === 'enemy' ? 4 : 0)), color: side === 'enemy' ? '#7a1d12' : '#b8b09a', roughness: .9, transparent: true, opacity: .75, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, emissive: '#000000' });
+    const mat = new THREE.MeshStandardMaterial({ map: inkRuneTexture(lane + (side === 'enemy' ? 4 : 0)), color: side === 'enemy' ? '#7a1d12' : '#b8b09a', roughness: .9, transparent: true, opacity: side === 'enemy' ? .5 : .38, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, emissive: '#000000' });
     const mesh = new THREE.Mesh(slotGeo, mat);
     mesh.rotation.x = -Math.PI / 2;
     mesh.position.set(LANES_X[lane], .004, ROW_Z[side]);
     mesh.renderOrder = 1;
-    mesh.userData = { ink: new THREE.Color(side === 'enemy' ? '#7a1d12' : '#b8b09a'), lit: new THREE.Color(side === 'enemy' ? '#ff5a30' : '#ffe2a8'), level: 0, target: 0, base: .75, seed: lane * 1.7 + (side === 'enemy' ? 3 : 0), side, lane, spin: 0 };
+    mesh.userData = { ink: new THREE.Color(side === 'enemy' ? '#7a1d12' : '#b8b09a'), lit: new THREE.Color(side === 'enemy' ? '#ff5a30' : '#ffe2a8'), level: 0, target: 0, base: side === 'enemy' ? .5 : .38, seed: lane * 1.7 + (side === 'enemy' ? 3 : 0), side, lane, spin: 0 };
     group.add(mesh); slots[side].push(mesh);
   }
 
-  const ash = new THREE.Mesh(new THREE.PlaneGeometry(6.4, .42), new THREE.MeshBasicMaterial({ map: ashTexture(), transparent: true, opacity: .5, depthWrite: false, color: '#d9d2c4' }));
+  const ash = new THREE.Mesh(new THREE.PlaneGeometry(6.4, .42), new THREE.MeshBasicMaterial({ map: ashTexture(), transparent: true, opacity: .2, depthWrite: false, color: '#d9d2c4' }));
   ash.rotation.x = -Math.PI / 2; ash.position.set(0, .003, -.23);
   group.add(ash);
 
@@ -49,7 +49,7 @@ export function createTable(scene) {
   function clearGlow() { for (const side of ['enemy', 'ally']) for (const m of slots[side]) m.userData.target = 0; }
   function pulseSlot(side, lane, amount = 1.4) { const m = slots[side]?.[lane]; if (m) m.userData.level = Math.max(m.userData.level, amount); }
   let plain = 0;
-  function setPlain(v) { plain = v; ash.material.opacity = .5 * (1 - v); }
+  function setPlain(v) { plain = v; ash.material.opacity = .2 * (1 - v); }
   function update(dt, t) {
     for (const side of ['enemy', 'ally']) for (const m of slots[side]) {
       const u = m.userData;
