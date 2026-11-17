@@ -251,3 +251,77 @@ endTurn=async function(){
  if(state.battle===b&&b)xTurnStart(b);
 };
 function xTurnStart(b){}
+
+// ---------- 敌人行为类型 ----------
+const X_BEHAVIORS={
+ guard:['盾卫','被动：受到的全部伤害降低25%。'],
+ bomber:['自爆','被动：被击倒时炸伤正前方的鬼灵（其最大生命的15%）；前方无人时熄灭我方3%命灯。'],
+ leech:['吸血','被动：普通攻击造成伤害后，恢复该伤害50%的生命。'],
+ swift:['疾行','被动：每逢第3、6、9…回合多行动一次。'],
+ sniper:['远射','被动：无视站位，总是攻击场上生命比例最低的鬼灵。'],
+ splitter:['增殖','被动：第一次被击倒时，在原地留下一个生命减半的分身。'],
+ hexer:['咒师','被动：普通攻击命中后，目标受到的伤害增加10%，持续2回合。'],
+ wailer:['哀嚎','被动：被击倒时，其余敌人攻击提高20%。'],
+ lurker:['潜伏','被动：开场前2回合有50%概率闪避攻击。'],
+ parasite:['寄生','被动：普通攻击命中后，我方下回合可用鬼气减少1点（每回合最多2点）。'],
+ drummer:['鼓手','被动：只要它在场，其余敌人攻击提高15%。'],
+ binder:['缚灵','被动：每逢第3、6、9…回合，令正前方的鬼灵下次行动停止。']
+};
+const X_BEHAVIOR_KEYS=Object.keys(X_BEHAVIORS);
+for(const [name,desc] of Object.values(X_BEHAVIORS))BOSS_SKILLS[name]={name,kind:'trait',desc,behavior:true};
+function xHash(s){let h=0;for(const ch of String(s))h=(h*31+ch.charCodeAt(0))>>>0;return h}
+function xIs(e,k){return !!e&&!e.dead&&e.behavior===k}
+function xGiveBehavior(e,key){
+ const [name]=X_BEHAVIORS[key];e.behavior=key;e.bossTraits=[...(e.bossTraits||[]),name];
+ if(e.name.startsWith('随从 · '))e.name=name+' · '+e.name.slice(5);else if(e.name==='无尽游鬼')e.name=name+'游鬼';
+ if(key==='guard')addEffect(e,'xbGuard','盾卫',null,{reduction:.25});
+ if(key==='lurker')addEffect(e,'butterfly','潜伏',2,{dodge:.5});
+ return e}
+const xPrevRoster=enemyRoster;
+enemyRoster=function(id){
+ const list=xPrevRoster(id),n=NODES[id],arc=n?.arc||0;if(!n||n.difficulty===1||arc<1)return list;
+ const seed=xHash(id);
+ list.forEach((e,i)=>{if(!i&&(n.type==='boss'||arc<2))return;xGiveBehavior(e,X_BEHAVIOR_KEYS[(seed+arc*5+i*7)%X_BEHAVIOR_KEYS.length])});
+ return list};
+const xPrevEndlessRoster=endlessRoster;
+endlessRoster=function(){
+ const list=xPrevEndlessRoster(),w=state.wave||1;
+ list.forEach((e,i)=>{e.bossTraits||=[];if(e.bossSkills?.length)return;xGiveBehavior(e,X_BEHAVIOR_KEYS[(w*5+i*7)%X_BEHAVIOR_KEYS.length])});
+ return list};
+xEnemyHitHook=async function(b,e,t,dealt){
+ if(e.dead)return;
+ if(e.behavior==='leech'){const v=Math.min(e.maxHp-e.hp,dealt*.5);if(v>0){e.hp+=v;xFloat(e,'enemy',`吸血 +${formatNum(v)}`,'heal')}}
+ else if(e.behavior==='hexer'&&!t.dead){addEffect(t,'xbHex','咒印',2,{receivedBonus:.1});xFloat(t,'ally','咒印')}
+ else if(e.behavior==='parasite'){b.qiPenalty=Math.min(2,(b.qiPenalty||0)+1);xFloat(e,'enemy','寄生 鬼气-1')}
+ refreshCombatCards()};
+function xEnemyDeath(b,e){
+ b.kills=(b.kills||0)+1;
+ if(e.behavior==='bomber'){const t=b.units[e.lane];if(t&&!t.dead){const v=t.maxHp*.15;dealRawDamage(e,t,v,'自爆',true,true);xFloat(t,'ally',`自爆 -${formatNum(v)}`,'damage')}else{b.will=Math.max(0,b.will-b.maxWill*.03);b.log.unshift(`${e.name}自爆，熄灭我方3%命灯`)}}
+ else if(e.behavior==='wailer'){for(const o of xFoes(b))addEffect(o,'xbWail','哀嚎',null,{attackBonus:(o.effects?.xbWail?.attackBonus||0)+.2});b.log.unshift(`${e.name}的哀嚎令其余敌人攻击提高20%`)}
+ else if(e.behavior==='splitter'&&!e.isSplit){const hp=Math.max(1,Math.round(e.maxHp*.5)),c={...clone(e),uid:e.uid+'-s',name:e.name+'（分身）',hp,maxHp:hp,dead:false,effects:{},isSplit:true,behavior:null,bossTraits:(e.bossTraits||[]).filter(x=>x!=='增殖'),shield:0};b.enemies.push(c);b.log.unshift(`${e.name}留下了一个分身`);globalThis.GC_BRIDGE.fx('enemy:return',{uid:c.uid,lane:c.lane})}
+}
+const xPrevCleanup2=cleanup;
+cleanup=function(){
+ const b=state.battle;
+ if(b)for(const e of [...b.enemies])if(e.dead&&!e.xGone){e.xGone=true;xEnemyDeath(b,e);xFieldOnDeath(b,e)}
+ xPrevCleanup2();
+};
+function xFieldOnDeath(b,e){}
+const xPrevEffAtk2=effectiveAttack;
+effectiveAttack=function(u){
+ let v=xPrevEffAtk2(u);const b=state.battle;
+ if(b&&u&&b.enemies.includes(u)){const n=b.enemies.filter(o=>o!==u&&xIs(o,'drummer')).length;if(n)v*=1+.15*n}
+ return v};
+// 远射：改写敌方普攻目标；空路时也优先点名
+function xSniperTarget(b){return xAllies(b).sort((x,y)=>x.hp/x.maxHp-y.hp/y.maxHp)[0]||null}
+const xPrevAttack2=attackAnim;
+attackAnim=function(a,t,enemy){const b=state.battle;if(enemy&&b&&a.behavior==='sniper'&&!(b.deceit&&b.deceit.turns>0)){const s=xSniperTarget(b);if(s)t=s}return xPrevAttack2(a,t,enemy)};
+const xPrevHitWill2=hitWill;
+hitWill=function(e){const b=state.battle;if(b&&e.behavior==='sniper'&&!(b.deceit&&b.deceit.turns>0)){const s=xSniperTarget(b);if(s)return attackAnim(e,s,true)}return xPrevHitWill2(e)};
+function xBehaviorTurn(b){
+ if(b.turn%3)return;
+ for(const e of xFoes(b)){
+  if(e.behavior==='swift'){e.nextExtra=(e.nextExtra||0)+1;b.log.unshift(`${e.name}疾行：本回合行动两次`)}
+  else if(e.behavior==='binder'){const t=b.units[e.lane];if(t&&!t.dead&&!skipEffect(t)){addEffect(t,'xbBind','缚灵',null,{skip:1});b.log.unshift(`${e.name}缚住了${t.name}`);xFloat(t,'ally','缚灵')}}
+ }
+}
