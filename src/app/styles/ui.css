@@ -314,3 +314,15 @@ body.hud-peek .hud .hud-menu, .hud .hud-menu:focus-within { pointer-events: auto
 .cell { background: rgba(233, 226, 208, .055); backdrop-filter: blur(2px); }
 .ink-btn { background: rgba(18, 16, 14, .55); backdrop-filter: blur(6px); }
 .ink-btn.primary { background: rgba(194, 38, 29, .88); }
+
+/* 轮盘面板微调：面板更实一些以保证可读，难度/馈赠卡片加高 */
+.sheet { background: linear-gradient(180deg, rgba(33, 29, 25, .86), rgba(14, 12, 11, .92)); }
+.sheet-veil { background: radial-gradient(circle at 50% 40%, rgba(10, 9, 8, .45), rgba(10, 9, 8, .82)); }
+.sheet.wheels { max-height: 95vh; }
+.sheet.wheels .sheet-body { padding-top: 10px; padding-bottom: 8px; }
+.sheet.wheels .wheel { margin: 2px 0 4px; --wheel-h: 172px; }
+.sheet.wheels .wheel:first-child { --wheel-h: 112px; }
+.sheet.wheels .wheel-item { padding: 10px 14px; }
+.sheet.wheels .wheel-item p { font-size: 12px; line-height: 1.5; }
+.sheet.wheels .wheel-stage { height: calc(var(--wheel-h) + 14px); }
+.sheet.wheels .field { margin: 2px 0 4px; }
