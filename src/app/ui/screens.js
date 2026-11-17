@@ -5,7 +5,7 @@ import { GUIDE } from './guide-data.js';
 import { makeCanvas } from '../scene/textures.js';
 import { CW, CH, drawUnitFace, drawSkillFace, unitDescriptor, compact, RARITY } from '../cards/card-face.js';
 import { play, unlockAudio } from '../core/audio.js';
-import { quality, setQuality, qualityLocked, autoQuality } from '../core/quality.js';
+import { quality, setQuality, qualityLocked, autoQuality, LITE } from '../core/quality.js';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const num = n => compact(Math.round((+n || 0) * 10) / 10);
@@ -78,7 +78,7 @@ export function createScreens(ctx) {
   const slotLine = s => s ? `${GC.MODE_NAMES[s.mode]} · ${GC.DIFFICULTIES[s.difficulty]?.name || '简单'} · ${s.mode === 'endless' ? `第${s.wave}波` : (GC.NODES[s.current]?.title || '启程')}` : '尚未启程';
 
   const stage = createStoryStage(ctx); ctx.storyStage = stage;
-  const storyMode = () => localStorage.getItem('gc3d-story-mode') !== 'plain';
+  const storyMode = () => !LITE && localStorage.getItem('gc3d-story-mode') !== 'plain';
   const shownBattle = new Set();
   const htmlEl = html => { const d = document.createElement('div'); fill(d, html); return d; };
   function stageEvent(id, n, main, arc, kick, text, extra, foot) {

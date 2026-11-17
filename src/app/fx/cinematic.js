@@ -267,6 +267,7 @@ export function createCinematic(ctx) {
   (document.getElementById('ui') || document.body).append(click);
 
   let mode = localStorage.getItem('gc3d-cine-mode'); if (!MODES.includes(mode)) mode = 'full';
+  if (new URLSearchParams(location.search).get('lite') === '1') mode = 'table';
   const seen = new Set();
   const tex = new Map();
   let cur = null, hudWas = true, frozen = false, scenes = null;

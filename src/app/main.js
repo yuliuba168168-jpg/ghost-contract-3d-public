@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { createRenderer } from './core/renderer.js';
 import { onFrame, setRender, start, stats } from './core/loop.js';
-import { initQuality, quality, setQuality, view } from './core/quality.js';
+import { initQuality, quality, setQuality, view, LITE } from './core/quality.js';
 import { initInput } from './core/input.js';
 import { loadAssets } from './core/assets.js';
 import { unlockAudio } from './core/audio.js';
@@ -91,7 +91,7 @@ async function boot() {
   });
   start();
 
-  await ctx.director?.warmup?.().catch(e => console.warn('[warmup]', e));
+  if (LITE) document.body.classList.add('lite'); else await ctx.director?.warmup?.().catch(e => console.warn('[warmup]', e));
 
   addEventListener('pointerdown', unlockAudio, { once: true });
   addEventListener('keydown', unlockAudio, { once: true });
