@@ -94,3 +94,8 @@ py tools\build_assets.py                # 重建 assets/gen（只读接手包）
 ### 素材接入（按文件名自动加载）
 
 见 `docs/assets.md`。`assets/music/`、`assets/video/`、`assets/cards/` 里按约定命名的文件在刷新后自动生效；`serve.cjs` 新增 `/__list?dir=assets/...`（只允许 assets 下）和音视频 MIME，改过 `serve.cjs` 后要重启它。浏览器自动播放限制：用 CDP 验证出声时 `Runtime.evaluate` 要带 `userGesture:true`。`assets/gen/manifest.json` 缺失时不再报错。
+
+### 方块版与试玩版
+
+- 方块版：`simple.html` + `src/simple/`，不建 WebGL，说明见 `docs/simple.md`。改 `ui/screens.js` 时注意它在方块版里拿到的是空壳 ctx（新增对 `ctx.xxx` 3D 对象的调用要同步加空壳）。
+- 试玩版：`?lite=1`（`启动试玩版.cmd`），仍是 3D，`core/quality.js` 的 `lite` 档 + 3 倍速 + 不播全屏演出。

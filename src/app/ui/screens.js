@@ -18,7 +18,7 @@ export function createScreens(ctx) {
   const mapLabels = document.createElement('div'); mapLabels.style.cssText = 'inset:0;pointer-events:none;overflow:hidden'; layer.append(mapLabels);
   const baseEl = document.createElement('div'); baseEl.style.cssText = 'inset:0;pointer-events:none;position:absolute'; layer.append(baseEl);
   const tipEl = document.createElement('div'); layer.append(tipEl);
-  const mapView = createMapView(ctx, mapLabels); ctx.mapView = mapView;
+  const mapView = (ctx.makeMapView || createMapView)(ctx, mapLabels); ctx.mapView = mapView;
   let base = '', sheetEl = null, sheetName = '', queue = [], archiveFrom = 'map', testCfg = null, codexTab = 'spirits';
   const thumbs = new Map();
   ctx.battleActive = false;
@@ -77,8 +77,8 @@ export function createScreens(ctx) {
   const btn = (label, fn, primary) => { const b = document.createElement('button'); b.className = 'ink-btn' + (primary ? ' primary' : ''); b.textContent = label; b.onclick = () => { unlockAudio(); play('click'); fn(); }; return b; };
   const slotLine = s => s ? `${GC.MODE_NAMES[s.mode]} · ${GC.DIFFICULTIES[s.difficulty]?.name || '简单'} · ${s.mode === 'endless' ? `第${s.wave}波` : (GC.NODES[s.current]?.title || '启程')}` : '尚未启程';
 
-  const stage = createStoryStage(ctx); ctx.storyStage = stage;
-  const storyMode = () => !LITE && localStorage.getItem('gc3d-story-mode') !== 'plain';
+  const stage = (ctx.makeStoryStage || createStoryStage)(ctx); ctx.storyStage = stage;
+  const storyMode = () => !LITE && !ctx.simple && localStorage.getItem('gc3d-story-mode') !== 'plain';
   const shownBattle = new Set();
   const htmlEl = html => { const d = document.createElement('div'); fill(d, html); return d; };
   function stageEvent(id, n, main, arc, kick, text, extra, foot) {
