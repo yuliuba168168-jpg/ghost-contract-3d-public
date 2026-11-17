@@ -171,7 +171,7 @@ function xRun(b,ops,target,ctx){
   else if(k==='healWill')b.will=Math.min(b.maxWill,b.will+b.maxWill*a);
   else if(k==='payWill')b.will=Math.max(1,b.will-b.maxWill*a);
   else if(k==='willExecute'){if(b.enemyWill/b.maxEnemyWill<a)b.enemyWill=0;else b.enemyWill-=b.maxEnemyWill*c}
-  else if(k==='payStrike'){const lost=target.hp*a;target.hp=Math.max(1,target.hp-lost);const e=b.enemies.find(x=>!x.dead&&x.lane===target.lane);if(e)dealRawDamage(target,e,lost*c*receivedMultiplier(e),ctx.card.name,true,true)}
+  else if(k==='payStrike'){b.xBloodTurn=b.turn;const lost=target.hp*a;target.hp=Math.max(1,target.hp-lost);const e=b.enemies.find(x=>!x.dead&&x.lane===target.lane);if(e)dealRawDamage(target,e,lost*c*receivedMultiplier(e),ctx.card.name,true,true)}
   else if(k==='ward'){if(b.ward){if(b.wardTurn!==b.turn){b.wardTurn=b.turn;b.wardCasts=0}b.wardCasts+=a}}
   else if(k==='needToken'){}
   else if(target)xApply(b,op,target,src,ctx);
@@ -325,3 +325,133 @@ function xBehaviorTurn(b){
   else if(e.behavior==='binder'){const t=b.units[e.lane];if(t&&!t.dead&&!skipEffect(t)){addEffect(t,'xbBind','缚灵',null,{skip:1});b.log.unshift(`${e.name}缚住了${t.name}`);xFloat(t,'ally','缚灵')}}
  }
 }
+
+// ---------- 场地 ----------
+const X_FIELDS={
+ bloodmoon:['血月','双方全部单位攻击提高15%。'],
+ styx:['冥河','每回合开始，双方生命比例最低的单位各恢复6%生命。'],
+ scorch:['焦土','所有灼烧造成的伤害提高50%。'],
+ grave:['乱葬岗','任何单位被击倒时，我方获得1点鬼气（每回合最多2点）。'],
+ market:['鬼市','每回合打出的第一张技能卡少消耗1点鬼气。'],
+ battlefield:['古战场','召唤物的生命与攻击提高30%。'],
+ lanterns:['灯会','双方命灯受到的空路直击提高25%。'],
+ thunder:['雷泽','每回合开始，双方各有一个随机单位受到其最大生命6%的雷击（不会致命）。']
+};
+const X_FIELD_KEYS=Object.keys(X_FIELDS);
+function xSetField(b,key,by){b.field=key;const [name,desc]=X_FIELDS[key];b.log.unshift(`${by?by+'：':''}场地变为【${name}】——${desc}`);globalThis.GC_BRIDGE.fx('field:change',{id:key,name,desc,by:by||null})}
+const xPrevAddEffect=addEffect;
+addEffect=function(u,key,label,turns,data={}){
+ if(state.battle?.field==='scorch'){if(key==='ghostFire'&&data.ratio)data={...data,ratio:data.ratio*1.5};else if(key==='bossBurn')data={...data,burnPct:(data.burnPct||.08)*1.5}}
+ return xPrevAddEffect(u,key,label,turns,data)};
+const xPrevEffAtk3=effectiveAttack;
+effectiveAttack=function(u){const v=xPrevEffAtk3(u);return state.battle?.field==='bloodmoon'?v*1.15:v};
+const xPrevSpawn=xSpawn;
+xSpawn=function(b,kind,lane,from){const u=xPrevSpawn(b,kind,lane,from);if(b.field==='battlefield'){u.maxHp=u.hp=u.baseMaxHp=Math.round(u.maxHp*1.3);u.atk=u.baseAtk=+(u.atk*1.3).toFixed(1)}b.summoned=(b.summoned||0)+1;return u};
+xFieldOnDeath=function(b,e){if(b.field==='grave'&&(b.xGraveTurn!==b.turn||b.xGraveQi<2)){if(b.xGraveTurn!==b.turn){b.xGraveTurn=b.turn;b.xGraveQi=0}b.xGraveQi++;b.qi++;b.log.unshift('乱葬岗：获得1点鬼气')}};
+const xPrevHitWill3=hitWill,xPrevHitEnemyWill=hitEnemyWill;
+hitWill=async function(e){const b=state.battle,w=b?.will;await xPrevHitWill3(e);if(b&&state.battle===b&&b.field==='lanterns'&&b.will<w)b.will=Math.max(0,b.will-(w-b.will)*.25)};
+hitEnemyWill=async function(u){const b=state.battle,w=b?.enemyWill;await xPrevHitEnemyWill(u);if(b&&state.battle===b&&b.field==='lanterns'&&b.enemyWill<w)b.enemyWill-=(w-b.enemyWill)*.25};
+const xPrevPlaySkill2=playSkill;
+playSkill=function(index,lane){
+ const b=state.battle,id=b?.hand[index],c=typeof id==='string'?SKILLS[id]:null;
+ if(!b||!c||b.field!=='market'||b.xMarketTurn===b.turn||!c.cost||busy)return xPrevPlaySkill2(index,lane);
+ const n=b.hand.length;b.qi+=1;const r=xPrevPlaySkill2(index,lane);
+ if(b.hand.length<n||b.hand[index]!==id){b.xMarketTurn=b.turn;b.log.unshift('鬼市：这张牌少消耗1点鬼气')}else b.qi-=1;
+ return r};
+function xFieldTurn(b){
+ if(b.field==='styx'){for(const [list,side] of [[xAllies(b),'ally'],[xFoes(b),'enemy']]){const u=list.filter(x=>x.hp<x.maxHp).sort((x,y)=>x.hp/x.maxHp-y.hp/y.maxHp)[0];if(u){const v=Math.min(u.maxHp-u.hp,u.maxHp*.06);u.hp+=v;xFloat(u,side,`冥河 +${formatNum(v)}`,'heal')}}}
+ else if(b.field==='thunder'){for(const [list,side] of [[xAllies(b),'ally'],[xFoes(b),'enemy']]){if(!list.length)continue;const u=list[Math.floor(Math.random()*list.length)],v=Math.min(u.hp-1,u.maxHp*.06);if(v>0){u.hp-=v;xFloat(u,side,`雷击 -${formatNum(v)}`,'damage');globalThis.GC_BRIDGE.fx('burst',{uid:u.uid,side,lane:u.lane,glyph:'ϟ',tone:'#bcd4ff'})}}}
+}
+
+// ---------- 鬼障破障条件 ----------
+const X_WARD={
+ blood:['血障','本回合只要有己方单位被击倒、被献出或以生命支付代价，鬼障自动破除一层。',b=>b.xBloodTurn===b.turn],
+ fire:['火障','只要场上有敌人正在灼烧，鬼障自动破除一层。',b=>xFoes(b).some(xBurning)],
+ ice:['冰障','只要场上有敌人被冰冻或停止行动，鬼障自动破除一层。',b=>xFoes(b).some(xControlled)],
+ array:['阵障','己方四路全部站满（召唤物也算）时，鬼障自动破除一层。',b=>b.units.every(u=>u&&!u.dead)],
+ lamp:['灯障','我方命灯低于一半时，鬼障自动破除一层。',b=>b.will/b.maxWill<.5],
+ lone:['影障','首领身边的随从全部倒下后，鬼障自动破除一层。',b=>xFoes(b).length<=1]
+};
+const X_WARD_KEYS=Object.keys(X_WARD);
+for(const [name,desc] of Object.values(X_WARD))BOSS_SKILLS['破障·'+name]={name:'破障·'+name,kind:'trait',desc:'这名首领的鬼障另有破法：'+desc};
+const xPrevWardCasts=wardCasts;
+wardCasts=function(b=state.battle){let n=xPrevWardCasts(b);if(b?.ward&&b.wardRule&&X_WARD[b.wardRule][2](b))n+=1;return n};
+const xPrevApply=xApply;
+xApply=function(b,op,t,src,ctx){if(op[0]==='pay'||op[0]==='kill')b.xBloodTurn=b.turn;return xPrevApply(b,op,t,src,ctx)};
+
+// ---------- 首领二阶段 ----------
+const X_PHASES={
+ frenzy:['暴走','此后每回合都施放技能，攻击提高25%。'],
+ mirror:['镜像','在空路留下一个生命为自身四成的镜像；没有空路时改为获得20%护盾。'],
+ molt:['蜕壳','清除自身全部减益，并获得最大生命25%的护盾，持续3回合。'],
+ snuff:['夺灯','立刻熄灭我方8%的命灯，并恢复自身8%生命。'],
+ rewrite:['改场','黑影替它改写场地规则。'],
+ devour:['噬从','吞掉全部随从：每吞一名恢复15%生命、攻击提高20%；没有随从时攻击提高30%。']
+};
+const X_PHASE_KEYS=Object.keys(X_PHASES);
+for(const [name,desc] of Object.values(X_PHASES))BOSS_SKILLS['二阶段·'+name]={name:'二阶段·'+name,kind:'trait',desc:'生命第一次降到一半时：'+desc};
+function xPhase(b,e){
+ const key=e.phase2,[name,desc]=X_PHASES[key];e.phased=true;b.log.unshift(`${e.name}进入二阶段【${name}】：${desc}`);
+ if(key==='frenzy'){e.bossEvery=1;e.bossNext=Math.min(e.bossNext||b.turn,b.turn);addEffect(e,'xPhaseAtk','暴走',null,{attackBonus:.25})}
+ else if(key==='mirror'){const lane=[0,1,2,3].find(i=>!b.enemies.some(o=>!o.dead&&o.lane===i));if(lane==null){e.shield=(e.shield||0)+e.maxHp*.2;addEffect(e,'xPhaseShield','镜像',3,{shieldExpiry:true})}else{const hp=Math.max(1,Math.round(e.maxHp*.4));b.enemies.push({...clone(e),uid:e.uid+'-m',name:e.name+'的镜像',hp,maxHp:hp,lane,dead:false,effects:{},shield:0,bossSkills:[],bossTraits:[],phase2:null,phased:true,elite:false,bossUses:{}});globalThis.GC_BRIDGE.fx('enemy:return',{uid:e.uid+'-m',lane})}}
+ else if(key==='molt'){for(const [k,x] of Object.entries(e.effects||{}))if(k==='ghostFire'||k==='ice'||x.skip||x.receivedBonus||x.outgoingReduction)delete e.effects[k];e.shield=(e.shield||0)+e.maxHp*.25;addEffect(e,'xPhaseShield','蜕壳',3,{shieldExpiry:true})}
+ else if(key==='snuff'){b.will=Math.max(1,b.will-b.maxWill*.08);e.hp=Math.min(e.maxHp,e.hp+e.maxHp*.08)}
+ else if(key==='rewrite')xSetField(b,X_FIELD_KEYS[(X_FIELD_KEYS.indexOf(b.field)+3)%X_FIELD_KEYS.length],'黑影');
+ else if(key==='devour'){const m=xFoes(b).filter(o=>o!==e);for(const o of m){o.hp=0;o.dead=true;o.xGone=true}const k=m.length;e.hp=Math.min(e.maxHp,e.hp+e.maxHp*.15*k);addEffect(e,'xPhaseAtk','噬从',null,{attackBonus:k?.2*k:.3})}
+ globalThis.GC_BRIDGE.fx('boss:phase',{uid:e.uid,lane:e.lane,name:e.name,phase:name,desc});xSay(b,'phase');
+}
+const xPrevCleanup3=cleanup;
+cleanup=function(){
+ const b=state.battle;
+ if(b){if(b.units.some(u=>u?.dead))b.xBloodTurn=b.turn;for(const e of xFoes(b))if(e.phase2&&!e.phased&&e.hp/e.maxHp<=.5)xPhase(b,e)}
+ xPrevCleanup3();
+};
+function xSay(b,event,extra){}
+
+// ---------- 战斗开场布置 ----------
+function xSetupBattle(b){
+ const n=NODES[b.nodeId]||{},endless=b.nodeId==='endless-arena',arc=endless?(state.wave||1):(n.arc||0),lead=b.enemies[0],seed=xHash(b.nodeId)+arc;
+ b.x=1;
+ if(lead&&lead.bossSkills?.length&&(n.type==='boss'||endless)&&n.difficulty!==1){
+  lead.phase2=X_PHASE_KEYS[arc%X_PHASE_KEYS.length];lead.bossTraits=[...(lead.bossTraits||[]),'二阶段·'+X_PHASES[lead.phase2][0]];
+  if(b.ward){b.wardRule=X_WARD_KEYS[arc%X_WARD_KEYS.length];lead.bossTraits.push('破障·'+X_WARD[b.wardRule][0]);b.log.unshift(`${X_WARD[b.wardRule][0]}：${X_WARD[b.wardRule][1]}`)}
+ }
+ if(n.difficulty!==1&&(endless||arc>=2)){b.field=X_FIELD_KEYS[seed%X_FIELD_KEYS.length];if(lead?.phase2==='rewrite'&&!b.field)b.field=X_FIELD_KEYS[0];b.log.unshift(`场地【${X_FIELDS[b.field][0]}】：${X_FIELDS[b.field][1]}`)}
+ else if(lead?.phase2==='rewrite'){lead.bossTraits=lead.bossTraits.filter(x=>x!=='二阶段·改场');lead.phase2='frenzy';lead.bossTraits.push('二阶段·暴走')}
+}
+const xPrevStart=startBattle;
+startBattle=function(id){
+ xPrevStart(id);const b=state.battle;if(!b||!b.mainline||b.nodeId!==id||b.x)return;
+ xSetupBattle(b);save();globalThis.GC_BRIDGE.sync('battle');xSay(b,'start');
+};
+xTurnStart=function(b){
+ xBehaviorTurn(b);if(b.field)xFieldTurn(b);
+ const n=NODES[b.nodeId]||{};
+ if(b.field&&n.type==='boss'&&b.turn===5&&!b.fieldSwapped){b.fieldSwapped=true;xSetField(b,X_FIELD_KEYS[(X_FIELD_KEYS.indexOf(b.field)+5)%X_FIELD_KEYS.length],'黑影拂过桌面');xSay(b,'rule')}
+ xSay(b,'turn');save();globalThis.GC_BRIDGE.sync('battle');
+};
+
+// ---------- 敌方意图（纯查询） ----------
+function xIntents(b=state.battle){
+ if(!b)return [];
+ return xFoes(b).map(e=>{
+  const out={uid:e.uid,lane:e.lane,cast:null,castIn:null,action:'attack',targetUid:null,targetLane:null,damage:0,times:1+(e.nextExtra||0),behavior:e.behavior||null};
+  if(e.bossSkills?.length){
+   const name=e.bossSkills[(e.bossCastIndex||0)%e.bossSkills.length],d=BOSS_SKILLS[name],uses=e.bossUses?.[name]||0,spent=d&&(d.kind==='summon'&&uses>=1||d.kind==='heal'&&uses>=2||d.kind==='siphon'&&uses>=3||d.kind==='purge'&&uses>=2);
+   if(b.turn>=(e.bossNext||0)){if(d&&!spent&&!(b.enemySkillNull>0))out.cast={name,kind:d.kind,desc:d.desc}}else out.castIn=e.bossNext-b.turn;
+  }
+  if(skipEffect(e)){out.action='skip';return out}
+  const deceived=b.deceit&&b.deceit.turns>0;let t=deceived?b.units.find(u=>u?.id==='yuzao'&&!u.dead):null;
+  if(!t&&e.behavior==='sniper')t=xSniperTarget(b);
+  if(!t){const front=b.units[e.lane];t=front&&!front.dead&&xHasKey(front,'taunt')?front:xTaunter(b,e.lane)||(front&&!front.dead?front:null)}
+  const atk=effectiveAttack(e)*(1+(e.extraAdd||0))*outgoingMultiplier(e);
+  if(t){out.targetUid=t.uid;out.targetLane=t.lane;let d=atk*rankMultiplier(e,t)*receivedMultiplier(t);for(const x of Object.values(t.effects||{}))if(x.reduction)d*=1-x.reduction;out.damage=d}
+  else if(e.effects?.spaceLaw?.cannotAttackPlayer)out.action='skip';
+  else{out.action='lamp';out.damage=b.mainline?Math.min(b.maxWill*(b.directBite||.2),atk)*(b.field==='lanterns'?1.25:1):atk}
+  if(e.effects?.ice)out.freeze=e.effects.ice.freezeChance||.25;
+  return out});
+}
+function xKeywordsOf(u){return Object.keys(X_KEYWORDS).filter(k=>u?.keywords?.includes(k)||u?.effects?.['kw-'+k]).map(k=>({key:k,...X_KEYWORDS[k]}))}
+globalThis.GC_X={ARCH:X_ARCH,KEYWORDS:X_KEYWORDS,TOKENS:X_TOKENS,BEHAVIORS:X_BEHAVIORS,FIELDS:X_FIELDS,WARD:X_WARD,PHASES:X_PHASES,
+ intents:xIntents,keywordsOf:xKeywordsOf,field:(b=state.battle)=>b?.field?{id:b.field,name:X_FIELDS[b.field][0],desc:X_FIELDS[b.field][1]}:null,
+ wardRule:(b=state.battle)=>b?.ward&&b.wardRule?{id:b.wardRule,name:X_WARD[b.wardRule][0],desc:X_WARD[b.wardRule][1],met:X_WARD[b.wardRule][2](b)}:null};
