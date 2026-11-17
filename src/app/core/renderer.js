@@ -6,6 +6,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
 import { BokehPass } from 'three/addons/postprocessing/BokehPass.js';
 import { Pass } from 'three/addons/postprocessing/Pass.js';
+import { simplifyScene } from './plain-materials.js';
 import { quality, onQuality, lowerQuality, floorQuality, view, savedScale, saveScale } from './quality.js';
 
 const GradeShader = {
@@ -197,6 +198,7 @@ export function createRenderer(canvas) {
     render(dt, t) {
       if (!composer) return;
       grade.uniforms.uTime.value = t;
+      if (quality().plain && renderPass.scene) simplifyScene(renderPass.scene, frame);
       if (frame++ % quality().shadowEvery === 0) renderer.shadowMap.needsUpdate = true;
       overlay.enabled = !!api.overlayOn; distort.enabled = distort.uniforms.uStrength.value > .001;
       distort.uniforms.uTime.value = t; distort.uniforms.uAspect.value = innerWidth / innerHeight;
