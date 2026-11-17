@@ -1,4 +1,4 @@
-import { LITE } from './quality.js';
+import { LITE, quality } from './quality.js';
 const active = new Set();
 const timers = new Set();
 
@@ -28,7 +28,7 @@ export const ease = {
 
 export function speed() {
   const v = Math.max(.25, Number(globalThis.GC?.preferences?.speed) || 1);
-  return LITE ? Math.max(3, v) : v;
+  return LITE ? Math.max(3, v) : quality().plain ? Math.max(1.6, v) : v;
 }
 
 export function tween(target, to, opts = {}) {

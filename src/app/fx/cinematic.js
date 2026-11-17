@@ -11,6 +11,7 @@ import { themeColor } from './skill-fx.js';
 import { drawSkillFace, CW, CH } from '../cards/card-face.js';
 import { buildCineScenes } from './cine-scenes.js';
 import { focusState } from '../core/renderer.js';
+import { quality } from '../core/quality.js';
 
 const MODES = ['full', 'smart', 'table'];
 const MODE_NAME = { full: '全屏 + 牌桌', smart: '精简', table: '仅牌桌' };
@@ -268,6 +269,7 @@ export function createCinematic(ctx) {
 
   let mode = localStorage.getItem('gc3d-cine-mode'); if (!MODES.includes(mode)) mode = 'full';
   if (new URLSearchParams(location.search).get('lite') === '1') mode = 'table';
+  else if (quality().plain && !localStorage.getItem('gc3d-cine-mode')) mode = 'table';   // 极简档默认不放全屏演出，玩家在设置里选过则照玩家的
   const seen = new Set();
   const tex = new Map();
   let cur = null, hudWas = true, frozen = false, scenes = null;

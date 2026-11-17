@@ -91,8 +91,12 @@ async function boot() {
   });
   start();
 
-  if (LITE) document.body.classList.add('lite'); else await ctx.director?.warmup?.().catch(e => console.warn('[warmup]', e));
+  // 预热要把相机扫过所有机位并把每种特效各放一次；软件渲染下这要几分钟，极简档直接跳过（代价是技能首次施放时各卡一下）
+  if (LITE) document.body.classList.add('lite');
+  else if (quality().plain) document.body.classList.add('plain-gfx');
+  else { R.busy = true; await ctx.director?.warmup?.().catch(e => console.warn('[warmup]', e)); R.busy = false; }
 
+  if (!params.get('dev') && !params.get('nonote')) import('./ui/gpu-note.js').then(m => m.showGpuNote());
   addEventListener('pointerdown', unlockAudio, { once: true });
   addEventListener('keydown', unlockAudio, { once: true });
 

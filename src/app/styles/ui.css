@@ -240,3 +240,12 @@ body.tut-on .guide-tip { display: none !important; }
 .asset-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 4px 14px; margin: 6px 0 18px; font-size: 13px; }
 .asset-list span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: .55; }
 .asset-list span.have { opacity: 1; color: #9fd8a8; }
+
+/* 软件渲染提示 */
+.gpu-note { position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%); z-index: 60; width: min(640px, calc(100vw - 32px)); padding: 16px 20px 14px; background: rgba(12, 10, 12, .86); border: 1px solid rgba(190, 60, 50, .55); border-radius: 6px; color: #d9d2c6; font-size: 13px; line-height: 1.7; backdrop-filter: blur(8px); box-shadow: 0 12px 40px rgba(0, 0, 0, .6); pointer-events: auto; }
+.gpu-note b { display: block; font-size: 16px; letter-spacing: .12em; color: #e2584a; margin-bottom: 4px; }
+.gpu-note p { margin: 0 0 6px; }
+.gpu-note ol { margin: 0 0 10px; padding-left: 20px; }
+.gpu-note code { padding: 1px 6px; background: rgba(255, 255, 255, .08); border-radius: 3px; color: #e8c88a; user-select: all; }
+.gpu-note-row { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+.gpu-note-row a { text-decoration: none; margin-right: auto; }

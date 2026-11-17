@@ -19,7 +19,7 @@ async function run(q){const f=document.createElement('iframe');f.src='./?dev=bat
  const I=$('info');row(I,'显卡（浏览器实际使用的）',g.renderer,soft?'bad':'ok');row(I,'是否软件渲染',soft?'是 —— 浏览器没有用显卡':'否',soft?'bad':'ok');row(I,'WebGL2',g.webgl2?'支持':'不支持');
  row(I,'窗口 / 屏幕 / 缩放',report.window+' / '+report.screen+' / '+devicePixelRatio);row(I,'CPU 线程 / 内存',report.cores+' / '+(report.memGB||'?')+' GB');row(I,'浏览器',navigator.userAgent.replace(/^.*?(Edg|Chrome|Firefox)\/([\d.]+).*$/,'$1 $2'));
  report.runs={};
- for(const [name,q] of [['最高 cinema','q=cinema'],['中 medium','q=medium'],['低 low','q=low'],['试玩 lite','lite=1']]){
+ for(const [name,q] of [['最高 cinema','q=cinema'],['中 medium','q=medium'],['低 low','q=low'],['极简 potato','q=potato'],['试玩 lite','lite=1']]){
   $('state').textContent='正在检测：'+name+' ……';const r=await run(q);report.runs[name]=r;const tr=$('runs').insertRow();
   const fps=r.fps?r.fps.toFixed(1):'-';[name,r.error||fps+' 帧/秒',r.avgMs?r.avgMs.toFixed(1)+' ms':'-',r.renderMs!=null?r.renderMs+' ms':'-',r.scale!=null?(+r.scale).toFixed(2)+'（像素比 '+r.pr+'）':'-',r.calls??'-',r.quality||'-',(r.load/1000).toFixed(0)+' 秒'].forEach((v,i)=>{const c=tr.insertCell();c.textContent=v;if(i===1)c.className=r.fps>=30?'ok':'bad';});
   $('out').value=JSON.stringify(report);}

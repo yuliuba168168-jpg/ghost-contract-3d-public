@@ -74,6 +74,13 @@ export function createBattleInput(ctx) {
     onOut: () => { a.hoverTarget = 0; hideTip(); },
     onClick: () => { if (GC.battle?.playerSkillsUsed?.[i]) { ctx.overlay.toast(`${GC.GD.playerSkills[i].name}本场已使用`, 'warn'); return; } act(() => { const s = sel(); if (s?.kind === 'playerSkill' && s.index === i) A.cancelSelection(); else A.selectPlayerSkill(i); }); }
   }));
+  // 命烛不显示数字，悬停时才提示具体数值
+  const lifeNum = n => n >= 100000 ? (Math.round(n / 1000) / 10) + '万' : n >= 100 ? String(Math.round(n)) : String(Math.round(n * 10) / 10);
+  for (const side of ['ally', 'enemy']) register(props.life[side].group, {
+    enabled: () => !!GC.battle,
+    onHover: () => { const b = GC.battle; if (!b) return; const v = side === 'ally' ? b.will : b.enemyWill, m = side === 'ally' ? b.maxWill : b.maxEnemyWill; showTipAt(props.lifeAnchor(side).setY(1.7), `<b>${side === 'ally' ? '你的命烛' : '黑影的命烛'}</b><em>${lifeNum(Math.max(0, v))} / ${lifeNum(m)}</em><p>${side === 'ally' ? '烛灭即败。敌人走空路时会直击它。' : '烛灭即胜。鬼灵正前方没有敌人时会直击它。'}</p>`); },
+    onOut: hideTip
+  });
   register(props.deck.group, { enabled: () => !!GC.battle, onHover: () => showTipAt(props.deck.group.position.clone().setY(.9), `<b>牌堆</b><p>余 ${GC.battle?.draw.length ?? 0} 张。每回合开始抽 1 张，手牌上限 12。</p>`), onOut: hideTip });
   register(props.urn.group, { enabled: () => !!GC.battle || idle(), onClick: () => { if (!GC.battle) touch('urn', props.urn.group.position); }, onHover: () => !GC.battle ? showTipAt(props.urn.group.position.clone().setY(1.3), '<b>魂瓮</b><p>叩一叩。</p>') : showTipAt(props.urn.group.position.clone().setY(1.3), `<b>魂瓮</b><p>${(GC.battle?.grave || []).map(u => esc(typeof u === 'string' ? Q.spirit(u)?.name : u.name)).join('、') || '尚无阵亡的鬼灵'}</p>`), onOut: hideTip });
   register(props.censer, { enabled: () => !!GC.battle || idle(), onClick: () => { if (!GC.battle) touch('censer', props.censer.position); }, onHover: () => { const b = GC.battle; if (!b) return showTipAt(props.censer.position.clone().setY(1.5), '<b>香炉</b><p>上一炷香。</p>'); showTipAt(props.censer.position.clone().setY(1.5), `<b>鬼气 ${b.qi}/${b.maxQi}</b><p>本场第 ${b.deployedCount + 1} 次显形需 ${Q.spiritCost()} 鬼气；左右移动每格 1 鬼气，相邻换位不耗鬼气。</p>`); }, onOut: hideTip });

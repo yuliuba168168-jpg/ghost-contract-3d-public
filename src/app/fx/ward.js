@@ -5,7 +5,7 @@ import { glowTexture } from '../scene/textures.js';
 import { tween, damp, mulberry } from '../core/tween.js';
 
 const TIP = '本回合主动施放鬼灵技能、打出技能卡或使用御鬼者技能可破除一层；每回合开始重新合拢。';
-const ANCHOR = new THREE.Vector3(2.62, .78, -2.4); // 敌命标签上方
+const ANCHOR = new THREE.Vector3(2.62, 1.62, -2.4); // 黑影命烛的火苗上方
 
 function wardText(info) {
   if (!info) return '';

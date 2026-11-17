@@ -75,76 +75,66 @@ export function createProps(scene, lights) {
     tween(sp.material, { opacity: 0 }, { dur, ease: 'inQuad' }).then(() => { sp.visible = false; });
   }
 
-  function candle(x, z, h, r, lit = true) {
-    const g = new THREE.Group();
+  function candle(x, z, h, r, lit = true, mat = wax(), flameColor = PALETTE.candle) {
+    const g = new THREE.Group(), stem = new THREE.Group();
     const prof = [], N = 14;
     for (let i = 0; i <= N; i++) {
       const u = i / N, lump = Math.sin(u * 9 + x * 5) * .07 + Math.sin(u * 23 + z * 7) * .035 + (rnd() - .5) * .04, melt = u > .88 ? (1 - (u - .88) / .12 * .35) : 1;
       prof.push([r * (1.04 - u * .12 + lump) * melt, h * u]);
     }
     prof.push([r * .78, h - .004], [r * .5, h - .022], [.012, h - .03], [0, h - .03]);
-    const body = new THREE.Mesh(lathe(prof, 18), wax());
+    const body = new THREE.Mesh(lathe(prof, 18), mat);
     body.castShadow = true; body.receiveShadow = true;
-    const pool = new THREE.Mesh(new THREE.SphereGeometry(r, 14, 8), wax());
+    const pool = new THREE.Mesh(new THREE.SphereGeometry(r, 14, 8), mat);
     pool.scale.set(1.8, .2, 1.8); pool.position.y = .008; pool.receiveShadow = true;
     for (let i = 0; i < 3; i++) {
-      const drip = new THREE.Mesh(new THREE.SphereGeometry(r * .32, 8, 6), wax()), a = rnd() * 6.28;
+      const drip = new THREE.Mesh(new THREE.SphereGeometry(r * .32, 8, 6), mat), a = rnd() * 6.28;
       drip.scale.y = 1.6 + rnd() * 2; drip.position.set(Math.cos(a) * r * .88, h * (.45 + rnd() * .45), Math.sin(a) * r * .88);
-      g.add(drip);
+      stem.add(drip);
     }
     const wick = new THREE.Mesh(new THREE.CylinderGeometry(.008, .008, .06, 5), darkBronze());
     wick.position.y = h + .03;
-    g.add(body, pool, wick);
+    stem.add(body); g.add(stem, pool, wick);
     g.position.set(x, 0, z); g.rotation.z = Math.atan(.07 * x) + (rnd() - .5) * .06; g.rotation.x = (rnd() - .5) * .04;
     let f = null;
-    if (lit) { f = makeFlame(PALETTE.candle, .26 + r * .6); f.group.position.y = h + .03; g.add(f.group); }
+    if (lit) { f = makeFlame(flameColor, .26 + r * .6); f.group.position.y = h + .03; g.add(f.group); }
     group.add(g);
-    return { group: g, flame: f, top: new THREE.Vector3(x, h + .15, z) };
+    return { group: g, stem, pool, wick, h, flame: f, top: new THREE.Vector3(x, h + .15, z) };
   }
   const decor = [[-4.05, -2.25, 1.35, .13, 9], [-3.45, -2.5, .7, .1, 0], [4.05, -2.3, 1.05, .12, 0], [3.42, -2.52, 1.5, .1, 0], [-4.22, .92, .62, .11, 6], [4.26, .78, .85, .11, 6], [-2.65, -2.52, .42, .09, 0]];
   for (const [x, z, h, r, power] of decor) { const c = candle(x, z, h, r); if (power) lights.addCandle(x - Math.sin(c.group.rotation.z) * (h + .35), (h + .35) * Math.cos(c.group.rotation.z), z, power); }
 
-  const lampGeo = lathe([[0, 0], [.085, 0], [.095, .02], [.035, .04], [.03, .075], [.1, .11], [.115, .135], [.1, .135], [.0, .1]], 14);
-  function lifeLamps(side) {
-    const lamps = [], root = new THREE.Group();
-    group.add(root);
-    if (side === 'ally') {
-      const tray = new THREE.Mesh(new THREE.BoxGeometry(2.05, .05, .98), lacquer());
-      tray.position.set(-3.42, .025, 1.66); tray.receiveShadow = true; tray.castShadow = true; root.add(tray);
-      const rimMat = new THREE.MeshStandardMaterial({ color: '#7d1b14', roughness: .5 });
-      for (const [w, d, x, z] of [[2.09, .04, 0, -.5], [2.09, .04, 0, .5], [.04, .98, -1.03, 0], [.04, .98, 1.03, 0]]) { const r2 = new THREE.Mesh(new THREE.BoxGeometry(w, .09, d), rimMat); r2.position.set(-3.42 + x, .045, 1.66 + z); root.add(r2); }
-    }
-    for (let i = 0; i < 10; i++) {
-      const m = new THREE.Mesh(lampGeo, side === 'ally' ? bronze() : darkBronze());
-      if (side === 'ally') m.position.set(-3.42 + ((i % 5) - 2) * .38, .05, 1.66 + (Math.floor(i / 5) - .5) * .42);
-      else m.position.set((i - 4.5) * .43, 0, -2.45 + Math.sin(i * 1.9) * .03);
-      m.castShadow = true;
-      const f = makeFlame(side === 'ally' ? '#ffb060' : '#d8442a', .13, true);
-      f.group.position.y = .12; m.add(f.group);
-      root.add(m); lamps.push({ mesh: m, flame: f, lit: true });
-    }
-    const label = makeLabel('', { scale: .95 });
-    label.position.set(side === 'ally' ? -3.42 : 2.62, side === 'ally' ? .82 : .42, side === 'ally' ? 1.66 : -2.45);
-    root.add(label);
-    return { root, lamps, label, value: -1, max: -1 };
+  // 命烛：双方各一支，代替原来的二十盏命灯和数字。蜡烧得越短、火越小，命越薄；剩不到三成时火苗乱抖。具体数值只在鼠标悬停时提示。
+  function lifeCandle(side) {
+    const ally = side === 'ally';
+    const c = ally ? candle(-3.42, 1.66, 1.2, .15) : candle(2.62, -2.45, 1.0, .12, true, new THREE.MeshStandardMaterial({ color: '#2b1512', roughness: .42 }), '#d8442a');
+    const dish = new THREE.Mesh(new THREE.CylinderGeometry(ally ? .3 : .25, ally ? .24 : .2, .035, 20), ally ? bronze() : darkBronze());
+    dish.position.y = .018; dish.receiveShadow = true; c.group.add(dish);
+    c.flame.size *= ally ? 1.25 : 1.1;
+    return { ...c, root: c.group, value: -1, max: -1, ratio: 1, level: 1, base: c.flame.size };
   }
-  const life = { ally: lifeLamps('ally'), enemy: lifeLamps('enemy') };
-  const fmt = n => n >= 100000 ? (Math.round(n / 1000) / 10) + '万' : n >= 100 ? String(Math.round(n)) : (Math.round(n * 10) / 10).toString();
+  const life = { ally: lifeCandle('ally'), enemy: lifeCandle('enemy') };
   function setLife(side, value, max = 10) {
     const L = life[side];
     if (L.value === value && L.max === max) return;
-    L.value = value; L.max = max;
-    const v = Math.max(0, value), per = max / 10, world = new THREE.Vector3();
-    L.lamps.forEach((lamp, i) => {
-      const level = Math.max(0, Math.min(1, (v - i * per) / per)), on = level > .04;
-      if (lamp.lit && !on) { lamp.mesh.getWorldPosition(world); world.y += .2; puff(world, { size: .34, rise: .6 }); }
-      lamp.lit = on; lamp.flame.target = on ? .45 + level * .55 : 0;
-    });
-    L.label.set(`${side === 'ally' ? '命灯' : '敌命'} ${fmt(v)}/${fmt(max)}`, side === 'ally' ? '#cdbf9f' : '#c98068');
+    const before = L.ratio;
+    L.value = value; L.max = max; L.ratio = Math.max(0, Math.min(1, value / Math.max(1e-6, max)));
+    if (L.ratio < before - .001) { const w = lifeAnchor(side); puff(w, { size: L.ratio <= 0 ? .5 : .3, rise: .6, color: side === 'ally' ? '#8a86a8' : '#7a4a44' }); }
   }
   function lifeAnchor(side, target = new THREE.Vector3()) {
-    const L = life[side], i = Math.max(0, Math.min(9, Math.ceil(Math.max(0, L.value) / (L.max / 10)) - 1));
-    return L.lamps[i].mesh.getWorldPosition(target).add(new THREE.Vector3(0, .2, 0));
+    const L = life[side];
+    return L.group.localToWorld(target.set(0, L.h * L.stem.scale.y + .15, 0));
+  }
+  function updateLife(dt, t) {
+    for (const side of ['ally', 'enemy']) {
+      const L = life[side];
+      L.level = damp(L.level, L.ratio, 3.5, dt);
+      const k = .12 + .88 * L.level, top = L.h * k;
+      L.stem.scale.y = k; L.wick.position.y = top + .03; L.flame.group.position.y = top + .03;
+      L.pool.scale.set(1.8 + (1 - L.level) * 1.5, .2 + (1 - L.level) * .12, 1.8 + (1 - L.level) * 1.5);
+      const low = L.ratio > 0 && L.ratio < .3 ? .78 + .22 * Math.sin(t * 17 + (side === 'ally' ? 0 : 2)) * Math.sin(t * 5.3) : 1;
+      L.flame.target = L.ratio <= 0 ? 0 : (.5 + .5 * L.ratio) * low;
+    }
   }
 
   const censer = new THREE.Group();
@@ -315,7 +305,7 @@ export function createProps(scene, lights) {
       f.fl.set({ lean: n * .2, intensity: .9 + n * .1 });
       if (f.glow) f.glow.scale.setScalar(f.size * 1.5 * f.level * (1 + n * .08));
     }
-    updateIncense(dt, t);
+    updateLife(dt, t); updateIncense(dt, t);
     bellHalo.material.opacity = damp(bellHalo.material.opacity, bellState.enabled ? (bellState.hover ? .55 : .2 + .1 * Math.sin(t * 2.4)) : 0, 6, dt);
     bellLabel.material.opacity = damp(bellLabel.material.opacity, bellState.hover && bellState.enabled ? 1 : 0, 10, dt);
     if (!bellState.ringing) bellPivot.rotation.z = Math.sin(t * 1.3) * .012;

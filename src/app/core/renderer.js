@@ -6,7 +6,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
 import { BokehPass } from 'three/addons/postprocessing/BokehPass.js';
 import { Pass } from 'three/addons/postprocessing/Pass.js';
-import { quality, onQuality, lowerQuality, view, savedScale, saveScale } from './quality.js';
+import { quality, onQuality, lowerQuality, floorQuality, view, savedScale, saveScale } from './quality.js';
 
 const GradeShader = {
   uniforms: {
@@ -114,7 +114,7 @@ export function createRenderer(canvas) {
 
   function applySize() {
     const q = quality(), base = Math.min(devicePixelRatio || 1, Math.sqrt(q.pixels / Math.max(1, innerWidth * innerHeight)));
-    const pr = Math.max(.3, base * scale);
+    const pr = Math.max(q.plain ? .18 : .3, base * scale);
     renderer.setPixelRatio(pr);
     renderer.setSize(innerWidth, innerHeight, false);
     composer?.setPixelRatio(pr);
@@ -136,11 +136,14 @@ export function createRenderer(canvas) {
   }
 
   const tuner = {
-    samples: [], hold: 3, stable: 0, upWait: 30, probing: 0, slow: 0,
+    samples: [], hold: 3, stable: 0, upWait: 30, probing: 0, slow: 0, crawl: 0,
     reset() { this.samples.length = 0; this.hold = 3; this.stable = 0; this.probing = 0; this.slow = 0; },
     setScale(v) { scale = Math.round(v * 100) / 100; saveScale(scale); applySize(); this.hold = 1; this.stable = 0; },
     push(ms) {
-      if (document.hidden || ms > 250) { this.samples.length = 0; return; }
+      if (document.hidden) { this.samples.length = 0; this.crawl = 0; return; }
+      // 单帧超过 1/4 秒多半是编译着色器或切回窗口，不计入；但连续 6 帧都这么慢就是机器带不动（软件渲染约 3–5 帧/秒），直接落到极简档
+      if (ms > 250) { this.samples.length = 0; if (++this.crawl >= 6 && !api.busy) { this.crawl = 0; floorQuality(); } return; }
+      this.crawl = 0;
       this.samples.push(ms);
       if (this.samples.length < WINDOW) return;
       const s = this.samples.sort((a, b) => a - b), med = s[WINDOW >> 1];
