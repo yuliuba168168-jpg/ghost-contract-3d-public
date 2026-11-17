@@ -1,4 +1,7 @@
 import { createMapView } from './map-view.js';
+import { createWheel } from './wheel.js';
+// 五档难度的主题色（轮盘、标题页存档位、禁忌红光）
+const DIFF_TONE = { easy: '#9fd0c8', normal: '#ffd98a', hard: '#ff9a4a', nightmare: '#b07cff', taboo: '#ff2a1a' };
 import { createStoryStage } from './story-stage.js';
 import { hasViews, artImage, viewImage } from '../core/assets.js';
 import { slotList } from '../core/asset-slots.js';
@@ -77,6 +80,18 @@ export function createScreens(ctx) {
     return true;
   }
   const btn = (label, fn, primary) => { const b = document.createElement('button'); b.className = 'ink-btn' + (primary ? ' primary' : ''); b.textContent = label; b.onclick = () => { unlockAudio(); play('click'); fn(); }; return b; };
+  // 难度轮盘：不显示原始倍率（各难度的倍率经过按等级段拉平，数字本身不可比），改用五格强度刻度
+  const DIFF_BARS = { easy: [1, 0, 0], normal: [2, 1, 1], hard: [3, 2, 2], nightmare: [4, 4, 4], taboo: [5, 5, 5] };
+  const bars = n => `<i class="bars">${[0, 1, 2, 3, 4].map(k => `<u class="${k < n ? 'on' : ''}"></u>`).join('')}</i>`;
+  const diffItems = () => Object.keys(GC.DIFFICULTIES).map(d => ({ key: d, name: GC.DIFFICULTIES[d].name, desc: GC.DIFFICULTIES[d].desc, color: DIFF_TONE[d], cls: 'diff-' + d }));
+  const diffCard = it => { const b = DIFF_BARS[it.key] || [1, 0, 0]; return `<b>${esc(it.name)}</b><p>${esc(it.desc)}</p><div class="diff-bars"><span>敌势${bars(b[0])}</span><span>鬼障${bars(b[1])}</span><span>首领${bars(b[2])}</span></div>`; };
+  // 选中禁忌难度：整屏泛起脉动的红光，3D 画面一并压红
+  let glowEl = null;
+  function tabooGlow(on) {
+    if (on && !glowEl) { glowEl = document.createElement('div'); glowEl.className = 'taboo-glow'; glowEl.innerHTML = '<i></i><b>禁忌</b>'; (document.getElementById('ui') || document.body).append(glowEl); }
+    if (glowEl) { glowEl.classList.toggle('on', !!on); document.body.classList.toggle('taboo', !!on); }
+    ctx.overlay?.flash && on && ctx.overlay.flash('#c2261d', .35, 900);
+  }
   const slotLine = s => s ? `${GC.MODE_NAMES[s.mode]} · ${GC.DIFFICULTIES[s.difficulty]?.name || '简单'} · ${s.mode === 'endless' ? `第${s.wave}波` : (GC.NODES[s.current]?.title || '启程')}` : '尚未启程';
 
   const stage = (ctx.makeStoryStage || createStoryStage)(ctx); ctx.storyStage = stage;
@@ -107,15 +122,19 @@ export function createScreens(ctx) {
       baseEl.replaceChildren();
       const root = document.createElement('div'); root.className = 'title-screen';
       root.innerHTML = `<div class="title-logo"><div class="seal">契</div><h1>全球诡异时代<small>鬼灵契约</small></h1></div><div><div class="slots"></div><div class="title-foot" style="margin-top:16px"></div></div>`;
-      const slots = root.querySelector('.slots');
-      (GC.slots || []).forEach((s, i) => {
-        const d = document.createElement('div'); d.className = 'slot' + (s ? ' used' : '') + (s?.fallen ? ' fallen' : '');
-        d.innerHTML = `<i class="no">${'壹贰叁肆'[i]}</i><b>${s ? esc(s.name) : '空白旅途'}</b><span>${esc(slotLine(s))}</span><span>${s ? `鬼灵 ${s.spirits.length} · 经验 ${num(s.xp)}${s.battle ? ' · 战斗中' : ''}${s.fallen ? ' · 本轮已结束' : ''}` : '普通 / 极限 / 无尽'}</span><div class="acts"></div>`;
-        const acts = d.querySelector('.acts');
-        if (s && !s.fallen) acts.append(btn('继续旅途', () => A.loadSlot(i), true));
-        acts.append(btn(s ? '重建' : '建立新旅途', () => A.createSlotDialog(i), !s));
-        slots.append(d);
+      // 存档位轮盘：转到正面的那一位才能操作
+      const list = (GC.slots || []).map((s, i) => ({ s, i, color: s ? (s.fallen ? '#8a8480' : DIFF_TONE[s.difficulty] || '#c2261d') : '#bec7d4' }));
+      const last = +localStorage.getItem('gc3d-last-slot'), start = list[last]?.s ? last : Math.max(0, list.findIndex(o => o.s && !o.s.fallen));
+      const wheel = createWheel(list, {
+        index: start, itemWidth: 300, cls: 'slot-wheel', onChange: () => play('click'),
+        render: ({ s, i }) => `<div class="slot${s ? ' used' : ''}${s?.fallen ? ' fallen' : ''}"><i class="no">${'壹贰叁肆'[i]}</i><b>${s ? esc(s.name) : '空白旅途'}</b><span>${esc(slotLine(s))}</span><span>${s ? `鬼灵 ${s.spirits.length} · 经验 ${num(s.xp)}${s.battle ? ' · 战斗中' : ''}${s.fallen ? ' · 本轮已结束' : ''}` : '普通 / 极限 / 无尽'}</span><div class="acts"></div></div>`
       });
+      list.forEach(({ s, i }) => {
+        const acts = wheel.cells[i].querySelector('.acts');
+        if (s && !s.fallen) acts.append(btn('继续旅途', () => { localStorage.setItem('gc3d-last-slot', i); A.loadSlot(i); }, true));
+        acts.append(btn(s ? '重建' : '建立新旅途', () => { localStorage.setItem('gc3d-last-slot', i); A.createSlotDialog(i); }, !s));
+      });
+      root.querySelector('.slots').replaceWith(wheel.el);
       const foot = root.querySelector('.title-foot');
       foot.append(btn('鬼灵图鉴', () => A.renderCodex()), btn('演武台', () => A.renderTestLab()), btn('剧情档案', () => { archiveFrom = 'home'; A.openStoryArchive(A.renderHome); }), btn('每日挑战', () => show('daily')), btn('成就战绩', () => show('achievements')), btn('成绩榜', () => show('records')), btn('操作指南', () => show('guide', { index: 0 })),
         btn('设置', () => A.presentationSettings()), btn('导出存档', exportSlots), btn('导入存档', importSlots));
@@ -123,18 +142,24 @@ export function createScreens(ctx) {
     },
     slotDialog({ index, occupied }) {
       let mode = 'normal', diff = 'easy', boon = '';
-      const DF = GC.DIFFICULTIES;
-      const boonHtml = `<h3>开局馈赠（普通与极限模式，选一个或不选）</h3><div class="grid c4" id="boons">${(globalThis.GC_X?.boons() || []).map(o => `<button class="cell ${o.unlocked ? '' : 'dead'}" data-act="boon" data-arg="${o.key}" ${o.unlocked ? '' : 'disabled'}><b>${esc(o.name)}</b><p>${esc(o.desc)}</p><small>${o.unlocked ? '已解锁' : '解锁条件：' + esc(o.need)}</small></button>`).join('')}</div>`;
+      const DF = GC.DIFFICULTIES, boons = [{ key: '', name: '不带馈赠', desc: '空手上路。', unlocked: true }, ...(globalThis.GC_X?.boons() || [])];
       const box = sheet('slotDialog', {
-        kicker: `存档位 ${'壹贰叁肆'[index]}`, title: occupied ? '替换这段旅途' : '建立新旅途',
-        body: `${occupied ? '<p class="red">确认后将替换此位原有的旅途，其余三位不受影响。可先回标题导出备份。</p>' : ''}<div class="field"><span>旅途名称</span><input type="text" id="slotName" maxlength="24" value="旅途${index + 1}"></div><h3>模式</h3><div class="grid c3" id="modes">${Object.keys(MODE_DESC).map(m => `<button class="cell ${m === 'normal' ? 'on' : ''}" data-act="mode" data-arg="${m}"><b>${GC.MODE_NAMES[m]}</b><p>${MODE_DESC[m]}</p></button>`).join('')}</div><h3>难度</h3><div class="grid c5" id="diffs">${Object.keys(DF).map(d => `<button class="cell ${d === 'easy' ? 'on' : ''}" data-act="diff" data-arg="${d}"><b>${DF[d].name}</b><p>${DF[d].desc}</p></button>`).join('')}</div><p class="muted" style="margin-top:8px">难度可以在旅途中（战斗之外）随时调整。</p>${boonHtml}`,
-        foot: [{ label: '返回', fn: () => A.returnToTitle() }, { label: '确认开始', primary: true, fn: () => { globalThis.GC_X?.setBoon(boon); A.confirmNewSlot(index, mode, box.querySelector('#slotName').value.trim() || `旅途${index + 1}`, diff); } }],
-        acts: { boon: (k, el) => { boon = boon === k ? '' : k; box.querySelectorAll('#boons .cell').forEach(c => c.classList.toggle('on', c === el && !!boon)); }, mode: (m, el) => { mode = m; box.querySelectorAll('#modes .cell').forEach(c => c.classList.toggle('on', c === el)); }, diff: (d, el) => { diff = d; box.querySelectorAll('#diffs .cell').forEach(c => c.classList.toggle('on', c === el)); } }
+        kicker: `存档位 ${'壹贰叁肆'[index]}`, title: occupied ? '替换这段旅途' : '建立新旅途', cls: 'wheels',
+        body: `${occupied ? '<p class="red">确认后将替换此位原有的旅途，其余三位不受影响。可先回标题导出备份。</p>' : ''}<div class="field"><span>旅途名称</span><input type="text" id="slotName" maxlength="24" value="旅途${index + 1}"></div><div id="wheels"></div><p class="muted" style="margin-top:6px;text-align:center">左右方向键、滚轮或拖动都可以转动轮盘。难度可以在旅途中（战斗之外）随时调整。</p>`,
+        foot: [{ label: '返回', fn: () => { tabooGlow(false); A.returnToTitle(); } }, { label: '确认开始', primary: true, fn: () => { tabooGlow(false); globalThis.GC_X?.setBoon(mode === 'endless' ? '' : boon); A.confirmNewSlot(index, mode, box.querySelector('#slotName').value.trim() || `旅途${index + 1}`, diff); } }]
       });
+      const host = box.querySelector('#wheels');
+      const wm = createWheel(Object.keys(MODE_DESC).map(m => ({ key: m, name: GC.MODE_NAMES[m], desc: MODE_DESC[m], color: { normal: '#bec7d4', extreme: '#ff8a70', endless: '#9fd0c8' }[m] })), { label: '模式', itemWidth: 250, onChange: it => { mode = it.key; play('click'); wb.el.classList.toggle('off', mode === 'endless'); }, render: it => `<b>${esc(it.name)}</b><p>${esc(it.desc)}</p>` });
+      const wd = createWheel(diffItems(), { label: '难度', itemWidth: 250, onChange: it => { diff = it.key; play(it.key === 'taboo' ? 'boss' : 'click'); tabooGlow(it.key === 'taboo'); }, render: diffCard });
+      const wb = createWheel(boons.map(o => ({ ...o, disabled: !o.unlocked, color: '#ffd98a' })), { label: '开局馈赠（普通与极限模式）', itemWidth: 250, onChange: it => { boon = it.unlocked ? it.key : ''; play('click'); }, render: it => `<b>${esc(it.name)}</b><p>${esc(it.desc)}</p><small>${it.unlocked ? (it.key ? '已解锁' : '') : '未解锁：' + esc(it.need)}</small>` });
+      host.append(wm.el, wd.el, wb.el);
     },
     difficulty() {
-      const DF = GC.DIFFICULTIES, cur = Q.difficultyOf();
-      sheet('difficulty', { kicker: '难度', title: '调整旅途难度', body: `<div class="grid c5">${Object.keys(DF).map(d => `<button class="cell ${d === cur ? 'on' : ''}" data-act="set" data-arg="${d}"><b>${DF[d].name}</b><p>${DF[d].desc}</p><p class="blue">敌方生命 ×${DF[d].hp} · 攻击 ×${DF[d].atk} · 敌方命灯 ×${DF[d].life}${DF[d].traits.length ? ' · 首领特性：' + DF[d].traits.join('、') : ''}</p></button>`).join('')}</div><p class="muted" style="margin-top:10px">调整后从下一场战斗开始生效，经验奖励随难度提高。</p>`, foot: [{ label: '返回', primary: true, fn: () => A.renderMap() }], acts: { set: d => { A.setDifficulty(d); A.renderMap(); toast('难度已调整为' + DF[d].name); } } });
+      const cur = Q.difficultyOf(); let pick = cur;
+      const box = sheet('difficulty', { kicker: '难度', title: '调整旅途难度', cls: 'wheels narrow', body: '<div id="wheels"></div><p class="muted" style="text-align:center">转到想要的难度后确认。只影响之后的战斗。</p>',
+        foot: [{ label: '返回', fn: () => { tabooGlow(false); A.renderMap(); } }, { label: '确认', primary: true, fn: () => { tabooGlow(false); if (pick !== cur) { A.setDifficulty(pick); toast('难度已调整为 ' + GC.DIFFICULTIES[pick].name); } A.renderMap(); } }] });
+      const w = createWheel(diffItems(), { index: Object.keys(GC.DIFFICULTIES).indexOf(cur), itemWidth: 250, onChange: it => { pick = it.key; play(it.key === 'taboo' ? 'boss' : 'click'); tabooGlow(it.key === 'taboo'); }, render: diffCard });
+      box.querySelector('#wheels').append(w.el); tabooGlow(cur === 'taboo');
     },
     map({ act }) {
       closeSheet();

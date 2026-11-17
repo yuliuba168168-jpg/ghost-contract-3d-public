@@ -249,3 +249,55 @@ body.tut-on .guide-tip { display: none !important; }
 .gpu-note code { padding: 1px 6px; background: rgba(255, 255, 255, .08); border-radius: 3px; color: #e8c88a; user-select: all; }
 .gpu-note-row { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
 .gpu-note-row a { text-decoration: none; margin-right: auto; }
+
+/* 轮盘选择器 */
+.wheel { position: relative; display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; outline: none; user-select: none; --wheel-w: 220px; --wheel-h: 150px; }
+.wheel-label { grid-column: 1 / -1; text-align: center; font-size: 13px; letter-spacing: .5em; color: rgba(233, 226, 208, .55); margin-bottom: 2px; }
+.wheel-stage { height: calc(var(--wheel-h) + 26px); perspective: 1100px; overflow: hidden; display: grid; place-items: center; -webkit-mask-image: linear-gradient(90deg, transparent, #000 16%, #000 84%, transparent); mask-image: linear-gradient(90deg, transparent, #000 16%, #000 84%, transparent); }
+.wheel-ring { position: relative; width: var(--wheel-w); height: var(--wheel-h); transform-style: preserve-3d; transition: transform .55s cubic-bezier(.22, .9, .25, 1); }
+.wheel-item { --tone: var(--spirit); position: absolute; inset: 0; box-sizing: border-box; padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; justify-content: center; text-align: center; color: var(--bone); background: rgba(16, 14, 13, .5); border: 1px solid rgba(233, 226, 208, .16); border-top: 3px solid color-mix(in srgb, var(--tone) 55%, transparent); backface-visibility: hidden; cursor: pointer; opacity: .38; filter: saturate(.5); transition: opacity .4s, filter .4s, box-shadow .4s, border-color .4s, background .4s; backdrop-filter: blur(6px); }
+.wheel-item.near { opacity: .62; }
+.wheel-item.on { opacity: 1; filter: none; cursor: default; background: rgba(22, 19, 17, .72); border-color: color-mix(in srgb, var(--tone) 70%, transparent); border-top-color: var(--tone); box-shadow: 0 0 34px color-mix(in srgb, var(--tone) 32%, transparent), 0 14px 40px rgba(0, 0, 0, .55); }
+.wheel-item.dead { filter: grayscale(1) brightness(.7); }
+.wheel-item b { font-size: 22px; letter-spacing: .3em; margin-right: -.3em; color: var(--tone); }
+.wheel-item p { margin: 0; font-size: 13px; line-height: 1.55; color: rgba(233, 226, 208, .78); }
+.wheel-item small { font-size: 12px; color: rgba(233, 226, 208, .5); letter-spacing: .08em; }
+.wheel-item:not(.on) .ink-btn { pointer-events: none; }
+.wheel-arrow { font: 300 34px/1 Georgia, serif; color: rgba(233, 226, 208, .6); background: none; border: 0; cursor: pointer; padding: 8px 0; transition: color .15s, transform .15s; }
+.wheel-arrow:hover { color: var(--bone); transform: scale(1.25); }
+.wheel-dots { grid-column: 1 / -1; display: flex; gap: 8px; justify-content: center; margin-top: 2px; }
+.wheel-dots i { width: 18px; height: 3px; background: rgba(233, 226, 208, .2); cursor: pointer; transition: background .2s, width .2s; }
+.wheel-dots i.on { background: var(--bone); width: 30px; }
+.wheel:focus-visible .wheel-item.on { outline: 1px dashed rgba(233, 226, 208, .5); outline-offset: 4px; }
+
+/* 标题页：存档位轮盘 */
+.slot-wheel { width: min(1080px, 100%); margin: 0 auto; --wheel-h: 168px; }
+.slot-wheel .wheel-item { padding: 0; background: none; border: 0; box-shadow: none; backdrop-filter: none; text-align: left; }
+.slot-wheel .wheel-item .slot { height: 100%; box-sizing: border-box; min-height: 0; background: linear-gradient(180deg, rgba(33, 29, 25, .58), rgba(13, 11, 10, .7)); backdrop-filter: blur(7px); border-top-color: color-mix(in srgb, var(--tone) 60%, transparent); }
+.slot-wheel .wheel-item .slot:hover { transform: none; }
+.slot-wheel .wheel-item.on .slot { border-color: color-mix(in srgb, var(--tone) 60%, transparent); border-top-color: var(--tone); box-shadow: 0 0 40px color-mix(in srgb, var(--tone) 26%, transparent), 0 16px 40px rgba(0, 0, 0, .6); }
+.slot-wheel .wheel-item .slot .acts { margin-top: auto; display: flex; gap: 8px; }
+
+/* 建立旅途 / 调整难度：轮盘面板 */
+.sheet.wheels .wheel { margin: 6px 0 10px; }
+.sheet.wheels .wheel.off { opacity: .3; pointer-events: none; filter: grayscale(1); }
+.diff-bars { display: flex; gap: 12px; justify-content: center; margin-top: 6px; font-size: 12px; letter-spacing: .1em; color: rgba(233, 226, 208, .6); }
+.diff-bars span { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.bars { display: inline-flex; gap: 2px; }
+.bars u { width: 7px; height: 10px; background: rgba(233, 226, 208, .14); text-decoration: none; transform: skewX(-12deg); }
+.bars u.on { background: var(--tone); box-shadow: 0 0 6px color-mix(in srgb, var(--tone) 60%, transparent); }
+.wheel-item.diff-taboo.on { animation: tabooPulse 1.6s ease-in-out infinite; }
+.wheel-item.diff-taboo.on b { text-shadow: 0 0 18px #ff2a1a, 0 0 4px #fff; }
+.wheel-item.diff-nightmare.on { box-shadow: 0 0 44px rgba(176, 124, 255, .4), 0 14px 40px rgba(0, 0, 0, .55); }
+@keyframes tabooPulse { 0%, 100% { box-shadow: 0 0 30px rgba(255, 42, 26, .45), 0 14px 40px rgba(0, 0, 0, .55); } 50% { box-shadow: 0 0 70px rgba(255, 42, 26, .9), 0 0 120px rgba(255, 42, 26, .35); } }
+
+/* 禁忌红光：整屏脉动的血色暗角 */
+.taboo-glow { position: fixed; inset: 0; z-index: 9; pointer-events: none; opacity: 0; transition: opacity .7s; }
+.taboo-glow.on { opacity: 1; }
+.taboo-glow i { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 46%, rgba(120, 8, 4, .12) 0%, rgba(170, 14, 8, .38) 55%, rgba(210, 20, 10, .78) 100%); mix-blend-mode: screen; animation: tabooBreath 2.4s ease-in-out infinite; }
+.taboo-glow b { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font-size: min(46vw, 70vh); line-height: 1; letter-spacing: .1em; white-space: nowrap; color: rgba(255, 40, 24, .07); text-shadow: 0 0 80px rgba(255, 30, 16, .25); font-weight: 700; }
+@keyframes tabooBreath { 0%, 100% { opacity: .62; } 50% { opacity: 1; } }
+body.taboo .sheet { border-color: rgba(255, 60, 40, .6); box-shadow: 0 0 90px rgba(255, 30, 16, .35), 0 30px 90px rgba(0, 0, 0, .8); }
+body.taboo .sheet::before { background: #ff2a1a; box-shadow: 0 0 24px #ff2a1a; }
+body.taboo .sheet-head .kicker { color: #ff4a36; }
+body.taboo .ink-btn.primary { background: #a80f08; border-color: #ff5a44; box-shadow: 0 0 22px rgba(255, 40, 24, .55); }
