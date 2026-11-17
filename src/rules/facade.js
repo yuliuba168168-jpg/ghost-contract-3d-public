@@ -23,7 +23,7 @@ if(typeof g.RESET_PLAY_TIPS==='function')actions.resetGuideTips=g.RESET_PLAY_TIP
 const QUERY_NAMES=['enemyRoster','endlessRoster','rewardInfo','rewardCandidates','effectiveAttack','statusText','cooldown','spiritCost','playerSkillRestriction','skillDetailMeta','replacementText',
  'spiritStats','critProfile','upgradeBudget','contractPrice','formatNum','handSpirit','maxHp','enemyHp','rankMultiplier','storyText','parseCooldowns','configuredEffects',
  'validImportedSlot','allEnemiesDefeated','weightedReward','skillDamage','dealSkillDamage','rollAttackDamage','skipEffect','blocksNegative','outgoingMultiplier','receivedMultiplier',
- 'wardInfo','tuned','upgradeGhostRecord','initUnit','makeTestUnit','spirit','syncPlayerVitality','fullHeal','fullHealPlayerOnly','normalizeState','readSlots','writeSlots','clone','addSpirit','enemyHp'];
+ 'wardInfo','tuned','upgradeGhostRecord','rankCap','initUnit','makeTestUnit','spirit','syncPlayerVitality','fullHeal','fullHealPlayerOnly','normalizeState','readSlots','writeSlots','clone','addSpirit','enemyHp'];
 const query={};
 for(const name of QUERY_NAMES)if(typeof g[name]==='function')query[name]=g[name];
 query.difficultyOf=(s)=>lex('difficultyOf')?(s?difficultyOf(s):difficultyOf()):'easy';

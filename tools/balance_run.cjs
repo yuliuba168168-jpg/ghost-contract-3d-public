@@ -1,12 +1,13 @@
 // 平衡模拟的路线循环与统计（由 balance_sim.cjs 载入）。
 const { A, GC, Q, X, GX, ORDER, FORK, PACT, VERBOSE: VERB0, RETRY, playTurn, setSeed } = require('./balance_sim.cjs');
 const VERBOSE = +process.env.SIM_VERBOSE || 0, N = +(process.argv[2] || 2), DIFFS = process.argv[3] ? process.argv[3].split(',') : ORDER;
+const OVER = +(process.env.SIM_OVER || 0);   // 允许用富余经验越过本幕等级多少级
 const FORK_ORDER = ['explore', 'trial', 'shop', 'omen'];
 
 function pickSquad(st) { st.squad = st.spirits.filter(s => s.id !== 'nannan' && !s.dead).sort((a, b) => b.rankIndex - a.rankIndex || b.atk - a.atk).slice(0, 6).map(s => s.id); }
 // 只练出战的前 4 只：一级一级轮流升，直到到达本幕等级或经验不够
 function train(st, arcIndex) {
-  const target = Math.max(0, A.ML.arcs[arcIndex].rank), top = st.squad.map(i => st.spirits.find(s => s.id === i)).slice(0, 4);
+  const target = Math.min(GC.GD.ranks.length - 1, Math.max(0, A.ML.arcs[arcIndex].rank) + OVER), top = st.squad.map(i => st.spirits.find(s => s.id === i)).slice(0, 4);
   for (let g = 0; g < 200; g++) { const s = top.filter(x => x.rankIndex < target).sort((a, b) => a.rankIndex - b.rankIndex)[0]; if (!s || !Q.upgradeGhostRecord(s)) break; }
 }
 function takeRewards(st) {
@@ -69,7 +70,7 @@ async function campaign(diff, it) {
   return stat;
 }
 (async () => {
-  console.log(`seeds ${N} · fork ${FORK} · pact ${PACT}`);
+  console.log(`seeds ${N} · fork ${FORK} · pact ${PACT} · over ${OVER}`);
   for (const d of DIFFS) {
     const all = []; for (let i = 1; i <= N; i++) { const s = await campaign(d, i); all.push(s); if (VERBOSE) console.log(' ', d, i, 'lost', s.lost.join(','), '| stuck', s.stuck.join(','), '| act', s.endAct, 'coins', s.coins, 'relics', s.relics, 'deck', s.deck, JSON.stringify(s.forks), JSON.stringify(s.bought)); }
     const sum = k => all.reduce((a, s) => a + s[k], 0), pct = v => (v * 100).toFixed(0) + '%';

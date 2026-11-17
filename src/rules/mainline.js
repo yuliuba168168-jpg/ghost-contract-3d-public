@@ -226,8 +226,10 @@ function grantTraining(arcIndex){
 }
 // 一键修行：优先练出战队伍里最强的 4 只（没有编队时取全队最强 4 只），从等级最低的开始一级一级升，经验不会摊到替补身上。
 function trainTeam(arcIndex){const target=Math.max(0,ML.arcs[arcIndex].rank),all=state.spirits.filter(s=>s.id!=='nannan'&&!s.dead),squad=all.filter(s=>(state.squad||[]).includes(s.id)),top=(squad.length?squad:all).sort((a,b)=>b.rankIndex-a.rankIndex||b.atk-a.atk).slice(0,4);
- for(let g=0;g<400;g++){const s=top.filter(x=>x.rankIndex<target).sort((a,b)=>a.rankIndex-b.rankIndex)[0];if(!s||state.xp<GD.ranks[s.rankIndex].upgradeXp||!upgradeGhostRecord(s))break}save();}
-function upgradeGhostRecord(s){const r=GD.ranks[s.rankIndex],next=GD.ranks[s.rankIndex+1];if(s.id==='nannan'||!next||state.xp<r.upgradeXp)return false;state.xp-=r.upgradeXp;s.rankIndex++;s.rankName=next.name;s.level=s.rankIndex+1;const st=spiritStats(s.id,s.rankName,s.potential);s.maxHp=s.hp=st.hp;s.atk=st.atk;s.dead=false;return true;}
+ for(let g=0;g<400;g++){const s=top.filter(x=>x.rankIndex<target).sort((a,b)=>a.rankIndex-b.rankIndex)[0];if(!s||state.xp<GD.ranks[s.rankIndex].upgradeXp||!upgradeGhostRecord(s,Math.max(target,rankCap())))break}save();}
+// 等级上限：主线里鬼灵最多比当前幕的推荐等级高 1 级（无尽模式不限）。没有这条时，中期一场战斗的经验够连升好几级，靠等级压制可以无视难度。
+function rankCap(){const top=GD.ranks.length-1;if(!state||!state.mainline||state.mode==='endless')return top;let arc=-1;for(const id of [...(state.available||[]),state.current,state.battle&&state.battle.nodeId]){const n=id&&NODES[id];if(n&&n.arc!=null)arc=Math.max(arc,n.arc)}return arc<0?top:Math.min(top,Math.max(0,ML.arcs[arc].rank)+1)}
+function upgradeGhostRecord(s,cap=rankCap()){const r=GD.ranks[s.rankIndex],next=GD.ranks[s.rankIndex+1];if(s.id==='nannan'||!next||state.xp<r.upgradeXp||s.rankIndex>=cap)return false;state.xp-=r.upgradeXp;s.rankIndex++;s.rankName=next.name;s.level=s.rankIndex+1;const st=spiritStats(s.id,s.rankName,s.potential);s.maxHp=s.hp=st.hp;s.atk=st.atk;s.dead=false;return true;}
 let trainingCtx=null;
 function showTraining(arcIndex,back=renderMap){
  grantTraining(arcIndex);trainingCtx={arc:arcIndex,back};
