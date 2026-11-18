@@ -29,7 +29,7 @@ async function playTurn() {
 }
 function pickButton() {
   const q = s => [...document.querySelectorAll(s)].filter(e => vis(e) && !e.closest('.sheet-veil.out'));   // 正在淡出的面板不算
-  const skip = /返回|取消|离开|跳过|重建|导出|导入|设置|图鉴|演武|档案|指南|成就|成绩|每日|日志|难度|放弃|回标题|回到标题|鬼灵与卡牌|素材|查看/;
+  const skip = /回顾|返回|取消|离开|跳过|重建|导出|导入|设置|图鉴|演武|档案|指南|成就|成绩|每日|日志|难度|放弃|回标题|回到标题|鬼灵与卡牌|素材|查看/;
   const sheet = q('.sheet .ink-btn, .sheet button.cell, .story-bar button, .sheet button');
   const pri = sheet.filter(b => b.classList.contains('primary') && !skip.test(b.textContent));
   const any = sheet.filter(b => !skip.test(b.textContent));
