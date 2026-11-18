@@ -1,6 +1,10 @@
 # ghost-contract-3d
 鬼灵契约3D：Three.js 3D 卡牌战役（完整版 + 试玩版 + 方块版）
 
+> **这是试玩版分支（`demo`）**：只含主线第 1–2 幕，打完第 2 幕显示“试玩结束”。第 3–46 幕的剧情、战斗和小说原文都不在这个分支里；完整版在 `main` 分支。
+> 由 `node tools/make_demo.cjs 2` 从完整版生成。`mainline_test`、`expansion_test`、`battle_loop_test` 断言的是 46 幕内容，在这个分支上不适用。
+
+
 ## 运行
 
 需要 Node.js。Windows 下双击对应的启动脚本：
