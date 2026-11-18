@@ -143,7 +143,8 @@ function buildMainline(){
   for(const key of [story,fight,...chain,fork,explore,trial,camp])MAIN_KEYS.add(key);
  });
  STORY['main-ending']='从柳城教室里的一枚红色蝴蝶结，到满天神佛退去的那一夜，林风与鬼灵们把信任一点点变成了可以共同守护的秩序。黑暗上帝与黑暗天庭都已不在，东方的圣灵重新现世，西方有了新的上帝。鬼族的婚礼如约举行，潘多拉合上了魔盒。开满鲜花的小岛上，童童问永远有多久。林风看着身边的每一个人，答：就是字面上的意思，永永远远。';
- NODES['main-ending']={act:ML.arcs.length,title:'终幕 · 永永远远',type:'ending',story:'main-ending',next:[],mainline:true};MAIN_KEYS.add('main-ending');ACT_ROWS[ML.arcs.length].push(['main-ending']);
+ if(ML.demo)STORY['main-ending']='试玩版到这里结束。黄金墙外的夜还很长，林风和鬼灵们的路才刚刚开始。完整版共 46 幕。';
+ NODES['main-ending']={act:ML.arcs.length,title:ML.demo?'试玩结束':'终幕 · 永永远远',type:'ending',story:'main-ending',next:[],mainline:true};MAIN_KEYS.add('main-ending');ACT_ROWS[ML.arcs.length].push(['main-ending']);
  for(const key of MAIN_KEYS){const n=NODES[key];if(n.type==='battle'||n.type==='boss')n.enemies=enemyRoster(key).map(e=>[e.id,e.rankIndex+1]);}
 }
 function enemyRoster(id){
